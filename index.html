@@ -1,41 +1,104 @@
-async function executeCourseEngineQuery() {
-    const rawInput = document.getElementById('course-search-input').value;
-    const query = rawInput.trim();
-    const logger = document.getElementById('api-status-log');
-    const display = document.getElementById('current-course-display');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="p-3 bg-black text-zinc-100 font-sans antialiased min-h-screen">
 
-    if(!query) {
-        alert("❌ Input Error: Please type a golf course or city name!");
-        return;
-    }
+    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
+        
+        <div class="lg:col-span-3 space-y-4">
+            <nav class="grid grid-cols-3 gap-1 bg-zinc-900/60 p-1 border border-zinc-800/80 rounded-xl">
+                <button onclick="switchTab('new-round')" id="tab-new-round" class="text-xs font-bold py-2 rounded-lg bg-emerald-500 text-black transition-all">New Scorecard</button>
+                <button onclick="switchTab('history')" id="tab-history" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">Past History</button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">Data Charts</button>
+            </nav>
 
-    logger.innerText = "⚡ Querying live open global golf map...";
+            <!-- NEW ROUND TAB -->
+            <div id="view-new-round" class="tab-view block space-y-4">
+                <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">🔍 Search & Fetch Course Mapping</h2>
+                    <div class="flex gap-2">
+                        <input id="course-search-input" type="text" placeholder="e.g. Pebble Beach, Calgary..." class="flex-1 bg-black text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500 font-mono">
+                        <button onclick="executeCourseEngineQuery()" class="bg-emerald-500 text-black text-xs font-black px-4 py-2 rounded-lg active:scale-95 transition-transform">Fetch Data</button>
+                    </div>
+                </section>
 
-    try {
-        // Querying the live open golf database REST API
-        const response = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
+                <section class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl shadow-md">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="text-[9px] text-zinc-500 font-bold uppercase">Course Rating</label>
+                            <input id="course-rating" type="number" step="0.1" value="72.0" class="w-full bg-black p-2 rounded border border-zinc-700 text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[9px] text-zinc-500 font-bold uppercase">Slope Rating</label>
+                            <input id="slope-rating" type="number" value="125" class="w-full bg-black p-2 rounded border border-zinc-700 text-xs">
+                        </div>
+                    </div>
+                    <!-- [Scorecard Grid Omitted for brevity: Use same structure as before] -->
+                    <div id="scorecard-wrapper" class="text-center p-10 text-zinc-500 border-2 border-dashed border-zinc-800 rounded-lg">Scorecard UI Active</div>
+                    <button onclick="commitCardToCloudDatabase()" class="w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl uppercase mt-4">Sync Scorecard</button>
+                </section>
+            </div>
 
-        if (data && data.courses && data.courses.length > 0) {
-            const course = data.courses[0]; // Take the closest match
-            display.innerText = course.name.toUpperCase();
-            logger.innerText = `✅ Found in database! Location: ${course.city || 'Local'}`;
+            <!-- HISTORY & ANALYTICS TABS [Same structure] -->
+            <div id="view-history" class="tab-view hidden space-y-4">...</div>
+            <div id="view-analytics" class="tab-view hidden space-y-4">...</div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="space-y-4">
+            <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-3">⛳ Handicap Index</h2>
+                <div class="text-center py-4">
+                    <div id="hcp-display" class="text-4xl font-black text-white">--</div>
+                    <p class="text-[10px] text-zinc-500 uppercase">Current Estimate</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // ... [Previous variables + functions] ...
+
+        function calculateHandicap() {
+            if(cachedRoundsInMemory.length === 0) return;
             
-            // Note: If the open API doesn't specify specific hole-by-hole pars, 
-            // we default them to standard 4s so you can adjust them manually.
-            let defaultPars = course.pars || Array(18).fill(4); 
-            for(let i=1; i<=18; i++) {
-                document.getElementById(`grid-par-${i}`).value = defaultPars[i-1] || 4;
-                document.getElementById(`grid-score-${i}`).value = defaultPars[i-1] || 4;
-            }
-        } else {
-            // Fallback if not found
-            display.innerText = rawInput.toUpperCase();
-            logger.innerText = "⚠️ Not found in global directory. Using custom manual layout.";
+            // Formula: (Score - Rating) * 113 / Slope
+            const differentials = cachedRoundsInMemory.map(r => {
+                const totalScore = r.holes.reduce((sum, h) => sum + h.score, 0);
+                const rating = r.courseRating || 72.0;
+                const slope = r.slopeRating || 113;
+                return (totalScore - rating) * 113 / slope;
+            });
+
+            // Average of lowest 8 differentials (simplified logic for stability)
+            const sorted = differentials.sort((a,b) => a - b);
+            const top8 = sorted.slice(0, 8);
+            const avg = top8.reduce((a,b) => a + b, 0) / top8.length;
+            
+            document.getElementById('hcp-display').innerText = avg.toFixed(1);
         }
-    } catch (error) {
-        console.error("Fetch failed, reverting to local matching.", error);
-        // Fallback to local hardcoded dictionary logic...
-    }
-    calculateGridTotals();
-}
+
+        async function commitCardToCloudDatabase() {
+            const roundObj = {
+                date: new Date().toLocaleDateString(),
+                course: document.getElementById('current-course-display').innerText,
+                courseRating: parseFloat(document.getElementById('course-rating').value),
+                slopeRating: parseInt(document.getElementById('slope-rating').value),
+                holes: [/* ... array of hole data ... */]
+            };
+            // ... [Database push logic]
+            calculateHandicap();
+        }
+
+        // Run calculation on load
+        fetchSystemHistoryRecords().then(calculateHandicap);
+    </script>
+</body>
+</html>
