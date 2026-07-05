@@ -4,119 +4,251 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Golf Analytics App</title>
-    <!-- Tailwind CSS for modern premium dashboard design -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Chart.js for smooth performance trends -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { background-color: #F8FAFC; color: #212529; font-family: 'Segoe UI', system-ui, sans-serif; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-4 md:p-8 max-w-md mx-auto bg-slate-50">
+<body class="p-4 max-w-md mx-auto bg-black text-slate-100 font-sans antialiased">
 
     <!-- APP HEADER -->
-    <header class="bg-[#212529] text-white p-4 rounded-xl shadow-md mb-6 flex justify-between items-center">
+    <header class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg mb-4 flex justify-between items-center">
         <div>
-            <h1 class="text-lg font-bold tracking-wide">GOLF ANALYTICS</h1>
-            <p class="text-xs text-slate-400">Premium Performance Tracking</p>
+            <h1 class="text-xs font-black tracking-widest text-emerald-400">GOLF ANALYTICS V2</h1>
+            <p class="text-[10px] text-zinc-500 uppercase">AMOLED Optimized Engine</p>
         </div>
-        <span class="bg-[#A3E635] text-black text-xs font-bold px-2 py-1 rounded">2026 ACTIVE</span>
+        <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/30 px-2 py-0.5 rounded">BATCH MODE READY</span>
     </header>
 
-    <!-- AUTOMATED COURSE FETCH BLOCK -->
-    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
-        <h2 class="text-sm font-bold text-slate-700 mb-3">⚡ Quick Course Fetch</h2>
-        <div class="flex gap-2">
-            <input id="course-search-input" type="text" placeholder="Search course (e.g., Pebble)" class="flex-1 bg-slate-100 text-sm p-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#212529]">
-            <button onclick="fetchCourseDetails()" class="bg-[#212529] text-white text-xs font-bold px-4 py-2.5 rounded-lg active:scale-95 transition-transform">Fetch</button>
+    <!-- OPTION A: POST-ROUND TRADITIONAL SCORECARD BATCH ENTRY -->
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                📝 Post-Round Paper Scorecard Entry
+            </h2>
+            <button onclick="toggleBatchView()" id="batch-toggle-btn" class="text-[10px] uppercase font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">Expand</button>
         </div>
-        <p id="api-status" class="text-xs text-slate-400 mt-2">Powered by OpenGolfAPI. No manual typing required.</p>
+        <p class="text-[10px] text-zinc-400 mb-3">Finished a round with a paper card? Type your total matrix scores below to batch upload instantly.</p>
+        
+        <div id="batch-entry-form" class="hidden border-t border-zinc-800 pt-3">
+            <div class="mb-3">
+                <label class="block text-[9px] uppercase font-bold text-zinc-500 mb-1">Course Name</label>
+                <input id="batch-course-name" type="text" placeholder="e.g. Pebble Beach GL" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            </div>
+
+            <!-- SCROLLABLE SCORECARD GRID -->
+            <div class="overflow-x-auto mb-4 border border-zinc-800 rounded-lg bg-black">
+                <table class="w-full min-w-[600px] text-center border-collapse text-xs font-mono">
+                    <thead>
+                        <tr class="bg-zinc-900 text-zinc-500 border-b border-zinc-800 text-[10px]">
+                            <th class="p-2 text-left text-zinc-400 font-sans font-bold">HOLE</th>
+                            <!-- 1 to 18 headers -->
+                            <script>
+                                for(let i=1; i<=18; i++) document.write(`<th class="p-1">${i}</th>`);
+                            </script>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- SCORE MATRIX ROW -->
+                        <tr class="border-b border-zinc-900">
+                            <td class="p-2 text-left font-sans font-bold text-zinc-400 text-[10px]">SCORE</td>
+                            <script>
+                                for(let i=1; i<=18; i++) document.write(`<td class="p-1"><input id="b-score-${i}" type="number" value="4" class="w-7 h-7 bg-zinc-900 border border-zinc-700 rounded text-center text-white font-bold focus:border-emerald-500"></td>`);
+                            </script>
+                        </tr>
+                        <!-- PUTTS MATRIX ROW -->
+                        <tr>
+                            <td class="p-2 text-left font-sans font-bold text-zinc-400 text-[10px]">PUTTS</td>
+                            <script>
+                                for(let i=1; i<=18; i++) document.write(`<td class="p-1"><input id="b-putts-${i}" type="number" value="2" class="w-7 h-7 bg-zinc-900 border border-zinc-800 rounded text-center text-zinc-400 focus:border-emerald-500"></td>`);
+                            </script>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button onclick="submitBatchRound()" class="w-full bg-emerald-500 text-black font-black text-xs py-2.5 rounded-lg tracking-widest uppercase active:scale-95">Save Entire Card ➔</button>
+        </div>
     </section>
 
-    <!-- MOBILE NEW ROUND SCORECARD -->
-    <section id="scorecard-section" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-base font-bold" id="current-course-display">Live Round Entry</h2>
-            <span id="hole-counter" class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">Hole 1 of 18</span>
+    <!-- OFFLINE FAVORITES CACHE -->
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">⛳ Instant Favorite Templates</h2>
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="loadPreseedCourse('Pebble Beach')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">Pebble Beach GL</button>
+            <button onclick="loadPreseedCourse('Augusta National')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">Augusta National</button>
+            <button onclick="loadPreseedCourse('St Andrews Links')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">St Andrews Old</button>
+            <button onclick="loadPreseedCourse('TPC Sawgrass')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">TPC Sawgrass</button>
+        </div>
+    </section>
+
+    <!-- LIVE COURSE LOOKUP SEARCH -->
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">🔍 Search Global Database</h2>
+        <div class="flex gap-2">
+            <input id="course-search-input" type="text" placeholder="e.g. Pinehurst No. 2" class="flex-1 bg-zinc-900 text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500">
+            <button onclick="fetchCourseDetails()" class="bg-zinc-100 text-black text-xs font-bold px-4 py-2 rounded-lg active:scale-95">Fetch</button>
+        </div>
+        <p id="api-status" class="text-[10px] font-mono text-zinc-500 mt-2">Ready for lookup over network.</p>
+    </section>
+
+    <!-- CORE LIVE SCORECARD VIEW -->
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <div class="flex justify-between items-center mb-3">
+            <h2 id="current-course-display" class="text-sm font-bold text-zinc-100">Standard 18 Layout</h2>
+            <span id="hole-counter" class="text-xs font-mono bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded text-zinc-400">Hole 1 of 18</span>
         </div>
 
-        <!-- Single Hole Focus Mode for Mobile Screens -->
-        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 text-center mb-4">
-            <div id="hole-num-display" class="text-4xl font-extrabold text-slate-800 mb-1">Hole 1</div>
-            <div id="hole-par-display" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Par 4 Reference</div>
+        <div class="bg-black p-4 rounded-xl border border-zinc-800 text-center mb-3">
+            <div id="hole-num-display" class="text-3xl font-black text-white tracking-tight">Hole 1</div>
+            <div id="hole-par-display" class="text-[10px] font-mono uppercase tracking-widest text-zinc-500 mb-4">Par 4 Template</div>
             
-            <div class="flex justify-center items-center gap-6 mb-4">
-                <button onclick="adjustScore(-1)" class="w-12 h-12 bg-white rounded-full border border-slate-200 shadow-sm text-xl font-bold active:bg-slate-100">-</button>
-                <div id="live-score" class="text-5xl font-black w-16">4</div>
-                <button onclick="adjustScore(1)" class="w-12 h-12 bg-[#212529] text-white rounded-full shadow-md text-xl font-bold active:scale-95">+</button>
+            <div class="flex justify-center items-center gap-6 mb-2">
+                <button onclick="adjustScore(-1)" class="w-12 h-12 bg-zinc-800 rounded-full border border-zinc-700 text-xl font-bold text-white shadow-sm active:bg-zinc-700">-</button>
+                <div id="live-score" class="text-5xl font-black w-14 tracking-tighter text-white">4</div>
+                <button onclick="adjustScore(1)" class="w-12 h-12 bg-emerald-500 text-black rounded-full text-xl font-extrabold shadow-sm active:scale-95">+</button>
             </div>
-            <p class="text-xs text-slate-500">Tap to toggle total strokes taken</p>
         </div>
 
-        <!-- STATS SUB-TOGGLES -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
-                <span class="block text-xs font-semibold text-slate-500 mb-1">Putts Taken</span>
-                <input id="live-putts" type="number" value="2" class="w-full text-center font-bold bg-white border border-slate-200 rounded p-1">
+        <!-- FAST TAP COURSE STATS -->
+        <div class="grid grid-cols-2 gap-2 mb-3">
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">Putts</span>
+                <input id="live-putts" type="number" value="2" class="w-full text-center font-bold bg-zinc-900 text-white border border-zinc-700 rounded p-1 text-sm focus:outline-none">
             </div>
-            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
-                <span class="block text-xs font-semibold text-slate-500 mb-1">Fairway (FIR)</span>
-                <select id="live-fir" class="w-full text-xs text-center bg-white border border-slate-200 rounded p-1">
-                    <option value="Hit">Hit</option>
-                    <option value="Miss Left">Miss Left</option>
-                    <option value="Miss Right">Miss Right</option>
-                    <option value="N/A">N/A (Par 3)</option>
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center flex flex-col justify-between">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">GIR</span>
+                <button id="gir-toggle" onclick="toggleGIR()" class="w-full text-xs font-bold py-1 px-2 rounded border border-zinc-700 bg-zinc-900 text-zinc-400">MISS</button>
+            </div>
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">Drive Distance</span>
+                <input id="live-distance" type="number" placeholder="Yards" class="w-full text-center font-mono bg-zinc-900 text-white border border-zinc-700 rounded p-1 text-sm focus:outline-none">
+            </div>
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">Drive Club</span>
+                <select id="live-club" class="w-full text-xs text-center bg-zinc-900 text-white border border-zinc-700 rounded p-1 focus:outline-none">
+                    <option value="Driver">Driver</option>
+                    <option value="3-Wood">3-Wood</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Iron">Iron</option>
+                    <option value="N/A">N/A</option>
                 </select>
             </div>
         </div>
 
-        <button onclick="nextHole()" id="next-btn" class="w-full bg-[#A3E635] text-black font-bold text-sm py-3 rounded-xl shadow-sm active:scale-[0.99]">Next Hole ➔</button>
+        <button onclick="nextHole()" id="next-btn" class="w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl tracking-widest uppercase active:scale-95">Next Hole ➔</button>
     </section>
 
-    <!-- REAL-TIME ANALYTICS DASHBOARD CARD -->
-    <main class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-        <h2 class="text-base font-bold mb-4">📈 Dynamic Dashboard KPIs</h2>
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="border border-slate-100 p-3 rounded-lg bg-slate-50/50">
-                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rounds Played</span>
-                <div id="kpi-rounds" class="text-xl font-bold text-slate-800">0</div>
+    <!-- HISTORIC RUNTIME METRICS CARD -->
+    <main class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📊 Real-Time Performance Analytics</h2>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="border border-zinc-800 p-3 rounded-lg bg-zinc-950">
+                <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Rounds Tracked</span>
+                <div id="kpi-rounds" class="text-xl font-bold font-mono text-zinc-100">0</div>
             </div>
-            <div class="border border-slate-100 p-3 rounded-lg bg-slate-50/50">
-                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Avg Score</span>
-                <div id="kpi-avg" class="text-xl font-bold text-slate-800">--</div>
+            <div class="border border-zinc-800 p-3 rounded-lg bg-zinc-950">
+                <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Avg Score / Round</span>
+                <div id="kpi-avg" class="text-xl font-bold font-mono text-emerald-400">--</div>
             </div>
         </div>
     </main>
 
-    <!-- CORE INTERACTIVE ENGINE SCRIPT -->
+    <!-- RUNTIME LOGIC MOTOR -->
     <script>
         let currentHole = 1;
         let activeRoundData = [];
-        let fetchedPars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; // default fallbacks
+        let fetchedPars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+        let currentGIR = false;
+
+        const offlinePreseed = {
+            "Pebble Beach": [4,4,4,4,3,5,3,4,4,4,4,3,4,5,4,4,3,5],
+            "Augusta National": [4,5,4,4,4,3,4,5,4,4,4,3,5,4,4,3,4,5],
+            "St Andrews Links": [4,4,4,4,5,4,4,3,4,4,3,4,4,5,4,4,4,4],
+            "TPC Sawgrass": [4,5,3,4,4,4,4,3,5,4,5,4,3,4,4,5,3,4]
+        };
+
+        function toggleBatchView() {
+            const form = document.getElementById('batch-entry-form');
+            const btn = document.getElementById('batch-toggle-btn');
+            if(form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                btn.innerText = "Collapse";
+            } else {
+                form.classList.add('hidden');
+                btn.innerText = "Expand";
+            }
+        }
+
+        function submitBatchRound() {
+            const courseName = document.getElementById('batch-course-name').value || "Manual Card Upload";
+            let batchHoles = [];
+            
+            for(let i = 1; i <= 18; i++) {
+                batchHoles.push({
+                    hole: i,
+                    par: 4, // Default baseline par placeholder
+                    score: parseInt(document.getElementById(`b-score-${i}`).value) || 4,
+                    putts: parseInt(document.getElementById(`b-putts-${i}`).value) || 2,
+                    gir: false,
+                    driveDistance: 0,
+                    driveClub: "N/A"
+                });
+            }
+
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            history.push({
+                date: new Date().toLocaleDateString(),
+                course: courseName,
+                holes: batchHoles
+            });
+            localStorage.setItem('golf_history', JSON.stringify(history));
+            
+            alert(`🎉 Entire scorecard logged for ${courseName}!`);
+            document.getElementById('batch-course-name').value = "";
+            toggleBatchView();
+            calculateKPIs();
+        }
+
+        function loadPreseedCourse(name) {
+            if(offlinePreseed[name]) {
+                fetchedPars = offlinePreseed[name];
+                document.getElementById('current-course-display').innerText = name;
+                document.getElementById('api-status').innerText = "⚡ Loaded directly from local cache memory.";
+                resetRound();
+            }
+        }
 
         async function fetchCourseDetails() {
             const query = document.getElementById('course-search-input').value;
             const statusText = document.getElementById('api-status');
             if(!query) return;
 
-            statusText.innerText = "🔍 Connecting to database server...";
+            statusText.innerText = "⏳ Connecting to network layer...";
             try {
-                // Call the open API engine query pipeline
                 const res = await fetch(`https://open-golf-api.onrender.com/v1/courses/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 
                 if(data && data.courses && data.courses.length > 0) {
                     const course = data.courses[0];
                     document.getElementById('current-course-display').innerText = course.name;
-                    statusText.innerText = `✅ Successfully fetched layout for ${course.name}!`;
-                    // If pars exist in API metadata payload, map them here dynamically
-                    if(course.pars) fetchedPars = course.pars;
+                    statusText.innerText = `✅ Found ${course.name}!`;
+                    if(course.pars && course.pars.length === 18) fetchedPars = course.pars;
                     resetRound();
                 } else {
-                    statusText.innerText = "❌ Course not found. Using default par profile.";
+                    statusText.innerText = "❌ Course missing from directory. Loaded fallback template.";
                 }
             } catch(e) {
-                statusText.innerText = "⚠️ Network offline. Using fallback defaults.";
+                statusText.innerText = "⚠️ Network offline. Using baseline par matrix configuration.";
+            }
+        }
+
+        function toggleGIR() {
+            currentGIR = !currentGIR;
+            const btn = document.getElementById('gir-toggle');
+            if(currentGIR) {
+                btn.innerText = "HIT";
+                btn.className = "w-full text-xs font-bold py-1 px-2 rounded border border-emerald-500/50 bg-emerald-500/10 text-emerald-400";
+            } else {
+                btn.innerText = "MISS";
+                btn.className = "w-full text-xs font-bold py-1 px-2 rounded border border-zinc-700 bg-zinc-900 text-zinc-400";
             }
         }
 
@@ -135,19 +267,26 @@
         function updateHoleUI() {
             document.getElementById('hole-counter').innerText = `Hole ${currentHole} of 18`;
             document.getElementById('hole-num-display').innerText = `Hole ${currentHole}`;
-            document.getElementById('hole-par-display').innerText = `Par ${fetchedPars[currentHole - 1] || 4} Reference`;
+            document.getElementById('hole-par-display').innerText = `Par ${fetchedPars[currentHole - 1] || 4} Template`;
             document.getElementById('live-score').innerText = fetchedPars[currentHole - 1] || 4;
             document.getElementById('live-putts').value = 2;
+            document.getElementById('live-distance').value = "";
+            
+            currentGIR = false;
+            const btn = document.getElementById('gir-toggle');
+            btn.innerText = "MISS";
+            btn.className = "w-full text-xs font-bold py-1 px-2 rounded border border-zinc-700 bg-zinc-900 text-zinc-400";
         }
 
         function nextHole() {
-            // Save local entry node state variables
             activeRoundData.push({
                 hole: currentHole,
                 par: fetchedPars[currentHole - 1] || 4,
                 score: parseInt(document.getElementById('live-score').innerText),
                 putts: parseInt(document.getElementById('live-putts').value),
-                fir: document.getElementById('live-fir').value
+                gir: currentGIR,
+                driveDistance: document.getElementById('live-distance').value || 0,
+                driveClub: document.getElementById('live-club').value
             });
 
             if(currentHole < 18) {
@@ -155,7 +294,7 @@
                 updateHoleUI();
                 if(currentHole === 18) {
                     document.getElementById('next-btn').innerText = "🏁 Complete & Save Round";
-                    document.getElementById('next-btn').className = "w-full bg-emerald-500 text-white font-bold text-sm py-3 rounded-xl shadow-sm active:scale-95";
+                    document.getElementById('next-btn').className = "w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl tracking-widest uppercase active:scale-95";
                 }
             } else {
                 saveRoundToDatabase();
@@ -170,7 +309,7 @@
                 holes: activeRoundData
             });
             localStorage.setItem('golf_history', JSON.stringify(history));
-            alert("Round successfully logged to phone database application memory!");
+            alert("Round logged into local engine memory cache successfully!");
             resetRound();
             calculateKPIs();
         }
@@ -188,7 +327,6 @@
             document.getElementById('kpi-avg').innerText = (totalScore / history.length).toFixed(1);
         }
 
-        // Initialize state indicators
         updateHoleUI();
         calculateKPIs();
     </script>
