@@ -7,58 +7,68 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="p-4 bg-black text-zinc-100 font-sans">
-
     <div class="max-w-4xl mx-auto space-y-6">
+        
         <!-- COURSE INTELLIGENCE -->
         <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
             <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4">Course Intelligence</h2>
             <div class="flex gap-2 mb-4">
-                <input id="course-search" class="flex-1 bg-black border border-zinc-700 p-3 rounded-lg text-sm" placeholder="Enter course name...">
+                <input id="course-search" class="flex-1 bg-black border border-zinc-700 p-3 rounded-lg text-sm" placeholder="e.g. Blue Devil, Calgary">
                 <button onclick="fetchCourseData()" class="bg-emerald-500 text-black font-black px-6 py-3 rounded-lg text-xs uppercase">Fetch</button>
             </div>
+            
             <div class="grid grid-cols-2 gap-4">
-                <input id="rating-val" placeholder="Rating" class="bg-black border border-zinc-700 p-2 rounded text-emerald-400 font-mono">
-                <input id="slope-val" placeholder="Slope" class="bg-black border border-zinc-700 p-2 rounded text-emerald-400 font-mono">
+                <div>
+                    <label class="text-[9px] text-zinc-500 uppercase block mb-1">Course Rating</label>
+                    <input id="rating-val" type="number" step="0.1" class="w-full bg-black border border-zinc-700 p-2 rounded text-emerald-400 font-mono" placeholder="74.4">
+                </div>
+                <div>
+                    <label class="text-[9px] text-zinc-500 uppercase block mb-1">Slope Rating</label>
+                    <input id="slope-val" type="number" class="w-full bg-black border border-zinc-700 p-2 rounded text-emerald-400 font-mono" placeholder="138">
+                </div>
             </div>
         </section>
 
         <!-- SCORECARD GRID -->
         <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
-            <div id="scorecard-grid" class="grid grid-cols-9 gap-2 mb-6">
-                <!-- 18 Inputs -->
+            <div id="scorecard-grid" class="grid grid-cols-9 gap-2">
                 <script>
                     for(let i=1; i<=18; i++) {
-                        document.write(`<input id="s${i}" placeholder="${i}" class="bg-black border border-zinc-700 p-2 text-center rounded text-xs">`);
+                        document.write(`<input id="s${i}" type="number" placeholder="${i}" class="bg-black border border-zinc-700 p-2 text-center rounded text-xs focus:border-emerald-500 outline-none">`);
                     }
                 </script>
             </div>
-            <button onclick="saveRound()" class="w-full bg-emerald-500 text-black font-black py-4 rounded-lg uppercase text-xs">Sync Round</button>
+            <button onclick="saveRound()" class="w-full mt-6 bg-emerald-500 text-black font-black py-4 rounded-lg uppercase text-xs hover:bg-emerald-400 transition-colors">Sync Round</button>
         </section>
     </div>
 
     <script>
         function fetchCourseData() {
             const query = document.getElementById('course-search').value.toLowerCase();
-            // Local fallback logic
-            const cache = { "blue devil": { rating: 74.4, slope: 138 } };
-            if (cache[query]) {
-                document.getElementById('rating-val').value = cache[query].rating;
-                document.getElementById('slope-val').value = cache[query].slope;
+            // Using your corrected data to override the faulty API defaults
+            if (query.includes('blue devil')) {
+                document.getElementById('rating-val').value = 74.4;
+                document.getElementById('slope-val').value = 138;
+            } else {
+                alert("Course not in local database. Please enter manually.");
             }
         }
 
         function saveRound() {
             const rating = parseFloat(document.getElementById('rating-val').value);
             const slope = parseInt(document.getElementById('slope-val').value);
-            const scores = Array.from({length: 18}, (_, i) => parseInt(document.getElementById(`s${i+1}`).value) || 0);
-            const total = scores.reduce((a, b) => a + b, 0);
-            
-            if (total > 0 && rating > 0) {
-                const diff = (total - rating) * 113 / slope;
-                alert(`Round Saved! Total: ${total}, Differential: ${diff.toFixed(1)}`);
-            } else {
-                alert("Please enter a valid course rating and score.");
+            let total = 0;
+            for(let i=1; i<=18; i++) {
+                total += parseInt(document.getElementById(`s${i}`).value) || 0;
             }
+            
+            if(total === 0 || !rating) {
+                alert("Please ensure Score and Course data are entered.");
+                return;
+            }
+            
+            const diff = ((total - rating) * 113 / slope).toFixed(1);
+            alert(`Round Saved! Total: ${total} | Differential: ${diff}`);
         }
     </script>
 </body>
