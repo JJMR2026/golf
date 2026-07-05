@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Connected Golf Analytics Dashboard</title>
+    <title>Analytics Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Include Supabase Client Library JS Engine Module -->
@@ -12,19 +12,11 @@
 <body class="p-3 bg-black text-zinc-100 font-sans antialiased min-h-screen">
 
     <!-- THE DYNAMIC EXPANDABLE WORKSPACE CANVAS FRAME -->
-    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
         
         <!-- MAIN TRACKING CONSOLE BLOCK (EXPUNDS WIDESCREEN ON DESKTOP INTERFACES) -->
         <div class="lg:col-span-3 space-y-4">
             
-            <header class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg flex justify-between items-center">
-                <div>
-                    <h1 class="text-xs font-black tracking-widest text-emerald-400">GOLF CADDIE CLOUD</h1>
-                    <p class="text-[10px] text-zinc-500 uppercase font-mono">True Cross-Device Synced Instance</p>
-                </div>
-                <span id="sync-indicator" class="bg-amber-500/10 text-amber-400 text-[10px] font-mono border border-amber-500/20 px-2 py-0.5 rounded">CONNECTING TO CLOUD...</span>
-            </header>
-
             <nav class="grid grid-cols-3 gap-1 bg-zinc-900/60 p-1 border border-zinc-800/80 rounded-xl">
                 <button onclick="switchTab('new-round')" id="tab-new-round" class="text-xs font-bold py-2 rounded-lg bg-emerald-500 text-black transition-all">New Scorecard</button>
                 <button onclick="switchTab('history')" id="tab-history" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">Past History</button>
@@ -121,12 +113,12 @@
                                     </tr>
                                     <tr class="border-b border-zinc-900 text-[9px]">
                                         <td class="p-1 text-left font-bold bg-zinc-900 border-r border-zinc-800 text-zinc-500">FIR</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-fir-${i}" onclick="toggleStat('fir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
+                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/40"><button id="grid-fir-${i}" onclick="toggleStat('fir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
                                         <td>-</td>
                                     </tr>
                                     <tr class="text-[9px]">
                                         <td class="p-1 text-left font-bold bg-zinc-950 border-r border-zinc-800 text-zinc-500">GIR</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-gir-${i}" onclick="toggleStat('gir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
+                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/40"><button id="grid-gir-${i}" onclick="toggleStat('gir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
                                         <td>-</td>
                                     </tr>
                                 </tbody>
@@ -148,7 +140,7 @@
             <!-- ================= TAB 2: HISTORICAL ARCHIVE VIEW ================= -->
             <div id="view-history" class="tab-view hidden space-y-4">
                 <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
-                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📁 Cloud Synchronized History Archive</h2>
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📁 Synchronized History Archive</h2>
                     <div id="history-rounds-container" class="space-y-2"></div>
                 </section>
 
@@ -187,7 +179,7 @@
         <!-- SIDEBAR STATIC PERFORMANCE CALCULATOR MONITOR -->
         <div class="space-y-4">
             <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-3">📊 Global Career Metrics Tracker</h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-3">📊 Global Metrics Tracker</h2>
                 
                 <div class="grid grid-cols-2 gap-2 mb-3 font-mono">
                     <div class="bg-black p-3 rounded-lg border border-zinc-800 text-center">
@@ -215,7 +207,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-1.5 mt-3 text-center text-[11px] border-t border-zinc-800/40 pt-3 font-mono">
+                <div class="grid grid-cols-3 gap-1.5 mt-3 text-center text-[11px] border-t border-zinc-800 pt-3 font-mono">
                     <div><span class="text-[8px] text-zinc-500 block">PUTTS/RD</span><span id="stat-putts" class="text-zinc-200 font-bold">0.0</span></div>
                     <div><span class="text-[8px] text-zinc-500 block">FIR %</span><span id="stat-fir-pct" class="text-zinc-200 font-bold">0%</span></div>
                     <div><span class="text-[8px] text-zinc-500 block">GIR %</span><span id="stat-gir-pct" class="text-zinc-200 font-bold">0%</span></div>
@@ -231,7 +223,7 @@
                         <input type="file" id="garmin-uploader" accept=".csv" class="hidden" onchange="importGarminCSV(event)">
                     </label>
                 </div>
-                <div class="border-t border-zinc-800/40 pt-2 grid grid-cols-2 gap-2">
+                <div class="border-t border-zinc-800 pt-2 grid grid-cols-2 gap-2">
                     <button onclick="downloadBackupCSV()" class="bg-zinc-800 border border-zinc-700 text-[10px] font-bold font-mono py-2 rounded-lg text-zinc-300">Export CSV</button>
                     <button onclick="purgeLocalCache()" class="bg-red-950/20 border border-red-900/30 text-[10px] font-bold font-mono py-2 rounded-lg text-red-400">Wipe UI</button>
                 </div>
@@ -249,11 +241,8 @@
         let supabase = null;
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            document.getElementById('sync-indicator').innerText = "☁️ CLOUD SYNC ACTIVE";
-            document.getElementById('sync-indicator').className = "bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/20 px-2 py-0.5 rounded";
         } catch (e) {
-            document.getElementById('sync-indicator').innerText = "⚠️ SYSTEM LOCAL RUNTIME";
-            document.getElementById('sync-indicator').className = "bg-red-500/10 text-red-400 text-[10px] font-mono border border-red-500/20 px-2 py-0.5 rounded";
+            console.error("Initialization error:", e);
         }
 
         let liveFirState = Array(18).fill(false);
@@ -376,7 +365,7 @@
                     score: parseInt(document.getElementById(`grid-score-${i}`).value) || 4,
                     putts: parseInt(document.getElementById(`grid-putts-${i}`).value) || 2,
                     fir: liveFirState[i-1],
-                    gir: liveGirState[i-1]
+                    grid: liveGirState[i-1]
                 });
             }
 
@@ -456,7 +445,7 @@
         function renderHistoryList() {
             const container = document.getElementById('history-rounds-container');
             if(cachedRoundsInMemory.length === 0) {
-                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No score records found.</p>`;
+                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No records found.</p>`;
                 return;
             }
 
@@ -535,7 +524,7 @@
                     count++;
                 }
                 localStorage.setItem('golf_history_backup', JSON.stringify(cachedRoundsInMemory));
-                alert(`Successfully processed and synced ${count} Garmin entries!`);
+                alert(`Successfully processed ${count} Garmin entries!`);
                 compileCoreDashboardKPIs();
             };
             reader.readAsText(file);
@@ -561,7 +550,7 @@
 
             trendChartInstance = new Chart(document.getElementById('scoreTrendChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: labels, datasets: [{ label: '18-Hole Aggregate Score', data: metrics, borderColor: '#10b981', tension: 0.1, fill: false }] },
+                data: { labels: labels, datasets: [{ label: 'Aggregate Score', data: metrics, borderColor: '#10b981', tension: 0.1, fill: false }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
@@ -588,11 +577,11 @@
         function downloadBackupCSV() {
             let csv = "data:text/csv;charset=utf-8,Date,Course,Hole,Par,Score,Putts\n";
             cachedRoundsInMemory.forEach(r => r.holes.forEach(h => csv += `"${r.date}","${r.course}",${h.hole},${h.par},${h.score},${h.putts}\n`));
-            const a = document.createElement('a'); a.setAttribute('href', encodeURI(csv)); a.setAttribute('download', 'golf_backup.csv');
+            const a = document.createElement('a'); a.setAttribute('href', encodeURI(csv)); a.setAttribute('download', 'data_backup.csv');
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        function purgeLocalCache() { if(confirm("Clear client UI cache state?")) { localStorage.clear(); location.reload(); } }
+        function purgeLocalCache() { if(confirm("Clear local cache state?")) { localStorage.clear(); location.reload(); } }
 
         // Boot-Up Handshake Initialization
         fetchSystemHistoryRecords();
