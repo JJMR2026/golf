@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Golf Analytics App</title>
+    <!-- Tailwind CSS for modern premium dashboard design -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js for smooth performance trends -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #F8FAFC; color: #212529; font-family: 'Segoe UI', system-ui, sans-serif; }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-md mx-auto bg-slate-50">
+
+    <!-- APP HEADER -->
+    <header class="bg-[#212529] text-white p-4 rounded-xl shadow-md mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-lg font-bold tracking-wide">GOLF ANALYTICS</h1>
+            <p class="text-xs text-slate-400">Premium Performance Tracking</p>
+        </div>
+        <span class="bg-[#A3E635] text-black text-xs font-bold px-2 py-1 rounded">2026 ACTIVE</span>
+    </header>
+
+    <!-- AUTOMATED COURSE FETCH BLOCK -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
+        <h2 class="text-sm font-bold text-slate-700 mb-3">⚡ Quick Course Fetch</h2>
+        <div class="flex gap-2">
+            <input id="course-search-input" type="text" placeholder="Search course (e.g., Pebble)" class="flex-1 bg-slate-100 text-sm p-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#212529]">
+            <button onclick="fetchCourseDetails()" class="bg-[#212529] text-white text-xs font-bold px-4 py-2.5 rounded-lg active:scale-95 transition-transform">Fetch</button>
+        </div>
+        <p id="api-status" class="text-xs text-slate-400 mt-2">Powered by OpenGolfAPI. No manual typing required.</p>
+    </section>
+
+    <!-- MOBILE NEW ROUND SCORECARD -->
+    <section id="scorecard-section" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-base font-bold" id="current-course-display">Live Round Entry</h2>
+            <span id="hole-counter" class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">Hole 1 of 18</span>
+        </div>
+
+        <!-- Single Hole Focus Mode for Mobile Screens -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 text-center mb-4">
+            <div id="hole-num-display" class="text-4xl font-extrabold text-slate-800 mb-1">Hole 1</div>
+            <div id="hole-par-display" class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Par 4 Reference</div>
+            
+            <div class="flex justify-center items-center gap-6 mb-4">
+                <button onclick="adjustScore(-1)" class="w-12 h-12 bg-white rounded-full border border-slate-200 shadow-sm text-xl font-bold active:bg-slate-100">-</button>
+                <div id="live-score" class="text-5xl font-black w-16">4</div>
+                <button onclick="adjustScore(1)" class="w-12 h-12 bg-[#212529] text-white rounded-full shadow-md text-xl font-bold active:scale-95">+</button>
+            </div>
+            <p class="text-xs text-slate-500">Tap to toggle total strokes taken</p>
+        </div>
+
+        <!-- STATS SUB-TOGGLES -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
+                <span class="block text-xs font-semibold text-slate-500 mb-1">Putts Taken</span>
+                <input id="live-putts" type="number" value="2" class="w-full text-center font-bold bg-white border border-slate-200 rounded p-1">
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
+                <span class="block text-xs font-semibold text-slate-500 mb-1">Fairway (FIR)</span>
+                <select id="live-fir" class="w-full text-xs text-center bg-white border border-slate-200 rounded p-1">
+                    <option value="Hit">Hit</option>
+                    <option value="Miss Left">Miss Left</option>
+                    <option value="Miss Right">Miss Right</option>
+                    <option value="N/A">N/A (Par 3)</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="nextHole()" id="next-btn" class="w-full bg-[#A3E635] text-black font-bold text-sm py-3 rounded-xl shadow-sm active:scale-[0.99]">Next Hole ➔</button>
+    </section>
+
+    <!-- REAL-TIME ANALYTICS DASHBOARD CARD -->
+    <main class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+        <h2 class="text-base font-bold mb-4">📈 Dynamic Dashboard KPIs</h2>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="border border-slate-100 p-3 rounded-lg bg-slate-50/50">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rounds Played</span>
+                <div id="kpi-rounds" class="text-xl font-bold text-slate-800">0</div>
+            </div>
+            <div class="border border-slate-100 p-3 rounded-lg bg-slate-50/50">
+                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Avg Score</span>
+                <div id="kpi-avg" class="text-xl font-bold text-slate-800">--</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- CORE INTERACTIVE ENGINE SCRIPT -->
+    <script>
+        let currentHole = 1;
+        let activeRoundData = [];
+        let fetchedPars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; // default fallbacks
+
+        async function fetchCourseDetails() {
+            const query = document.getElementById('course-search-input').value;
+            const statusText = document.getElementById('api-status');
+            if(!query) return;
+
+            statusText.innerText = "🔍 Connecting to database server...";
+            try {
+                // Call the open API engine query pipeline
+                const res = await fetch(`https://open-golf-api.onrender.com/v1/courses/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                if(data && data.courses && data.courses.length > 0) {
+                    const course = data.courses[0];
+                    document.getElementById('current-course-display').innerText = course.name;
+                    statusText.innerText = `✅ Successfully fetched layout for ${course.name}!`;
+                    // If pars exist in API metadata payload, map them here dynamically
+                    if(course.pars) fetchedPars = course.pars;
+                    resetRound();
+                } else {
+                    statusText.innerText = "❌ Course not found. Using default par profile.";
+                }
+            } catch(e) {
+                statusText.innerText = "⚠️ Network offline. Using fallback defaults.";
+            }
+        }
+
+        function adjustScore(amount) {
+            let scoreEl = document.getElementById('live-score');
+            let current = parseInt(scoreEl.innerText);
+            if(current + amount > 0) scoreEl.innerText = current + amount;
+        }
+
+        function resetRound() {
+            currentHole = 1;
+            activeRoundData = [];
+            updateHoleUI();
+        }
+
+        function updateHoleUI() {
+            document.getElementById('hole-counter').innerText = `Hole ${currentHole} of 18`;
+            document.getElementById('hole-num-display').innerText = `Hole ${currentHole}`;
+            document.getElementById('hole-par-display').innerText = `Par ${fetchedPars[currentHole - 1] || 4} Reference`;
+            document.getElementById('live-score').innerText = fetchedPars[currentHole - 1] || 4;
+            document.getElementById('live-putts').value = 2;
+        }
+
+        function nextHole() {
+            // Save local entry node state variables
+            activeRoundData.push({
+                hole: currentHole,
+                par: fetchedPars[currentHole - 1] || 4,
+                score: parseInt(document.getElementById('live-score').innerText),
+                putts: parseInt(document.getElementById('live-putts').value),
+                fir: document.getElementById('live-fir').value
+            });
+
+            if(currentHole < 18) {
+                currentHole++;
+                updateHoleUI();
+                if(currentHole === 18) {
+                    document.getElementById('next-btn').innerText = "🏁 Complete & Save Round";
+                    document.getElementById('next-btn').className = "w-full bg-emerald-500 text-white font-bold text-sm py-3 rounded-xl shadow-sm active:scale-95";
+                }
+            } else {
+                saveRoundToDatabase();
+            }
+        }
+
+        function saveRoundToDatabase() {
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            history.push({
+                date: new Date().toLocaleDateString(),
+                course: document.getElementById('current-course-display').innerText,
+                holes: activeRoundData
+            });
+            localStorage.setItem('golf_history', JSON.stringify(history));
+            alert("Round successfully logged to phone database application memory!");
+            resetRound();
+            calculateKPIs();
+        }
+
+        function calculateKPIs() {
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            if(history.length === 0) return;
+            document.getElementById('kpi-rounds').innerText = history.length;
+            
+            let totalScore = 0;
+            history.forEach(r => {
+                let rSum = r.holes.reduce((sum, h) => sum + h.score, 0);
+                totalScore += rSum;
+            });
+            document.getElementById('kpi-avg').innerText = (totalScore / history.length).toFixed(1);
+        }
+
+        // Initialize state indicators
+        updateHoleUI();
+        calculateKPIs();
+    </script>
+</body>
+</html>
