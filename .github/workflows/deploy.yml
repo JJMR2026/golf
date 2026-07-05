@@ -9,7 +9,6 @@ permissions:
   pages: write
   id-token: write
 
-# This ensures only one deployment can run at a time
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -27,7 +26,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          name: github-pages-site # Explicitly naming this prevents conflict
           path: '.'
 
       - name: Deploy
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-site # Ensure we deploy that specific artifact
