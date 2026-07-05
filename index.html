@@ -1,656 +1,825 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Golf Analytics App</title>
+    <title>Pro Golf Analytics & Scorecard</title>
+    <!-- Tailwind CSS for Styling -->
+<script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Client-Side Visualization without Server Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="p-3 bg-black text-zinc-100 font-sans antialiased min-h-screen">
+<body class="p-4 max-w-md mx-auto bg-black text-slate-100 font-sans antialiased">
 
-    <!-- THE DYNAMIC EXPANDABLE WORKSPACE CANVAS FRAME -->
-    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
+    <header class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg mb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-xs font-black tracking-widest text-emerald-400">GOLF ANALYTICS V2</h1>
+            <p class="text-[10px] text-zinc-500 uppercase">AMOLED Optimized Engine</p>
+        </div>
+        <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/30 px-2 py-0.5 rounded">SECURE LOCAL NODE</span>
+    </header>
+
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                📝 Post-Round Paper Scorecard Entry
+            </h2>
+            <button onclick="toggleBatchView()" id="batch-toggle-btn" class="text-[10px] uppercase font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700">Expand</button>
+        </div>
+        <p class="text-[10px] text-zinc-400 mb-3">Finished a round with a paper card? Type your total matrix scores below to batch upload instantly.</p>
         
-        <!-- MAIN TRACKING CONSOLE BLOCK (EXPANDS WIDESCREEN ON DESKTOP INTERFACES) -->
-        <div class="lg:col-span-3 space-y-4">
-            
-            <nav class="grid grid-cols-3 gap-1 bg-zinc-900/60 p-1 border border-zinc-800/80 rounded-xl">
-                <button onclick="switchTab('new-round')" id="tab-new-round" class="text-xs font-bold py-2 rounded-lg bg-emerald-500 text-black transition-all">New Scorecard</button>
-                <button onclick="switchTab('history')" id="tab-history" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">Past History</button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">Data Charts</button>
-            </nav>
+        <div id="batch-entry-form" class="hidden border-t border-zinc-800 pt-3">
+            <div class="mb-3">
+                <label class="block text-[9px] uppercase font-bold text-zinc-500 mb-1">Course Name</label>
+                <input id="batch-course-name" type="text" placeholder="e.g. Pebble Beach GL" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+<body class="p-3 max-w-md mx-auto bg-black text-zinc-100 font-sans antialiased min-h-screen flex flex-col justify-between">
 
-            <!-- ================= TAB 1: NEW ROUND PANEL ENGINE ================= -->
-            <div id="view-new-round" class="tab-view block space-y-4">
-                
-                <!-- AUTO-FETCH ENGINE (WITH CUSTOM INTERACTIVE WORKAROUND BUILDER) -->
-                <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
-                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">🔍 Search & Fetch Course Mapping</h2>
-                    <div class="flex gap-2">
-                        <input id="course-search-input" type="text" placeholder="e.g. Pebble Beach, Augusta, Cypress Point..." class="flex-1 bg-black text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500 font-mono">
-                        <button onclick="executeCourseEngineQuery()" class="bg-emerald-500 text-black text-xs font-black px-4 py-2 rounded-lg active:scale-95 transition-transform">Fetch Data</button>
+    <div>
+        <!-- TOP APP BAR HERO HEADER -->
+        <header class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg mb-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xs font-black tracking-widest text-emerald-400">GOLF CADDIE PRO</h1>
+                <p class="text-[10px] text-zinc-500 uppercase font-mono">Offline-First Scorecard Engine</p>
+</div>
+            <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/20 px-2 py-0.5 rounded">V2.0 LOCAL</span>
+        </header>
+
+        <!-- NAVIGATION TABS SWITCH PANEL -->
+        <nav class="grid grid-cols-3 gap-1 bg-zinc-900/60 p-1 border border-zinc-800/80 rounded-xl mb-4">
+            <button onclick="switchTab('new-round')" id="tab-new-round" class="text-xs font-bold py-2 rounded-lg bg-emerald-500 text-black transition-all">New Round</button>
+            <button onclick="switchTab('history')" id="tab-history" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">History</button>
+            <button onclick="switchTab('analytics')" id="tab-analytics" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">Analytics</button>
+        </nav>
+
+        <!-- ================= TAB 1: NEW ROUND VIEW ================= -->
+        <div id="view-new-round" class="tab-view block space-y-4">
+            <!-- COURSE FETCH & LOADER BLOCK -->
+            <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">🔍 Select or Fetch Golf Course</h2>
+                <div class="flex gap-2">
+                    <input id="course-search-input" type="text" placeholder="e.g. Pebble Beach, Augusta, Custom..." class="flex-1 bg-black text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    <button onclick="fetchCourseDetails()" class="bg-emerald-500 text-black text-xs font-black px-4 py-2 rounded-lg active:scale-95 transition-transform">Fetch</button>
+                </div>
+                <p id="api-status" class="text-[10px] font-mono text-zinc-500 mt-2">Enter any course name. Matches pull par layouts instantly.</p>
+            </section>
+
+            <!-- LIVE SCORECARD GRID CANVAS -->
+            <section class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 id="current-course-display" class="text-xs font-black uppercase tracking-wider text-emerald-400">STANDARD 18 LAYOUT</h2>
+                    <span class="text-[9px] font-mono text-zinc-400 bg-black px-2 py-0.5 rounded border border-zinc-800">18 HOLES MATCHPLAY</span>
+                </div>
+
+                <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-black">
+                    <table class="w-full min-w-[800px] text-center border-collapse text-xs font-mono">
+                        <thead>
+                            <tr class="bg-zinc-900/80 text-zinc-400 border-b border-zinc-800 text-[10px]">
+                                <th class="p-2 text-left sticky left-0 bg-zinc-900 z-10 font-bold border-r border-zinc-800 w-16">HOLE</th>
+                                <script>for(let i=1; i<=18; i++) document.write(`<th class="p-1 min-w-[38px] border-r border-zinc-800/40">${i}</th>`);</script>
+                                <th class="p-2 font-bold bg-zinc-900">TOT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- PAR DATA VALUE MAPPING -->
+                            <tr class="border-b border-zinc-900 text-zinc-500 bg-zinc-950/30">
+                                <td class="p-2 text-left font-bold sticky left-0 bg-zinc-950 text-[10px] border-r border-zinc-800">PAR</td>
+                                <script>for(let i=1; i<=18; i++) document.write(`<td id="grid-par-${i}" class="p-1 font-bold border-r border-zinc-800/30">4</td>`);</script>
+                                <td id="grid-par-total" class="p-2 font-bold bg-zinc-950 text-zinc-400">72</td>
+                            </tr>
+                            <!-- LIVE ACTIVE SCORE ROW -->
+                            <tr class="border-b border-zinc-800 text-white">
+                                <td class="p-2 text-left font-bold sticky left-0 bg-zinc-900 text-zinc-300 text-[10px] border-r border-zinc-800">SCORE</td>
+                                <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-score-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center font-black rounded text-white border border-zinc-700 focus:border-emerald-500 focus:outline-none"></td>`);</script>
+                                <td id="grid-score-total" class="p-2 font-black bg-zinc-950 text-emerald-400 text-sm">72</td>
+                            </tr>
+                            <!-- PUTTS TRACKER INPUT ROW -->
+                            <tr class="border-b border-zinc-900 text-zinc-400">
+                                <td class="p-2 text-left font-bold sticky left-0 bg-zinc-950 text-[10px] border-r border-zinc-800 text-zinc-500">PUTTS</td>
+                                <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-putts-${i}" type="number" value="2" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center rounded text-zinc-400 border border-zinc-800 focus:border-emerald-500 focus:outline-none"></td>`);</script>
+                                <td id="grid-putts-total" class="p-2 font-bold bg-zinc-950 text-zinc-400">36</td>
+                            </tr>
+                            <!-- FAIRWAY IN REGULATION (FIR) TOGGLE FIELD -->
+                            <tr class="border-b border-zinc-900 text-zinc-400 text-[10px]">
+                                <td class="p-2 text-left font-bold sticky left-0 bg-zinc-900 text-[9px] border-r border-zinc-800 text-zinc-500">FIR</td>
+                                <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-fir-${i}" onclick="toggleStat('fir', ${i})" class="w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
+                                <td id="grid-fir-total" class="p-1 text-[10px] font-bold bg-zinc-950 text-zinc-400">0%</td>
+                            </tr>
+                            <!-- GREEN IN REGULATION (GIR) TOGGLE FIELD -->
+                            <tr class="text-zinc-400 text-[10px]">
+                                <td class="p-2 text-left font-bold sticky left-0 bg-zinc-950 text-[9px] border-r border-zinc-800 text-zinc-500">GIR</td>
+                                <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-gir-${i}" onclick="toggleStat('gir', ${i})" class="w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
+                                <td id="grid-gir-total" class="p-1 text-[10px] font-bold bg-zinc-950 text-zinc-400">0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3 bg-black/40 border border-zinc-800 rounded-lg p-2 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase">Avg Drive Distance:</span>
+                        <input id="round-drive-dist" type="number" value="250" class="w-16 bg-zinc-900 border border-zinc-700 rounded p-1 text-center font-mono text-xs text-white">
+                        <span class="text-[10px] text-zinc-500 font-mono">yds</span>
                     </div>
-                    <p id="api-status-log" class="text-[10px] font-mono text-zinc-500 mt-2">Fuzzy matching active. Custom entries launch editable configurations below.</p>
-                </section>
+                </div>
 
-                <!-- SCORECARD INTERACTIVE GRID GENERATOR CANVAS -->
-                <section class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl shadow-md">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 id="current-course-display" class="text-xs font-black uppercase tracking-wider text-emerald-400">STANDARD 18 TRACK LAYOUT</h2>
-                        <span class="text-[9px] font-mono text-zinc-400 bg-black px-2 py-0.5 rounded border border-zinc-800">SCROLL RESPONSIVE MATRIX</span>
-                    </div>
-
-                    <!-- TWO-TIER BLOCK ROW FORM FOR SPLIT FRONT 9 & BACK 9 CARD MAPPINGS -->
-                    <div class="space-y-4">
-                        <!-- FRONT 9 MATRIX -->
-                        <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-black">
-                            <table class="w-full text-center border-collapse text-xs font-mono min-w-[400px]">
-                                <thead>
-                                    <tr class="bg-zinc-900/80 text-zinc-400 border-b border-zinc-800 text-[10px]">
-                                        <th class="p-2 text-left bg-zinc-900 font-bold border-r border-zinc-800 w-14">FRONT</th>
-                                        <script>for(let i=1; i<=9; i++) document.write(`<th class="p-1 border-r border-zinc-800/40">${i}</th>`);</script>
-                                        <th class="p-2 font-bold bg-zinc-900 w-12">OUT</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b border-zinc-900 text-zinc-500 bg-zinc-950/30">
-                                        <td class="p-2 text-left font-bold bg-zinc-950 border-r border-zinc-800">PAR</td>
-                                        <script>for(let i=1; i<=9; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-par-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-6 bg-transparent text-center font-bold text-zinc-500 border border-transparent focus:border-zinc-700 focus:bg-zinc-900 rounded"></td>`);</script>
-                                        <td id="total-out-par" class="p-1 font-bold text-zinc-500">36</td>
-                                    </tr>
-                                    <tr class="border-b border-zinc-800 text-white">
-                                        <td class="p-2 text-left font-bold bg-zinc-900 border-r border-zinc-800 text-zinc-300">SCORE</td>
-                                        <script>for(let i=1; i<=9; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-score-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center font-black rounded text-white border border-zinc-700 focus:border-emerald-500 focus:outline-none"></td>`);</script>
-                                        <td id="total-out-score" class="p-1 font-black text-emerald-400">36</td>
-                                    </tr>
-                                    <tr class="border-b border-zinc-900 text-zinc-400">
-                                        <td class="p-2 text-left font-bold bg-zinc-950 border-r border-zinc-800 text-zinc-500">PUTTS</td>
-                                        <script>for(let i=1; i<=9; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-putts-${i}" type="number" value="2" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center rounded border border-zinc-800 focus:border-emerald-500 focus:outline-none"></td>`);</script>
-                                        <td id="total-out-putts" class="p-1 text-zinc-400">18</td>
-                                    </tr>
-                                    <tr class="border-b border-zinc-900 text-[9px]">
-                                        <td class="p-1 text-left font-bold bg-zinc-900 border-r border-zinc-800 text-zinc-500">FIR</td>
-                                        <script>for(let i=1; i<=9; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-fir-${i}" onclick="toggleStat('fir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
-                                        <td>-</td>
-                                    </tr>
-                                    <tr class="text-[9px]">
-                                        <td class="p-1 text-left font-bold bg-zinc-950 border-r border-zinc-800 text-zinc-500">GIR</td>
-                                        <script>for(let i=1; i<=9; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-gir-${i}" onclick="toggleStat('gir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
-                                        <td>-</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- BACK 9 MATRIX -->
-                        <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-black">
-                            <table class="w-full text-center border-collapse text-xs font-mono min-w-[400px]">
-                                <thead>
-                                    <tr class="bg-zinc-900/80 text-zinc-400 border-b border-zinc-800 text-[10px]">
-                                        <th class="p-2 text-left bg-zinc-900 font-bold border-r border-zinc-800 w-14">BACK</th>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<th class="p-1 border-r border-zinc-800/40">${i}</th>`);</script>
-                                        <th class="p-2 font-bold bg-zinc-900 w-12">IN</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b border-zinc-900 text-zinc-500 bg-zinc-950/30">
-                                        <td class="p-2 text-left font-bold bg-zinc-950 border-r border-zinc-800">PAR</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-par-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-6 bg-transparent text-center font-bold text-zinc-500 border border-transparent focus:border-zinc-700 focus:bg-zinc-900 rounded"></td>`);</script>
-                                        <td id="total-in-par" class="p-1 font-bold text-zinc-500">36</td>
-                                    </tr>
-                                    <tr class="border-b border-zinc-800 text-white">
-                                        <td class="p-2 text-left font-bold bg-zinc-900 border-r border-zinc-800 text-zinc-300">SCORE</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-score-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center font-black rounded text-white border border-zinc-700 focus:border-emerald-500 focus:outline-none"></td>`);</script>
-                                        <td id="total-in-score" class="p-1 font-black text-emerald-400">36</td>
-                                    </tr>
-                                    <tr class="border-b border-zinc-400">
-                                        <td class="p-2 text-left font-bold bg-zinc-950 border-r border-zinc-800 text-zinc-500">PUTTS</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-putts-${i}" type="number" value="2" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center rounded border border-zinc-800 focus:border-emerald-500 focus:outline-none"></td>`);</script>
-                                        <td id="total-in-putts" class="p-1 text-zinc-400">18</td>
-                                    </tr>
-                                    <tr class="border-b border-zinc-900 text-[9px]">
-                                        <td class="p-1 text-left font-bold bg-zinc-900 border-r border-zinc-800 text-zinc-500">FIR</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/40"><button id="grid-fir-${i}" onclick="toggleStat('fir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
-                                        <td>-</td>
-                                    </tr>
-                                    <tr class="text-[9px]">
-                                        <td class="p-1 text-left font-bold bg-zinc-950 border-r border-zinc-800 text-zinc-500">GIR</td>
-                                        <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/40"><button id="grid-gir-${i}" onclick="toggleStat('gir', ${i})" class="w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
-                                        <td>-</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- MASTER TOTALS METRIC QUICKBAR ROW -->
-                    <div class="mt-4 grid grid-cols-3 gap-2 bg-black/40 border border-zinc-800 rounded-xl p-3 text-center text-xs font-mono">
-                        <div><span class="text-zinc-500 text-[9px] block uppercase">TOT PAR</span><span id="grid-par-total" class="text-zinc-300 font-bold text-sm">72</span></div>
-                        <div><span class="text-zinc-500 text-[9px] block uppercase">TOT SCORE</span><span id="grid-score-total" class="text-emerald-400 font-black text-sm">72</span></div>
-                        <div><span class="text-zinc-500 text-[9px] block uppercase">TOT PUTTS</span><span id="grid-putts-total" class="text-blue-400 font-bold text-sm">36</span></div>
-                    </div>
-
-                    <button onclick="commitCardToCloudDatabase()" class="w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl tracking-widest uppercase mt-4 active:scale-95 shadow-md">Complete & Sync Scorecard ➔</button>
-                </section>
-            </div>
-
-            <!-- ================= TAB 2: HISTORICAL ARCHIVE VIEW ================= -->
-            <div id="view-history" class="tab-view hidden space-y-4">
-                <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
-                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📁 Synchronized History Archive</h2>
-                    <div id="history-rounds-container" class="space-y-2"></div>
-                </section>
-
-                <section id="history-card-inspector" class="bg-zinc-900 border border-emerald-500/20 p-4 rounded-xl shadow-md hidden">
-                    <div class="flex justify-between items-center mb-3">
-                        <div>
-                            <h3 id="inspect-course-title" class="text-xs font-black text-emerald-400 uppercase">COURSE DETAILS INSPECTOR</h3>
-                            <p id="inspect-date-title" class="text-[9px] text-zinc-500 font-mono">01/01/2026</p>
-                        </div>
-                        <button onclick="document.getElementById('history-card-inspector').classList.add('hidden')" class="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded hover:bg-zinc-700 font-mono">Close</button>
-                    </div>
-                    <div id="inspector-table-wrapper" class="space-y-4"></div>
-                </section>
-            </div>
-
-            <!-- ================= TAB 3: VISUAL CHART VISUALIZATION INTERFACE ================= -->
-            <div id="view-analytics" class="tab-view hidden space-y-4">
-                <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md space-y-6">
-                    <div>
-                        <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📈 18-Hole Scoring Aggregation Trend</h3>
-                        <div class="bg-black p-3 rounded-xl border border-zinc-800 h-56">
-                            <canvas id="scoreTrendChart"></canvas>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📊 Scoring Delta Class Distribution</h3>
-                        <div class="bg-black p-3 rounded-xl border border-zinc-800 h-56">
-                            <canvas id="scoreDistributionChart"></canvas>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
+                <button onclick="submitGridRound()" class="w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl tracking-widest uppercase mt-4 active:scale-95 shadow-md">Complete & Log Scorecard ➔</button>
+            </section>
         </div>
 
-        <!-- SIDEBAR STATIC PERFORMANCE CALCULATOR MONITOR -->
-        <div class="space-y-4">
+            <div class="overflow-x-auto mb-4 border border-zinc-800 rounded-lg bg-black">
+                <table class="w-full min-w-[600px] text-center border-collapse text-xs font-mono">
+                    <thead>
+                        <tr class="bg-zinc-900 text-zinc-500 border-b border-zinc-800 text-[10px]">
+                            <th class="p-2 text-left text-zinc-400 font-sans font-bold">HOLE</th>
+                            <script>
+                                for(let i=1; i<=18; i++) document.write(`<th class="p-1">${i}</th>`);
+                            </script>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-900">
+                            <td class="p-2 text-left font-sans font-bold text-zinc-400 text-[10px]">SCORE</td>
+                            <script>
+                                for(let i=1; i<=18; i++) document.write(`<td class="p-1"><input id="b-score-${i}" type="number" value="4" class="w-7 h-7 bg-zinc-900 border border-zinc-700 rounded text-center text-white font-bold focus:border-emerald-500"></td>`);
+                            </script>
+                        </tr>
+                        <tr>
+                            <td class="p-2 text-left font-sans font-bold text-zinc-400 text-[10px]">PUTTS</td>
+                            <script>
+                                for(let i=1; i<=18; i++) document.write(`<td class="p-1"><input id="b-putts-${i}" type="number" value="2" class="w-7 h-7 bg-zinc-900 border border-zinc-800 rounded text-center text-zinc-400 focus:border-emerald-500"></td>`);
+                            </script>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        <!-- ================= TAB 2: HISTORICAL ARCHIVE VIEW ================= -->
+        <div id="view-history" class="tab-view hidden space-y-4">
             <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-3">📊 Global Metrics Tracker</h2>
-                
-                <div class="grid grid-cols-2 gap-2 mb-3 font-mono">
-                    <div class="bg-black p-3 rounded-lg border border-zinc-800 text-center">
-                        <span class="text-[8px] uppercase tracking-wider text-zinc-500 block">Total Rounds</span>
-                        <div id="kpi-rounds" class="text-xl font-black text-zinc-100">0</div>
-                    </div>
-                    <div class="bg-black p-3 rounded-lg border border-zinc-800 text-center">
-                        <span class="text-[8px] uppercase tracking-wider text-zinc-500 block">Scoring Avg</span>
-                        <div id="kpi-avg" class="text-xl font-black text-emerald-400">--</div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-4 gap-1 border-t border-zinc-800 pt-3 text-center font-mono">
-                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/40">
-                        <span class="text-[7px] text-zinc-500 block">EAGLE</span><span id="stat-eagles" class="text-xs font-bold text-yellow-400">0</span>
-                    </div>
-                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/40">
-                        <span class="text-[7px] text-zinc-500 block">BIRDIE</span><span id="stat-birdies" class="text-xs font-bold text-emerald-400">0</span>
-                    </div>
-                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/40">
-                        <span class="text-[7px] text-zinc-500 block">PAR</span><span id="stat-pars" class="text-xs font-bold text-zinc-300">0</span>
-                    </div>
-                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/40">
-                        <span class="text-[7px] text-zinc-500 block">BOGEY</span><span id="stat-bogeys" class="text-xs font-bold text-red-400">0</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-1.5 mt-3 text-center text-[11px] border-t border-zinc-800 pt-3 font-mono">
-                    <div><span class="text-[8px] text-zinc-500 block">PUTTS/HOLE</span><span id="stat-putts" class="text-zinc-200 font-bold">0.00</span></div>
-                    <div><span class="text-[8px] text-zinc-500 block">FIR %</span><span id="stat-fir-pct" class="text-zinc-200 font-bold">0%</span></div>
-                    <div><span class="text-[8px] text-zinc-500 block">GIR %</span><span id="stat-gir-pct" class="text-zinc-200 font-bold">0%</span></div>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📁 Past Logged Scorecards</h2>
+                <div id="history-rounds-container" class="space-y-2">
+                    <!-- Loaded dynamically via runtime Javascript array cycles -->
+                    <p class="text-xs text-zinc-500 text-center py-4 font-mono">No historical cards submitted on this terminal environment yet.</p>
                 </div>
             </section>
 
-            <!-- EXTERNAL UTILITY CONTROLLER NODES -->
-            <footer class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md space-y-3">
-                <div>
-                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">⌚ Garmin Approach S10 Parser</h2>
-                    <label class="block text-center text-[11px] font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-2 rounded-lg cursor-pointer border border-zinc-700 font-mono">
-                        📥 Load Garmin CSV History
-                        <input type="file" id="garmin-uploader" accept=".csv" class="hidden" onchange="importGarminCSV(event)">
-                    </label>
+            <!-- ARCHIVE INSPECTOR FULL SCORECARD CONTAINER MODAL OVERLAY -->
+            <section id="history-card-inspector" class="bg-zinc-900 border border-emerald-500/20 p-4 rounded-xl shadow-md hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h3 id="inspect-course-title" class="text-xs font-black text-emerald-400 uppercase">COURSE INSPECTOR</h3>
+                        <p id="inspect-date-title" class="text-[9px] text-zinc-500 font-mono">01/01/2026</p>
+                    </div>
+                    <button onclick="document.getElementById('history-card-inspector').classList.add('hidden')" class="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded hover:bg-zinc-700 font-mono">Close</button>
                 </div>
-                <div class="border-t border-zinc-800 pt-2 grid grid-cols-2 gap-2">
-                    <button onclick="downloadBackupCSV()" class="bg-zinc-800 border border-zinc-700 text-[10px] font-bold font-mono py-2 rounded-lg text-zinc-300">Export CSV</button>
-                    <button onclick="purgeLocalCache()" class="bg-red-950/20 border border-red-900/30 text-[10px] font-bold font-mono py-2 rounded-lg text-red-400">Wipe UI</button>
+                <div id="inspector-table-wrapper" class="overflow-x-auto border border-zinc-800 rounded-lg bg-black text-xs font-mono">
+                    <!-- Table injects programmatically during individual click selection -->
                 </div>
-            </footer>
+            </section>
         </div>
 
+            <button onclick="submitBatchRound()" class="w-full bg-emerald-500 text-black font-black text-xs py-2.5 rounded-lg tracking-widest uppercase active:scale-95">Save Entire Card ➔</button>
+        <!-- ================= TAB 3: ANALYTICS CORE DASHBOARD ================= -->
+        <div id="view-analytics" class="tab-view hidden space-y-4">
+            <!-- KPIS SUMMARY ROW PANEL -->
+            <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📊 Advanced Performance KPI Metrics</h2>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="border border-zinc-800 p-3 rounded-lg bg-black text-center">
+                        <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Rounds Tracked</span>
+                        <div id="kpi-rounds" class="text-xl font-black font-mono text-zinc-100">0</div>
+                    </div>
+                    <div class="border border-zinc-800 p-3 rounded-lg bg-black text-center">
+                        <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Avg Score / Round</span>
+                        <div id="kpi-avg" class="text-xl font-black font-mono text-emerald-400">--</div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-1.5 border-t border-zinc-800 pt-3 text-center">
+                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/60">
+                        <span class="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold block">Eagles</span>
+                        <span id="stat-eagles" class="text-xs font-bold font-mono text-yellow-400">0</span>
+                    </div>
+                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/60">
+                        <span class="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold block">Birdies</span>
+                        <span id="stat-birdies" class="text-xs font-bold font-mono text-emerald-400">0</span>
+                    </div>
+                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/60">
+                        <span class="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold block">Pars</span>
+                        <span id="stat-pars" class="text-xs font-bold font-mono text-zinc-300">0</span>
+                    </div>
+                    <div class="bg-black/40 p-1.5 rounded border border-zinc-800/60">
+                        <span class="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold block">Bogeys</span>
+                        <span id="stat-bogeys" class="text-xs font-bold font-mono text-red-400">0</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mt-2 text-center text-xs border-t border-zinc-800/40 pt-2 font-mono">
+                    <div><span class="text-[8px] text-zinc-500 block">AVG PUTTS</span><span id="stat-putts" class="text-zinc-300 font-bold">0.0</span></div>
+                    <div><span class="text-[8px] text-zinc-500 block">FIR ACCURACY</span><span id="stat-fir-pct" class="text-zinc-300 font-bold">0%</span></div>
+                    <div><span class="text-[8px] text-zinc-500 block">GIR ACCURACY</span><span id="stat-gir-pct" class="text-zinc-300 font-bold">0%</span></div>
+                </div>
+                <div class="text-center text-xs mt-2 font-mono border-t border-zinc-800/40 pt-2">
+                    <span class="text-[8px] text-zinc-500 block">AVG DRIVING DISTANCE</span>
+                    <span id="stat-avg-drive" class="text-emerald-400 font-bold text-sm">-- yds</span>
+                </div>
+            </section>
+
+            <!-- GRAPHING ENGINE CANVAS WRAPPERS -->
+            <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md space-y-4">
+                <div>
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📈 Scoring Trend Line</h3>
+                    <div class="bg-black p-2 rounded-lg border border-zinc-800 max-h-[220px]">
+                        <canvas id="scoreTrendChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📊 Scoring Distribution</h3>
+                    <div class="bg-black p-2 rounded-lg border border-zinc-800 max-h-[220px]">
+                        <canvas id="scoreDistributionChart"></canvas>
+                    </div>
+                </div>
+            </section>
+</div>
+    </section>
     </div>
 
-    <!-- ================= RUNTIME CORE SCRIPT LOGIC ENGINE ================= -->
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">⛳ Instant Favorite Templates</h2>
+    <!-- BACKUP NODE MANAGER AND STORAGE ACTIONS FOOTER -->
+    <footer class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mt-6">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">⚙️ Local Data Management</h2>
+<div class="grid grid-cols-2 gap-2">
+            <button onclick="loadPreseedCourse('Pebble Beach')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">Pebble Beach GL</button>
+            <button onclick="loadPreseedCourse('Augusta National')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">Augusta National</button>
+            <button onclick="loadPreseedCourse('St Andrews Links')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">St Andrews Old</button>
+            <button onclick="loadPreseedCourse('TPC Sawgrass')" class="bg-zinc-800 hover:bg-zinc-700 text-left p-2 rounded-lg border border-zinc-700 text-xs font-semibold text-zinc-300">TPC Sawgrass</button>
+            <button onclick="exportHistoryToCSV()" class="bg-zinc-800 border border-zinc-700 text-[11px] font-bold py-2 rounded-lg text-zinc-200 active:bg-zinc-700 transition-colors">📥 Export Data (CSV)</button>
+            <button onclick="wipeLocalDatabase()" class="bg-red-950/20 border border-red-900/30 text-[11px] font-bold py-2 rounded-lg text-red-400 active:bg-red-900/40 transition-colors">🗑️ Wipe Storage</button>
+</div>
+    </section>
+    </footer>
+
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">🔍 Search Global Database</h2>
+        <div class="flex gap-2">
+            <input id="course-search-input" type="text" placeholder="e.g. Pinehurst No. 2" class="flex-1 bg-zinc-900 text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500">
+            <button onclick="fetchCourseDetails()" class="bg-zinc-100 text-black text-xs font-bold px-4 py-2 rounded-lg active:scale-95">Fetch</button>
+        </div>
+        <p id="api-status" class="text-[10px] font-mono text-zinc-500 mt-2">Ready for lookup over network.</p>
+    </section>
+    <!-- ================= RUNTIME CORE BUSINESS ARCHITECTURE SCRIPT ================= -->
     <script>
-        const SUPABASE_URL = "https://KLpYENB7bIa_8SkAWN90uA_12BcxJKC.supabase.co"; 
-        const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC";
-
-        let supabase = null;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.error("Initialization error:", e);
-        }
-
+        // State Array Controllers
+        let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
         let liveFirState = Array(18).fill(false);
         let liveGirState = Array(18).fill(false);
-        let cachedRoundsInMemory = [];
+        
         let trendChartInstance = null;
         let distChartInstance = null;
 
-        const localCourseLookupAtlas = {
+        // Static Offline Native Course Array Directory Matrix (Zero Network Failure Point)
+        const globalCourseDatabase = {
             "pebble beach": [4,4,4,4,3,5,3,4,4,4,4,3,4,5,4,4,3,5],
             "augusta": [4,5,4,4,4,3,4,5,4,4,4,3,5,4,4,3,4,5],
             "st andrews": [4,4,4,4,5,4,4,3,4,4,3,4,4,5,4,4,4,4],
             "tpc sawgrass": [4,5,3,4,4,4,4,3,5,4,5,4,3,4,4,5,3,4],
             "pinehurst": [4,4,4,4,4,3,4,4,4,4,4,4,4,4,3,4,4,4],
             "cypress point": [4,4,4,4,3,5,4,3,4,4,5,4,3,5,4,3,4,4],
-            "shinnecock": [4,3,4,4,5,4,3,4,4,4,4,3,4,4,4,5,3,4],
-            "oakmont": [4,4,4,5,4,3,4,4,5,4,4,4,3,4,4,4,3,4],
-            "merion": [4,5,4,4,4,4,4,3,3,4,4,4,3,4,4,4,3,4],
-            "wingfoot": [4,4,4,4,5,4,3,4,4,4,4,4,5,3,4,4,4,4],
-            "bandon dunes": [4,4,5,4,4,3,4,4,5,4,4,3,5,4,4,4,5,4],
-            "pacific dunes": [4,4,5,4,4,3,4,4,4,4,4,3,5,4,3,4,3,5]
+            "shinnecock": [4,3,4,4,5,4,3,4,4,4,4,3,4,4,4,5,3,4]
         };
 
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <div class="flex justify-between items-center mb-3">
+            <h2 id="current-course-display" class="text-sm font-bold text-zinc-100">Standard 18 Layout</h2>
+            <span id="hole-counter" class="text-xs font-mono bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded text-zinc-400">Hole 1 of 18</span>
+        </div>
+        // Screen Tab Switch Controller Routing Routine
         function switchTab(tabId) {
             document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
             document.getElementById(`view-${tabId}`).classList.remove('hidden');
 
+        <div class="bg-black p-4 rounded-xl border border-zinc-800 text-center mb-3">
+            <div id="hole-num-display" class="text-3xl font-black text-white tracking-tight">Hole 1</div>
+            <div id="hole-par-display" class="text-[10px] font-mono uppercase tracking-widest text-zinc-500 mb-4">Par 4 Template</div>
+            
+            <div class="flex justify-center items-center gap-6 mb-2">
+                <button onclick="adjustScore(-1)" class="w-12 h-12 bg-zinc-800 rounded-full border border-zinc-700 text-xl font-bold text-white shadow-sm active:bg-zinc-700">-</button>
+                <div id="live-score" class="text-5xl font-black w-14 tracking-tighter text-white">4</div>
+                <button onclick="adjustScore(1)" class="w-12 h-12 bg-emerald-500 text-black rounded-full text-xl font-extrabold shadow-sm active:scale-95">+</button>
+            </div>
+        </div>
             document.querySelectorAll('nav button').forEach(btn => {
-                btn.className = "text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all";
+                btn.classList.remove('bg-emerald-500', 'text-black');
+                btn.classList.add('text-zinc-400');
             });
 
-            document.getElementById(`tab-${tabId}`).className = "text-xs font-bold py-2 rounded-lg bg-emerald-500 text-black transition-all";
-            
-            if(tabId === 'history') renderHistoryList();
-            if(tabId === 'analytics') buildChartsDashboard();
+        <div class="grid grid-cols-2 gap-2 mb-3">
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">Putts</span>
+                <input id="live-putts" type="number" value="2" class="w-full text-center font-bold bg-zinc-900 text-white border border-zinc-700 rounded p-1 text-sm focus:outline-none">
+            </div>
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center flex flex-col justify-between">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">GIR</span>
+                <button id="gir-toggle" onclick="toggleGIR()" class="w-full text-xs font-bold py-1 px-2 rounded border border-zinc-700 bg-zinc-900 text-zinc-400">MISS</button>
+            </div>
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">Drive Distance</span>
+                <input id="live-distance" type="number" placeholder="Yards" class="w-full text-center font-mono bg-zinc-900 text-white border border-zinc-700 rounded p-1 text-sm focus:outline-none">
+            </div>
+            <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800 text-center">
+                <span class="block text-[9px] font-bold tracking-wider text-zinc-500 uppercase mb-1">Drive Club</span>
+                <select id="live-club" class="w-full text-xs text-center bg-zinc-900 text-white border border-zinc-700 rounded p-1 focus:outline-none">
+                    <option value="Driver">Driver</option>
+                    <option value="3-Wood">3-Wood</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Iron">Iron</option>
+                    <option value="N/A">N/A</option>
+                </select>
+            </div>
+        </div>
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('text-zinc-400');
+            activeBtn.classList.add('bg-emerald-500', 'text-black');
+
+        <button onclick="nextHole()" id="next-btn" class="w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl tracking-widest uppercase active:scale-95">Next Hole ➔</button>
+    </section>
+            if(tabId === 'history') loadHistoryView();
+            if(tabId === 'analytics') loadAnalyticsDashboard();
         }
 
-        // SEAMLESS HYBRID COURSE PARSER WITH FAILSAFE RESTORATION
-        async function executeCourseEngineQuery() {
-            const rawInput = document.getElementById('course-search-input').value;
-            const query = rawInput.toLowerCase().trim();
-            const logger = document.getElementById('api-status-log');
-            const display = document.getElementById('current-course-display');
-
-            if (!query) {
-                alert("❌ Input Error: Please type a golf course name before hitting the fetch button!");
-                return;
-            }
-
-            logger.innerText = "⚡ Querying live directory...";
-            console.log("Searching for course query:", query);
-
-            try {
-                // Try remote fetch sequence
-                const response = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
-                if (!response.ok) throw new Error("Remote server returned an error status.");
-                
-                const data = await response.json();
-                console.log("Remote API payload received:", data);
-
-                if (data && data.courses && data.courses.length > 0) {
-                    const course = data.courses[0];
-                    display.innerText = course.name.toUpperCase();
-                    logger.innerText = `✅ Found remotely! Location: ${course.city || ''}, ${course.state || 'Global'}`;
-                    
-                    let targetPars = Array(18).fill(4);
-                    if (course.pars && Array.isArray(course.pars) && course.pars.length >= 18) {
-                        targetPars = course.pars.slice(0, 18);
-                    } else if (course.holes && Array.isArray(course.holes)) {
-                        course.holes.forEach((h, index) => {
-                            if (index < 18) targetPars[index] = parseInt(h.par) || 4;
-                        });
-                    }
-
-                    for (let i = 1; i <= 18; i++) {
-                        document.getElementById(`grid-par-${i}`).value = targetPars[i - 1];
-                        document.getElementById(`grid-score-${i}`).value = targetPars[i - 1];
-                    }
-                } else {
-                    throw new Error("No items matched in API response array.");
-                }
-            } catch (error) {
-                console.warn("API unavailable, running internal dictionary lookup:", error.message);
-                
-                // Fallback to local dictionary parsing
-                let atlasMatchKey = Object.keys(localCourseLookupAtlas).find(key => query.includes(key) || key.includes(query));
-
-                if (atlasMatchKey) {
-                    const targetPars = localCourseLookupAtlas[atlasMatchKey];
-                    display.innerText = atlasMatchKey.toUpperCase();
-                    logger.innerText = `✅ Pars matched via local dictionary for ${atlasMatchKey.toUpperCase()}`;
-                    
-                    for (let i = 1; i <= 18; i++) {
-                        document.getElementById(`grid-par-${i}`).value = targetPars[i - 1];
-                        document.getElementById(`grid-score-${i}`).value = targetPars[i - 1];
-                    }
-                } else {
-                    // Safe custom fallback if course is completely unindexed
-                    display.innerText = rawInput.toUpperCase().trim();
-                    logger.innerText = "⚠️ Course not indexed. Standard layout generated.";
-                    
-                    for (let i = 1; i <= 18; i++) {
-                        document.getElementById(`grid-par-${i}`).value = 4;
-                        document.getElementById(`grid-score-${i}`).value = 4;
-                    }
-                    console.log("No internal matches. Generated baseline Par 72 matrix mapping.");
-                }
-            }
-            calculateGridTotals();
-        }
-
+    <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📊 Real-Time Performance Analytics</h2>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="border border-zinc-800 p-3 rounded-lg bg-zinc-950">
+                <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Rounds Tracked</span>
+                <div id="kpi-rounds" class="text-xl font-bold font-mono text-zinc-100">0</div>
+            </div>
+            <div class="border border-zinc-800 p-3 rounded-lg bg-zinc-950">
+                <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Avg Score / Round</span>
+                <div id="kpi-avg" class="text-xl font-bold font-mono text-emerald-400">--</div>
+            </div>
+        </div>
+    </section>
+        // Toggle Grid State Values UI Matrix Elements
         function toggleStat(type, holeNum) {
-            const idx = holeNum - 1;
+            const index = holeNum - 1;
             if(type === 'fir') {
-                liveFirState[idx] = !liveFirState[idx];
+                liveFirState[index] = !liveFirState[index];
                 const btn = document.getElementById(`grid-fir-${holeNum}`);
-                btn.innerText = liveFirState[idx] ? "HIT" : "MISS";
-                btn.className = liveFirState[idx] ? "w-8 h-5 rounded text-[8px] font-bold bg-emerald-500 text-black" : "w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500";
+                btn.innerText = liveFirState[index] ? "HIT" : "MISS";
+                btn.className = liveFirState[index] ? "w-8 h-5 rounded text-[9px] font-bold bg-emerald-500 text-black" : "w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500";
             } else {
-                liveGirState[idx] = !liveGirState[idx];
+                liveGirState[index] = !liveGirState[index];
                 const btn = document.getElementById(`grid-gir-${holeNum}`);
-                btn.innerText = liveGirState[idx] ? "HIT" : "MISS";
-                btn.className = liveGirState[idx] ? "w-8 h-5 rounded text-[8px] font-bold bg-blue-500 text-white" : "w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500";
+                btn.innerText = liveGirState[index] ? "HIT" : "MISS";
+                btn.className = liveGirState[index] ? "w-8 h-5 rounded text-[9px] font-bold bg-blue-500 text-white" : "w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500";
             }
             calculateGridTotals();
         }
 
-        function calculateGridTotals() {
-            let outPar = 0, outScore = 0, outPutts = 0;
-            let inPar = 0, inScore = 0, inPutts = 0;
+    <main class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
+        <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">⚙️ Device Data Backup & Storage Tools</h2>
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportHistoryToCSV()" class="bg-zinc-800 border border-zinc-700 text-[11px] font-bold py-2 rounded-lg text-zinc-200 active:bg-zinc-700">📥 Export Backup (CSV)</button>
+            <button onclick="wipeLocalDatabase()" class="bg-red-950/20 border border-red-900/30 text-[11px] font-bold py-2 rounded-lg text-red-400 active:bg-red-900/20">🗑️ Wipe Database</button>
+        </div>
+    </main>
+        function fetchCourseDetails() {
+            const query = document.getElementById('course-search-input').value.toLowerCase().trim();
+            const statusText = document.getElementById('api-status');
+            const displayTitle = document.getElementById('current-course-display');
+            
+            if(!query) return;
+            statusText.innerText = "⏳ Querying internal dictionary mapping arrays...";
 
-            for(let i=1; i<=9; i++) {
-                outPar += parseInt(document.getElementById(`grid-par-${i}`).value) || 4;
-                outScore += parseInt(document.getElementById(`grid-score-${i}`).value) || 4;
-                outPutts += parseInt(document.getElementById(`grid-putts-${i}`).value) || 2;
-            }
-            document.getElementById('total-out-par').innerText = outPar;
-            document.getElementById('total-out-score').innerText = outScore;
-            document.getElementById('total-out-putts').innerText = outPutts;
+    <script>
+        let currentHole = 1;
+        let activeRoundData = [];
+        let fetchedPars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+        let currentGIR = false;
 
-            for(let i=10; i<=18; i++) {
-                inPar += parseInt(document.getElementById(`grid-par-${i}`).value) || 4;
-                inScore += parseInt(document.getElementById(`grid-score-${i}`).value) || 4;
-                inPutts += parseInt(document.getElementById(`grid-putts-${i}`).value) || 2;
-            }
-            document.getElementById('total-in-par').innerText = inPar;
-            document.getElementById('total-in-score').innerText = inScore;
-            document.getElementById('total-in-putts').innerText = inPutts;
+        const offlinePreseed = {
+            "Pebble Beach": [4,4,4,4,3,5,3,4,4,4,4,3,4,5,4,4,3,5],
+            "Augusta National": [4,5,4,4,4,3,4,5,4,4,4,3,5,4,4,3,4,5],
+            "St Andrews Links": [4,4,4,4,5,4,4,3,4,4,3,4,4,5,4,4,4,4],
+            "TPC Sawgrass": [4,5,3,4,4,4,4,3,5,4,5,4,3,4,4,5,3,4]
+        };
+            let foundKey = Object.keys(globalCourseDatabase).find(key => query.includes(key) || key.includes(query));
 
-            document.getElementById('grid-par-total').innerText = outPar + inPar;
-            document.getElementById('grid-score-total').innerText = outScore + inScore;
-            document.getElementById('grid-putts-total').innerText = outPutts + inPutts;
-        }
-
-        async function commitCardToCloudDatabase() {
-            const courseName = document.getElementById('current-course-display').innerText;
-            let holesArray = [];
+        function toggleBatchView() {
+            const form = document.getElementById('batch-entry-form');
+            const btn = document.getElementById('batch-toggle-btn');
+            if(form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                btn.innerText = "Collapse";
+            if (foundKey) {
+                currentCoursePars = globalCourseDatabase[foundKey];
+                displayTitle.innerText = foundKey.toUpperCase();
+                statusText.innerText = `✅ Loaded ${foundKey.toUpperCase()} layout dataset!`;
+} else {
+                form.classList.add('hidden');
+                btn.innerText = "Expand";
+                displayTitle.innerText = query.toUpperCase();
+                statusText.innerText = "ℹ️ Course layout missing. Generated default Par 72 matrix system structural layout.";
+                currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
+}
 
             for(let i=1; i<=18; i++) {
-                holesArray.push({
-                    hole: i,
-                    par: parseInt(document.getElementById(`grid-par-${i}`).value) || 4,
+                document.getElementById(`grid-par-${i}`).innerText = currentCoursePars[i-1];
+                document.getElementById(`grid-score-${i}`).value = currentCoursePars[i-1];
+            }
+            calculateGridTotals();
+}
+
+        function submitBatchRound() {
+            const courseName = document.getElementById('batch-course-name').value || "Manual Card Upload";
+            let batchHoles = [];
+            
+            for(let i = 1; i <= 18; i++) {
+                batchHoles.push({
+        function calculateGridTotals() {
+            let parTotal = 0, scoreTotal = 0, puttsTotal = 0, firTotal = 0, girTotal = 0;
+
+            for(let i=1; i<=18; i++) {
+                parTotal += parseInt(document.getElementById(`grid-par-${i}`).innerText) || 4;
+                scoreTotal += parseInt(document.getElementById(`grid-score-${i}`).value) || 4;
+                puttsTotal += parseInt(document.getElementById(`grid-putts-${i}`).value) || 2;
+                if(liveFirState[i-1]) firTotal++;
+                if(liveGirState[i-1]) girTotal++;
+            }
+
+            document.getElementById('grid-par-total').innerText = parTotal;
+            document.getElementById('grid-score-total').innerText = scoreTotal;
+            document.getElementById('grid-putts-total').innerText = puttsTotal;
+            document.getElementById('grid-fir-total').innerText = Math.round((firTotal / 18) * 100) + "%";
+            document.getElementById('grid-gir-total').innerText = Math.round((girTotal / 18) * 100) + "%";
+        }
+
+        function submitGridRound() {
+            const courseName = document.getElementById('current-course-display').innerText;
+            const avgDrive = parseInt(document.getElementById('round-drive-dist').value) || 250;
+            let finalHolesArray = [];
+
+            for(let i=1; i<=18; i++) {
+                finalHolesArray.push({
+hole: i,
+                    par: 4, 
+                    score: parseInt(document.getElementById(`b-score-${i}`).value) || 4,
+                    putts: parseInt(document.getElementById(`b-putts-${i}`).value) || 2,
+                    gir: false,
+                    driveDistance: 0,
+                    driveClub: "N/A"
+                    par: parseInt(document.getElementById(`grid-par-${i}`).innerText),
                     score: parseInt(document.getElementById(`grid-score-${i}`).value) || 4,
                     putts: parseInt(document.getElementById(`grid-putts-${i}`).value) || 2,
                     fir: liveFirState[i-1],
                     gir: liveGirState[i-1]
-                });
-            }
+});
+}
 
-            const newRoundObj = {
-                date: new Date().toLocaleDateString(),
-                course: courseName,
-                holes: holesArray
-            };
-
-            if(supabase) {
-                try {
-                    const { error } = await supabase.from('golf_history').insert([newRoundObj]);
-                    if(error) console.error("Database sync error: ", error.message);
-                } catch(e) {
-                    console.error(e);
-                }
-            }
-
-            cachedRoundsInMemory.push(newRoundObj);
-            localStorage.setItem('golf_history_backup', JSON.stringify(cachedRoundsInMemory));
+let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+history.push({
+                id: Date.now(),
+date: new Date().toLocaleDateString(),
+course: courseName,
+                holes: batchHoles
+                avgDrive: avgDrive,
+                holes: finalHolesArray
+});
+localStorage.setItem('golf_history', JSON.stringify(history));
             
-            alert(`✅ Scorecard safely compiled and locked!`);
-            resetInputGridFormFields();
-            compileCoreDashboardKPIs();
+            alert(`🎉 Entire scorecard logged for ${courseName}!`);
+            document.getElementById('batch-course-name').value = "";
+            toggleBatchView();
+            calculateKPIs();
         }
 
-        async function fetchSystemHistoryRecords() {
-            if(supabase) {
-                try {
-                    const { data, error } = await supabase.from('golf_history').select('*').order('created_at', { ascending: true });
-                    if(!error && data && data.length > 0) {
-                        cachedRoundsInMemory = data;
-                    } else {
-                        cachedRoundsInMemory = JSON.parse(localStorage.getItem('golf_history_backup') || '[]');
-                    }
-                } catch(e) {
-                    cachedRoundsInMemory = JSON.parse(localStorage.getItem('golf_history_backup') || '[]');
-                }
-            } else {
-                cachedRoundsInMemory = JSON.parse(localStorage.getItem('golf_history_backup') || '[]');
-            }
-            compileCoreDashboardKPIs();
-        }
-
-        function compileCoreDashboardKPIs() {
-            if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) return;
-
-            document.getElementById('kpi-rounds').innerText = cachedRoundsInMemory.length;
+        function loadPreseedCourse(name) {
+            if(offlinePreseed[name]) {
+                fetchedPars = offlinePreseed[name];
+                document.getElementById('current-course-display').innerText = name;
+                document.getElementById('api-status').innerText = "⚡ Loaded directly from local cache memory.";
+                resetRound();
+            alert(`🎉 Scorecard compiled and saved securely to cache matrix memory for ${courseName}!`);
             
-            let totalScores = 0, eagles = 0, birdies = 0, pars = 0, bogeys = 0;
-            let totalPutts = 0, fir = 0, gir = 0, totalHoles = 0;
+            // Clear current inputs reset operational space state variables
+            liveFirState.fill(false);
+            liveGirState.fill(false);
+            for(let i=1; i<=18; i++) {
+                document.getElementById(`grid-fir-${i}`).innerText = "MISS";
+                document.getElementById(`grid-fir-${i}`).className = "w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500";
+                document.getElementById(`grid-gir-${i}`).innerText = "MISS";
+                document.getElementById(`grid-gir-${i}`).className = "w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500";
+}
+            calculateGridTotals();
+}
 
-            cachedRoundsInMemory.forEach(r => {
-                if(r && r.holes && Array.isArray(r.holes)) {
-                    let roundTotalScore = 0;
-                    r.holes.forEach(h => {
-                        roundTotalScore += h.score;
-                        totalPutts += h.putts;
-                        totalHoles++;
-                        if(h.fir) fir++;
-                        if(h.gir) gir++;
+        async function fetchCourseDetails() {
+            const query = document.getElementById('course-search-input').value;
+            const statusText = document.getElementById('api-status');
+            if(!query) return;
 
-                        let diff = h.score - h.par;
-                        if(diff <= -2) eagles++;
-                        else if(diff === -1) birdies++;
-                        else if(diff === 0) pars++;
-                        else if(diff === 1) bogeys++;
-                    });
-                    totalScores += roundTotalScore;
+            statusText.innerText = "⏳ Connecting to network layer...";
+            try {
+                const res = await fetch(`https://open-golf-api.onrender.com/v1/courses/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                if(data && data.courses && data.courses.length > 0) {
+                    const course = data.courses[0];
+                    document.getElementById('current-course-display').innerText = course.name;
+                    statusText.innerText = `✅ Found ${course.name}!`;
+                    if(course.pars && course.pars.length === 18) fetchedPars = course.pars;
+                    resetRound();
+                } else {
+                    statusText.innerText = "❌ Course missing from directory. Loaded fallback template.";
                 }
-            });
-
-            if (totalHoles > 0) {
-                document.getElementById('kpi-avg').innerText = (totalScores / cachedRoundsInMemory.length).toFixed(1);
-                document.getElementById('stat-eagles').innerText = eagles;
-                document.getElementById('stat-birdies').innerText = birdies;
-                document.getElementById('stat-pars').innerText = pars;
-                document.getElementById('stat-bogeys').innerText = bogeys;
-                
-                document.getElementById('stat-putts').innerText = (totalPutts / totalHoles).toFixed(2);
-                
-                document.getElementById('stat-fir-pct').innerText = Math.round((fir / totalHoles) * 100) + "%";
-                document.getElementById('stat-gir-pct').innerText = Math.round((gir / totalHoles) * 100) + "%";
-            }
-        }
-
-        function renderHistoryList() {
+            } catch(e) {
+                statusText.innerText = "⚠️ Network offline. Using baseline par matrix configuration.";
+        // ================= HISTORICAL RENDER VIEWER LOGIC ENGINE =================
+        function loadHistoryView() {
             const container = document.getElementById('history-rounds-container');
-            if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) {
-                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No records found.</p>`;
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            
+            if(history.length === 0) {
+                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No historical cards submitted on this terminal environment yet.</p>`;
                 return;
-            }
+}
+        }
 
-            container.innerHTML = cachedRoundsInMemory.map((round, idx) => {
-                if(!round || !round.holes) return '';
-                let totalScore = round.holes.reduce((sum, h) => sum + (h.score || 0), 0);
+        function toggleGIR() {
+            currentGIR = !currentGIR;
+            const btn = document.getElementById('gir-toggle');
+            if(currentGIR) {
+                btn.innerText = "HIT";
+                btn.className = "w-full text-xs font-bold py-1 px-2 rounded border border-emerald-500/50 bg-emerald-500/10 text-emerald-400";
+            } else {
+                btn.innerText = "MISS";
+                btn.className = "w-full text-xs font-bold py-1 px-2 rounded border border-zinc-700 bg-zinc-900 text-zinc-400";
+            }
+            container.innerHTML = history.map((round, idx) => {
+                let totalScore = round.holes.reduce((sum, h) => sum + h.score, 0);
+                let totalPar = round.holes.reduce((sum, h) => sum + h.par, 0);
+                let diff = totalScore - totalPar;
+                let diffText = diff === 0 ? "E" : diff > 0 ? `+${diff}` : `${diff}`;
+
                 return `
-                    <div class="bg-black border border-zinc-800 p-3 rounded-lg flex justify-between items-center font-mono text-xs">
+                    <div class="bg-black border border-zinc-800 p-3 rounded-lg flex justify-between items-center font-mono">
                         <div>
-                            <span class="text-[9px] text-zinc-500 block">${round.date || 'Unknown Date'}</span>
-                            <span class="font-bold text-zinc-200 uppercase">${round.course || 'CUSTOM'}</span>
+                            <span class="text-[9px] text-zinc-500 block">${round.date}</span>
+                            <span class="text-xs font-bold text-zinc-200 block uppercase tracking-wide">${round.course}</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="font-black text-emerald-400">${totalScore}</span>
-                            <button onclick="inspectHistoricalRoundCardByIndex(${idx})" class="bg-zinc-800 text-[10px] px-2 py-1 rounded text-white">Inspect</button>
+                            <div class="text-right">
+                                <span class="text-sm font-black text-emerald-400 block">${totalScore}</span>
+                                <span class="text-[9px] text-zinc-400 block">${diffText}</span>
+                            </div>
+                            <button onclick="inspectHistoricalCard(${round.id})" class="bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold text-white px-2 py-1.5 rounded transition-colors">Inspect Card</button>
                         </div>
                     </div>
                 `;
             }).join('');
+}
+
+        function adjustScore(amount) {
+            let scoreEl = document.getElementById('live-score');
+            let current = parseInt(scoreEl.innerText);
+            if(current + amount > 0) scoreEl.innerText = current + amount;
         }
+        function inspectHistoricalCard(roundId) {
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            let round = history.find(r => r.id === roundId);
+            if(!round) return;
 
-        function inspectHistoricalRoundCardByIndex(idx) {
-            const round = cachedRoundsInMemory[idx];
-            if(!round || !round.holes) return;
-
-            document.getElementById('inspect-course-title').innerText = round.course || "CUSTOM ROUND";
-            document.getElementById('inspect-date-title').innerText = `Date Logged: ${round.date}`;
-
-            const frontHoles = round.holes.slice(0, 9);
-            const backHoles = round.holes.slice(9, 18);
-
-            const generateRowHtml = (hArray, label) => `
-                <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-black p-1">
-                    <table class="w-full text-center text-xs font-mono">
-                        <thead>
-                            <tr class="text-zinc-500 text-[9px] border-b border-zinc-800"><th class="text-left p-1 text-zinc-400 uppercase font-sans">${label}</th>${hArray.map(h=>`<th>${h.hole}</th>`).join('')}</tr>
-                        </thead>
-                        <tbody>
-                            <tr class="text-zinc-500 border-b border-zinc-900"><td class="text-left font-bold text-[9px]">PAR</td>${hArray.map(h=>`<td>${h.par || 4}</td>`).join('')}</tr>
-                            <tr class="text-white font-black"><td class="text-left text-zinc-400 text-[9px]">SCORE</td>${hArray.map(h=>`<td class="${h.score < h.par ? 'text-emerald-400': h.score > h.par ? 'text-red-400':''}">${h.score || 4}</td>`).join('')}</tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            document.getElementById('inspector-table-wrapper').innerHTML = generateRowHtml(frontHoles, "Front 9") + generateRowHtml(backHoles, "Back 9");
-            document.getElementById('history-card-inspector').classList.remove('hidden');
-            document.getElementById('history-card-inspector').scrollIntoView({ behavior: 'smooth' });
+        function resetRound() {
+            currentHole = 1;
+            activeRoundData = [];
+            updateHoleUI();
         }
+            document.getElementById('inspect-course-title').innerText = round.course;
+            document.getElementById('inspect-date-title').innerText = `Logged Date: ${round.date} | Driving Avg: ${round.avgDrive || 250} yds`;
 
-        function importGarminCSV(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const lines = e.target.result.split('\n');
-                let count = 0;
-
-                for(let i=1; i<lines.length; i++) {
-                    let cols = lines[i].split(',');
-                    if(cols.length < 5) continue;
-
-                    let dateStr = cols[0].replace(/"/g, '').trim();
-                    let name = cols[1].replace(/"/g, '').trim().toUpperCase();
-                    let rawScores = cols.slice(2).map(v => parseInt(v.trim()) || 4);
-
-                    let holes = [];
-                    for(let h=1; h<=18; h++) {
-                        holes.push({ hole: h, par: 4, score: rawScores[h-1] || 4, putts: 2, fir: false, gir: false });
-                    }
-
-                    const obj = { date: dateStr, course: name, holes: holes };
-                    if(supabase) {
-                        try { await supabase.from('golf_history').insert([obj]); } catch(err){}
-                    }
-                    cachedRoundsInMemory.push(obj);
-                    count++;
-                }
-                localStorage.setItem('golf_history_backup', JSON.stringify(cachedRoundsInMemory));
-                alert(`Successfully processed ${count} Garmin entries!`);
-                compileCoreDashboardKPIs();
-            };
-            reader.readAsText(file);
+        function updateHoleUI() {
+            document.getElementById('hole-counter').innerText = `Hole ${currentHole} of 18`;
+            document.getElementById('hole-num-display').innerText = `Hole ${currentHole}`;
+            document.getElementById('hole-par-display').innerText = `Par ${fetchedPars[currentHole - 1] || 4} Template`;
+            document.getElementById('live-score').innerText = fetchedPars[currentHole - 1] || 4;
+            document.getElementById('live-putts').value = 2;
+            document.getElementById('live-distance').value = "";
+            
+            currentGIR = false;
+            const btn = document.getElementById('gir-toggle');
+            btn.innerText = "MISS";
+            btn.className = "w-full text-xs font-bold py-1 px-2 rounded border border-zinc-700 bg-zinc-900 text-zinc-400";
         }
+            let totalPar = round.holes.reduce((s, h) => s + h.par, 0);
+            let totalScore = round.holes.reduce((s, h) => s + h.score, 0);
+            let totalPutts = round.holes.reduce((s, h) => s + h.putts, 0);
 
-        function buildChartsDashboard() {
-            if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) return;
-            let labels = [], metrics = [], e=0, br=0, p=0, bo=0;
-
-            cachedRoundsInMemory.forEach(r => {
-                if (r && r.holes) {
-                    labels.push(r.date || 'Round');
-                    metrics.push(r.holes.reduce((s, h) => s + (h.score || 0), 0));
-                    r.holes.forEach(h => {
-                        let d = (h.score || 4) - (h.par || 4);
-                        if(d <= -2) e++; else if(d === -1) br++; else if(d === 0) p++; else if(d === 1) bo++;
-                    });
-                }
+        function nextHole() {
+            activeRoundData.push({
+                hole: currentHole,
+                par: fetchedPars[currentHole - 1] || 4,
+                score: parseInt(document.getElementById('live-score').innerText),
+                putts: parseInt(document.getElementById('live-putts').value),
+                gir: currentGIR,
+                driveDistance: document.getElementById('live-distance').value || 0,
+                driveClub: document.getElementById('live-club').value
             });
 
+            if(currentHole < 18) {
+                currentHole++;
+                updateHoleUI();
+                if(currentHole === 18) {
+                    document.getElementById('next-btn').innerText = "🏁 Complete & Save Round";
+                    document.getElementById('next-btn').className = "w-full bg-emerald-500 text-black font-black text-xs py-3 rounded-xl tracking-widest uppercase active:scale-95";
+                }
+            } else {
+                saveRoundToDatabase();
+            }
+        }
+            let tableHtml = `
+                <table class="w-full min-w-[700px] text-center border-collapse">
+                    <thead>
+                        <tr class="bg-zinc-900 border-b border-zinc-800 text-zinc-400 text-[10px]">
+                            <th class="p-2 text-left sticky left-0 bg-zinc-900 border-r border-zinc-800 font-bold">HOLE</th>
+                            ${round.holes.map(h => `<th class="p-1">${h.hole}</th>`).join('')}
+                            <th class="p-2 bg-zinc-900">TOT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-zinc-900 text-zinc-500 bg-zinc-950/20">
+                            <td class="p-2 text-left sticky left-0 bg-zinc-950 border-r border-zinc-800 font-bold">PAR</td>
+                            ${round.holes.map(h => `<td class="p-1">${h.par}</td>`).join('')}
+                            <td class="p-2 font-bold text-zinc-400">${totalPar}</td>
+                        </tr>
+                        <tr class="border-b border-zinc-900 text-white">
+                            <td class="p-2 text-left sticky left-0 bg-zinc-900 border-r border-zinc-800 font-bold">SCORE</td>
+                            ${round.holes.map(h => `<td class="p-1 font-black ${h.score < h.par ? 'text-emerald-400': h.score > h.par ? 'text-red-400':'' }">${h.score}</td>`).join('')}
+                            <td class="p-2 font-black text-emerald-400 bg-zinc-950">${totalScore}</td>
+                        </tr>
+                        <tr class="text-zinc-400 text-[11px]">
+                            <td class="p-2 text-left sticky left-0 bg-zinc-950 border-r border-zinc-800 font-bold text-zinc-500">PUTTS</td>
+                            ${round.holes.map(h => `<td class="p-1">${h.putts}</td>`).join('')}
+                            <td class="p-2 font-bold text-zinc-400 bg-zinc-950">${totalPutts}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+        function saveRoundToDatabase() {
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            history.push({
+                date: new Date().toLocaleDateString(),
+                course: document.getElementById('current-course-display').innerText,
+                holes: activeRoundData
+            });
+            localStorage.setItem('golf_history', JSON.stringify(history));
+            alert("Round logged into local engine memory cache successfully!");
+            resetRound();
+            calculateKPIs();
+            document.getElementById('inspector-table-wrapper').innerHTML = tableHtml;
+            document.getElementById('history-card-inspector').classList.remove('hidden');
+            document.getElementById('history-card-inspector').scrollIntoView({ behavior: 'smooth' });
+}
+
+        function calculateKPIs() {
+        // ================= ANALYTICS CHARTING ENGINE LOGIC LAYER =================
+        function loadAnalyticsDashboard() {
+let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            
+if(history.length === 0) {
+document.getElementById('kpi-rounds').innerText = "0";
+document.getElementById('kpi-avg').innerText = "--";
+return;
+}
+
+document.getElementById('kpi-rounds').innerText = history.length;
+
+            let totalScore = 0;
+            history.forEach(r => {
+                let rSum = r.holes.reduce((sum, h) => sum + h.score, 0);
+                totalScore += rSum;
+            let totalScores = 0, totalEagles = 0, totalBirdies = 0, totalPars = 0, totalBogeys = 0, totalDblsPlus = 0;
+            let totalPutts = 0, totalFir = 0, totalGir = 0, totalDriveDist = 0, totalHoles = 0;
+            let trendLabels = [], trendData = [];
+
+            history.forEach((round, idx) => {
+                let roundScore = 0;
+                round.holes.forEach(h => {
+                    roundScore += h.score;
+                    totalPutts += h.putts;
+                    if(h.fir) totalFir++;
+                    if(h.gir) totalGir++;
+                    totalHoles++;
+
+                    let diff = h.score - h.par;
+                    if(diff <= -2) totalEagles++;
+                    else if(diff === -1) totalBirdies++;
+                    else if(diff === 0) totalPars++;
+                    else if(diff === 1) totalBogeys++;
+                    else if(diff >= 2) totalDblsPlus++;
+                });
+                totalScores += roundScore;
+                totalDriveDist += (round.avgDrive || 250);
+                
+                trendLabels.push(round.date);
+                trendData.push(roundScore);
+            });
+
+            document.getElementById('kpi-avg').innerText = (totalScores / history.length).toFixed(1);
+            document.getElementById('stat-eagles').innerText = totalEagles;
+            document.getElementById('stat-birdies').innerText = totalBirdies;
+            document.getElementById('stat-pars').innerText = totalPars;
+            document.getElementById('stat-bogeys').innerText = totalBogeys;
+            document.getElementById('stat-putts').innerText = (totalPutts / history.length).toFixed(1);
+            document.getElementById('stat-fir-pct').innerText = Math.round((totalFir / totalHoles) * 100) + "%";
+            document.getElementById('stat-gir-pct').innerText = Math.round((totalGir / totalHoles) * 100) + "%";
+            document.getElementById('stat-avg-drive').innerText = Math.round(totalDriveDist / history.length) + " yds";
+
+            // Render Chart.js Multi-Trend Canvas Elements
             if(trendChartInstance) trendChartInstance.destroy();
             if(distChartInstance) distChartInstance.destroy();
 
-            Chart.defaults.color = '#71717a'; Chart.defaults.font.family = 'monospace';
+            Chart.defaults.color = '#71717a';
+            Chart.defaults.font.family = 'monospace';
 
-            const ctxTrend = document.getElementById('scoreTrendChart');
-            if (ctxTrend) {
-                trendChartInstance = new Chart(ctxTrend.getContext('2d'), {
-                    type: 'line',
-                    data: { labels: labels, datasets: [{ label: 'Aggregate Score', data: metrics, borderColor: '#10b981', tension: 0.1, fill: false }] },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            }
-
-            const ctxDist = document.getElementById('scoreDistributionChart');
-            if (ctxDist) {
-                distChartInstance = new Chart(ctxDist.getContext('2d'), {
-                    type: 'bar',
-                    data: { labels: ['Eagles', 'Birdies', 'Pars', 'Bogeys'], datasets: [{ data: [e, br, p, bo], backgroundColor: '#10b981' }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-            }
-        }
-
-        function resetInputGridFormFields() {
-            liveFirState.fill(false); 
-            liveGirState.fill(false);
-            
-            for(let i=1; i<=18; i++) {
-                document.getElementById(`grid-score-${i}`).value = document.getElementById(`grid-par-${i}`).value;
-                document.getElementById(`grid-putts-${i}`).value = 2;
-                document.getElementById(`grid-fir-${i}`).className = "w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500";
-                document.getElementById(`grid-fir-${i}`).innerText = "MISS";
-                document.getElementById(`grid-gir-${i}`).className = "w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500";
-                document.getElementById(`grid-gir-${i}`).innerText = "MISS";
-            }
-            calculateGridTotals();
-        }
-
-        function downloadBackupCSV() {
-            let csv = "data:text/csv;charset=utf-8,Date,Course,Hole,Par,Score,Putts\n";
-            cachedRoundsInMemory.forEach(r => {
-                if(r && r.holes) {
-                    r.holes.forEach(h => csv += `"${r.date}","${r.course}",${h.hole},${h.par},${h.score},${h.putts}\n`);
-                }
+            const ctx1 = document.getElementById('scoreTrendChart').getContext('2d');
+            trendChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Total Round Score',
+                        data: trendData,
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } } }
             });
-            const a = document.createElement('a'); a.setAttribute('href', encodeURI(csv)); a.setAttribute('download', 'data_backup.csv');
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
 
-        function purgeLocalCache() { if(confirm("Clear local cache state?")) { localStorage.clear(); location.reload(); } }
+            const ctx2 = document.getElementById('scoreDistributionChart').getContext('2d');
+            distChartInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Eagles', 'Birdies', 'Pars', 'Bogeys', 'Dbl+'],
+                    datasets: [{
+                        data: [totalEagles, totalBirdies, totalPars, totalBogeys, totalDblsPlus],
+                        backgroundColor: ['#facc15', '#10b981', '#e4e4e7', '#f87171', '#7f1d1d']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+});
+            document.getElementById('kpi-avg').innerText = (totalScore / history.length).toFixed(1);
+}
 
-        fetchSystemHistoryRecords();
+function exportHistoryToCSV() {
+let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            if(history.length === 0) {
+                alert("No historic data records found to export yet!");
+                return;
+            }
+            if(history.length === 0) { alert("No stats data recorded to compile output export parameters."); return; }
+
+            let csvContent = "data:text/csv;charset=utf-8,Date,Course,Hole,Par,Score,Putts,GIR,DriveDistance,DriveClub\n";
+            
+            history.forEach(round => {
+                round.holes.forEach(h => {
+                    csvContent += `"${round.date}","${round.course}",${h.hole},${h.par},${h.score},${h.putts},${h.gir},${h.driveDistance},"${h.driveClub}"\n`;
+            let csvContent = "data:text/csv;charset=utf-8,Date,Course,Hole,Par,Score,Putts,FIR,GIR\n";
+            history.forEach(r => {
+                r.holes.forEach(h => {
+                    csvContent += `"${r.date}","${r.course}",${h.hole},${h.par},${h.score},${h.putts},${h.fir ? 1:0},${h.gir ? 1:0}\n`;
+});
+});
+
+            const encodedUri = encodeURI(csvContent);
+const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `golf_analytics_backup_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "golf_analytics_export.csv");
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+}
+
+function wipeLocalDatabase() {
+            if(confirm("⚠️ CRITICAL ACTION: Are you sure you want to permanently delete all tracked golf rounds from this phone's browser cache memory? This cannot be undone.")) {
+            if(confirm("Permanently wipe local device storage archive cache records? All rounds will be lost.")) {
+localStorage.removeItem('golf_history');
+                alert("Database completely purged.");
+                calculateKPIs();
+                switchTab('new-round');
+}
+}
+
+        updateHoleUI();
+        calculateKPIs();
+        // Initialize Application Defaults
         calculateGridTotals();
-    </script>
+</script>
 </body>
 </html>
