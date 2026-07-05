@@ -1,53 +1,450 @@
-// 1. Updated Offline Matrix with Custom Local Courses
-        const globalCourseDatabase = {
-            "pebble beach": [4,4,4,4,3,5,3,4,4,4,4,3,4,5,4,4,3,5],
-            "augusta": [4,5,4,4,4,3,4,5,4,4,4,3,5,4,4,3,4,5],
-            "st andrews": [4,4,4,4,5,4,4,3,4,4,3,4,4,5,4,4,4,4],
-            "tpc sawgrass": [4,5,3,4,4,4,4,3,5,4,5,4,3,4,4,5,3,4],
-            "pinehurst": [4,4,4,4,4,3,4,4,4,4,4,4,4,4,3,4,4,4],
-            "blue devil": [4,4,4,5,3,4,3,4,5,4,4,3,4,4,5,3,5,4]
-        };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Tracker</title>
+    <style>
+        /* --- GLOBAL & LAYOUT --- */
+        :root {
+            --bg-color: #050505;
+            --card-bg: #121212;
+            --border-color: #2a2a2a;
+            --accent-green: #10b981;
+            --accent-hover: #059669;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --cell-bg: #1a1a1a;
+            --cell-border: #333;
+        }
 
-        async function fetchCourseDetails() {
-            const query = document.getElementById('course-search-input').value.toLowerCase().trim();
-            const statusText = document.getElementById('api-status');
-            const displayTitle = document.getElementById('current-course-display');
-            
-            if(!query) return;
-            statusText.innerText = "⏳ Querying offline and network databases...";
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-            // 1. Try Offline Matrix First (Guarantees zero-latency loading for frequent courses)
-            let foundKey = Object.keys(globalCourseDatabase).find(key => query.includes(key) || key.includes(query));
-            if(foundKey) {
-                currentCoursePars = globalCourseDatabase[foundKey];
-                displayTitle.innerText = foundKey.toUpperCase();
-                statusText.innerText = `✅ Loaded ${foundKey.toUpperCase()} from local offline cache!`;
-                applyParsToGrid();
-                return;
-            }
+        /* Fixed: Expanded desktop width */
+        .container {
+            width: 100%;
+            max-width: 1400px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-            // 2. Try the Updated API Network Endpoint
-            try {
-                const res = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        /* --- BUTTONS & INPUTS --- */
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        button {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        button:hover { background-color: #1f1f1f; }
+        
+        button.primary {
+            background-color: var(--accent-green);
+            color: #000;
+            border: none;
+        }
+        button.primary:hover { background-color: var(--accent-hover); }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background-color: #0a0a0a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        /* --- SCORECARD MATRIX --- */
+        .scorecard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scorecard-header h3 {
+            margin: 0;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .badge {
+            background-color: #1f1f1f;
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .matrix-wrapper {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        /* Fixed: Grid uses 1fr to expand across full desktop width */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(18, minmax(60px, 1fr));
+            gap: 6px;
+            min-width: 1000px; /* Ensures mobile still scrolls */
+        }
+
+        .row-label {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            border: 1px solid var(--cell-border);
+            border-radius: 6px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
+        .cell.par-cell { cursor: pointer; user-select: none; }
+        .cell.par-cell:hover { border-color: var(--accent-green); }
+
+        .cell input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* Specific styling for the drive distance inputs */
+        .cell.drive-cell input:disabled {
+            color: #333;
+            cursor: not-allowed;
+            background-color: #141414;
+        }
+        .cell.drive-cell.disabled { opacity: 0.5; }
+
+        .toggle-btn {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .toggle-btn.hit { color: var(--accent-green); }
+
+        .log-btn-container {
+            margin-top: 25px;
+            display: flex;
+        }
+
+        /* --- DATA MANAGEMENT --- */
+        .data-management {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-management h4 { margin: 0; color: var(--text-muted); font-size: 12px; }
+        .danger-btn { color: #ef4444; border-color: #ef4444; }
+        .danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- NAVIGATION -->
+    <div class="nav-buttons">
+        <button class="primary">New Round</button>
+        <button>History</button>
+        <button>Analytics</button>
+    </div>
+
+    <!-- COURSE SEARCH -->
+    <div class="card">
+        <div style="font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">
+            🔍 Select or Fetch Golf Course
+        </div>
+        <div class="search-row">
+            <input type="text" id="course-search-input" placeholder="e.g., Blue Devil">
+            <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
+        </div>
+        <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
+    </div>
+
+    <!-- SCORECARD MATRIX -->
+    <div class="card">
+        <div class="scorecard-header">
+            <h3 id="current-course-display">STANDARD 18 LAYOUT</h3>
+            <div class="badge">18 HOLES</div>
+        </div>
+
+        <div class="matrix-wrapper">
+            <div class="matrix-grid" id="scorecard-grid">
+                <!-- Grid injected via JS -->
+            </div>
+        </div>
+
+        <div class="log-btn-container">
+            <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="logScorecard()">
+                COMPLETE & LOG SCORECARD →
+            </button>
+        </div>
+    </div>
+
+    <!-- DATA MANAGEMENT -->
+    <div class="card data-management">
+        <h4>⚙️ LOCAL DATA MANAGEMENT</h4>
+        <div style="display: flex; gap: 10px;">
+            <button>📊 Export CSV</button>
+            <button class="danger-btn">🗑️ Wipe Storage</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    const globalCourseDatabase = {
+        "blue devil": [4,4,4,5,3,4,3,4,5,4,4,3,4,4,5,3,5,4],
+        "banff springs": [4,3,5,4,4,4,4,3,5,4,4,4,3,4,5,4,3,4],
+        "glenabbey": [4,4,3,4,5,4,3,4,4,4,4,3,5,4,4,4,3,5]
+    };
+
+    let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; // Default Par 72
+
+    // --- COURSE FETCH LOGIC (Canadian API Targeted) ---
+    async function fetchCourseDetails() {
+        const query = document.getElementById('course-search-input').value.toLowerCase().trim();
+        const statusText = document.getElementById('api-status');
+        const displayTitle = document.getElementById('current-course-display');
+        
+        if(!query) return;
+        statusText.innerText = "⏳ Querying Canadian course databases...";
+
+        // 1. Offline Local Cache check
+        let foundKey = Object.keys(globalCourseDatabase).find(key => query.includes(key) || key.includes(query));
+        if(foundKey) {
+            currentCoursePars = [...globalCourseDatabase[foundKey]];
+            displayTitle.innerText = foundKey.toUpperCase();
+            statusText.innerText = `✅ Loaded ${foundKey.toUpperCase()} from local cache.`;
+            buildGrid();
+            return;
+        }
+
+        // 2. Network Endpoint (Configured for Canadian Database)
+        try {
+            // Updated endpoint structure targeting canadian DB logic
+            const res = await fetch(`https://api.golfdata.ca/v1/courses/search?q=${encodeURIComponent(query)}`);
+            if (res.ok) {
                 const data = await res.json();
-                
                 if(data && data.courses && data.courses.length > 0) {
                     const course = data.courses[0];
-                    displayTitle.innerText = course.name;
+                    displayTitle.innerText = course.name.toUpperCase();
                     statusText.innerText = `✅ Found ${course.name} via network!`;
                     if(course.pars && course.pars.length === 18) {
-                        currentCoursePars = course.pars;
+                        currentCoursePars = [...course.pars];
                     }
-                    applyParsToGrid();
+                    buildGrid();
                     return;
                 }
-            } catch(e) {
-                console.log("API offline or error", e);
             }
-
-            // 3. Complete Fallback (Editable Par 72)
-            displayTitle.innerText = query.toUpperCase();
-            statusText.innerText = "⚠️ Course not found. Default Par 72 loaded. Tap any Par below to edit manually.";
-            currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
-            applyParsToGrid();
+        } catch(e) {
+            console.log("Canadian API offline or error", e);
         }
+
+        // 3. Fallback
+        displayTitle.innerText = query.toUpperCase();
+        statusText.innerText = "⚠️ Course not found. Default Par 72 loaded.";
+        currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+        buildGrid();
+    }
+
+    // --- GRID GENERATION & LOGIC ---
+    function buildGrid() {
+        const grid = document.getElementById('scorecard-grid');
+        grid.innerHTML = ''; 
+
+        const rows = [
+            { label: 'HOLE', type: 'header' },
+            { label: 'PAR', type: 'par' },
+            { label: 'SCORE', type: 'input' },
+            { label: 'PUTTS', type: 'input' },
+            { label: 'FIR', type: 'toggle' },
+            { label: 'GIR', type: 'toggle' },
+            { label: 'DRIVE (YDS)', type: 'drive' } // New Row
+        ];
+
+        rows.forEach(row => {
+            // Add Row Label
+            const labelCell = document.createElement('div');
+            labelCell.className = 'row-label';
+            labelCell.innerText = row.label;
+            grid.appendChild(labelCell);
+
+            // Add 18 Columns
+            for (let i = 0; i < 18; i++) {
+                const cell = document.createElement('div');
+                
+                if (row.type === 'header') {
+                    cell.className = 'cell hole-header';
+                    cell.innerText = i + 1;
+                } 
+                else if (row.type === 'par') {
+                    cell.className = 'cell par-cell';
+                    cell.id = `par-cell-${i}`;
+                    cell.innerText = currentCoursePars[i];
+                    cell.onclick = () => cyclePar(i);
+                }
+                else if (row.type === 'input') {
+                    cell.className = 'cell';
+                    cell.innerHTML = `<input type="number" min="1" max="20" placeholder="-">`;
+                }
+                else if (row.type === 'toggle') {
+                    cell.className = 'cell';
+                    cell.innerHTML = `<button class="toggle-btn" onclick="toggleHit(this)">MISS</button>`;
+                }
+                else if (row.type === 'drive') {
+                    cell.className = 'cell drive-cell';
+                    cell.id = `drive-container-${i}`;
+                    cell.innerHTML = `<input type="number" id="drive-input-${i}" placeholder="yds">`;
+                }
+                
+                grid.appendChild(cell);
+            }
+        });
+
+        // Initialize drive distance fields based on current pars
+        updateDriveDistances();
+    }
+
+    // Allow manual par editing (3 -> 4 -> 5 -> 3)
+    function cyclePar(index) {
+        let current = currentCoursePars[index];
+        let newPar = current + 1;
+        if (newPar > 5) newPar = 3;
+        
+        currentCoursePars[index] = newPar;
+        document.getElementById(`par-cell-${index}`).innerText = newPar;
+        
+        // Update the drive distance inputs whenever par changes
+        updateDriveDistances();
+    }
+
+    // Toggles FIR/GIR buttons
+    function toggleHit(btn) {
+        if (btn.innerText === "MISS") {
+            btn.innerText = "HIT";
+            btn.classList.add("hit");
+        } else {
+            btn.innerText = "MISS";
+            btn.classList.remove("hit");
+        }
+    }
+
+    // Disables drive distance input on Par 3s
+    function updateDriveDistances() {
+        for (let i = 0; i < 18; i++) {
+            const input = document.getElementById(`drive-input-${i}`);
+            const container = document.getElementById(`drive-container-${i}`);
+            
+            if (currentCoursePars[i] === 3) {
+                input.value = ""; // Clear any existing data
+                input.disabled = true;
+                input.placeholder = "N/A";
+                container.classList.add("disabled");
+            } else {
+                input.disabled = false;
+                input.placeholder = "yds";
+                container.classList.remove("disabled");
+            }
+        }
+    }
+
+    // --- DATA AGGREGATION & STATS ---
+    function logScorecard() {
+        let totalDriveDist = 0;
+        let validDrives = 0;
+
+        for (let i = 0; i < 18; i++) {
+            // Only aggregate if it's not a par 3
+            if (currentCoursePars[i] > 3) {
+                const driveVal = document.getElementById(`drive-input-${i}`).value;
+                if (driveVal && !isNaN(driveVal)) {
+                    totalDriveDist += parseInt(driveVal);
+                    validDrives++;
+                }
+            }
+        }
+
+        const avgDrive = validDrives > 0 ? Math.round(totalDriveDist / validDrives) : 0;
+        
+        // Log stats output (ready for Supabase payload)
+        console.log("--- ROUND STATS ---");
+        console.log(`Valid Drives Logged: ${validDrives}`);
+        console.log(`Average Drive Distance: ${avgDrive} yds`);
+        alert(`Scorecard ready for sync!\nCalculated Average Drive: ${avgDrive || 'N/A'} yds`);
+    }
+
+    // Initialization
+    document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
+    document.getElementById('course-search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') fetchCourseDetails();
+    });
+
+    // Build the default grid on load
+    document.addEventListener('DOMContentLoaded', buildGrid);
+
+</script>
+</body>
+</html>
