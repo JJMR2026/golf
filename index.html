@@ -106,7 +106,7 @@
                                         <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-score-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center font-black rounded text-white border border-zinc-700 focus:border-emerald-500 focus:outline-none"></td>`);</script>
                                         <td id="total-in-score" class="p-1 font-black text-emerald-400">36</td>
                                     </tr>
-                                    <tr class="border-b border-zinc-900 text-zinc-400">
+                                    <tr class="border-b border-zinc-400">
                                         <td class="p-2 text-left font-bold bg-zinc-950 border-r border-zinc-800 text-zinc-500">PUTTS</td>
                                         <script>for(let i=10; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-putts-${i}" type="number" value="2" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center rounded border border-zinc-800 focus:border-emerald-500 focus:outline-none"></td>`);</script>
                                         <td id="total-in-putts" class="p-1 text-zinc-400">18</td>
@@ -282,35 +282,55 @@
         }
 
         // RE-ENGINEERED WITH COMPREHENSIVE USER INPUT VALIDATION & SUBSTRING FUZZY MATCHING
-        function executeCourseEngineQuery() {
+        async function executeCourseEngineQuery() {
             const rawInput = document.getElementById('course-search-input').value;
             const query = rawInput.toLowerCase().trim();
             const logger = document.getElementById('api-status-log');
             const display = document.getElementById('current-course-display');
 
-            // Explicit User Validation Trap
-            if(!query || query.length === 0) {
+            if(!query) {
                 alert("❌ Input Error: Please type a golf course name before hitting the fetch button!");
-                logger.innerText = "Error: Input query parameter empty.";
                 return;
             }
 
-            // Enhanced Lookups - checks keys or checks if input matches substrings cleanly
-            let atlasMatchKey = Object.keys(localCourseLookupAtlas).find(key => query.includes(key) || key.includes(query));
+            logger.innerText = "⚡ Querying live open global golf map...";
 
-            if(atlasMatchKey) {
-                const targetPars = localCourseLookupAtlas[atlasMatchKey];
-                display.innerText = atlasMatchKey.toUpperCase();
-                logger.innerText = `✅ Pars successfully matched and applied for ${atlasMatchKey.toUpperCase()}`;
-                
-                for(let i=1; i<=18; i++) {
-                    document.getElementById(`grid-par-${i}`).value = targetPars[i-1];
-                    document.getElementById(`grid-score-${i}`).value = targetPars[i-1];
+            try {
+                const response = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error("API server response invalid");
+                const data = await response.json();
+
+                if (data && data.courses && data.courses.length > 0) {
+                    const course = data.courses[0];
+                    display.innerText = course.name.toUpperCase();
+                    logger.innerText = `✅ Found in remote database! Location: ${course.city || 'Local'}`;
+                    
+                    let targetPars = course.pars || Array(18).fill(4);
+                    for(let i=1; i<=18; i++) {
+                        document.getElementById(`grid-par-${i}`).value = targetPars[i-1] || 4;
+                        document.getElementById(`grid-score-${i}`).value = targetPars[i-1] || 4;
+                    }
+                } else {
+                    throw new Error("Course not found in API. Trying local dictionary...");
                 }
-            } else {
-                display.innerText = rawInput.toUpperCase().trim();
-                logger.innerText = "⚠️ Course matrix not indexed. Custom layout generated below.";
-                alert(`ℹ️ "${rawInput}" isn't in our atlas dictionary yet. We've set up a blank layout so you can manually map pars below!`);
+            } catch (error) {
+                console.warn(error.message);
+                let atlasMatchKey = Object.keys(localCourseLookupAtlas).find(key => query.includes(key) || key.includes(query));
+
+                if(atlasMatchKey) {
+                    const targetPars = localCourseLookupAtlas[atlasMatchKey];
+                    display.innerText = atlasMatchKey.toUpperCase();
+                    logger.innerText = `✅ Pars matched locally via internal dictionary for ${atlasMatchKey.toUpperCase()}`;
+                    
+                    for(let i=1; i<=18; i++) {
+                        document.getElementById(`grid-par-${i}`).value = targetPars[i-1];
+                        document.getElementById(`grid-score-${i}`).value = targetPars[i-1];
+                    }
+                } else {
+                    display.innerText = rawInput.toUpperCase().trim();
+                    logger.innerText = "⚠️ Course matrix not indexed. Custom layout generated below.";
+                    alert(`ℹ️ "${rawInput}" isn't in our directory. We've generated a blank layout so you can manually input the pars!`);
+                }
             }
             calculateGridTotals();
         }
@@ -383,7 +403,9 @@
                 try {
                     const { error } = await supabase.from('golf_history').insert([newRoundObj]);
                     if(error) console.error("Database sync error: ", error.message);
-                } catch(e) {}
+                } catch(e) {
+                    console.error(e);
+                }
             }
 
             cachedRoundsInMemory.push(newRoundObj);
@@ -391,7 +413,7 @@
             
             alert(`✅ Scorecard safely compiled and locked!`);
             resetInputGridFormFields();
-            fetchSystemHistoryRecords();
+            compileCoreDashboardKPIs();
         }
 
         async function fetchSystemHistoryRecords() {
@@ -416,36 +438,15 @@
             if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) return;
 
             document.getElementById('kpi-rounds').innerText = cachedRoundsInMemory.length;
-async function executeCourseEngineQuery() {
-    const rawInput = document.getElementById('course-search-input').value;
-    const query = rawInput.trim();
-    const logger = document.getElementById('api-status-log');
-    const display = document.getElementById('current-course-display');
-
-    if(!query) {
-        alert("❌ Input Error: Please type a golf course or city name!");
-        return;
-    }
-
-    logger.innerText = "⚡ Querying live open global golf map...";
-
-    try {
-        // Querying the live open golf database REST API
-        const response = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-
-        if (data && data.courses && data.courses.length > 0) {
-            const course = data.courses[0]; // Take the closest match
-            display.innerText = course.name.toUpperCase();
-            logger.innerText = `✅ Found in database! Location: ${course.city || 'Local'}`;
-
+            
             let totalScores = 0, eagles = 0, birdies = 0, pars = 0, bogeys = 0;
             let putts = 0, fir = 0, gir = 0, totalHoles = 0;
 
             cachedRoundsInMemory.forEach(r => {
                 if(r && r.holes && Array.isArray(r.holes)) {
+                    let roundTotalScore = 0;
                     r.holes.forEach(h => {
-                        totalScores += h.score;
+                        roundTotalScore += h.score;
                         putts += h.putts;
                         totalHoles++;
                         if(h.fir) fir++;
@@ -457,6 +458,7 @@ async function executeCourseEngineQuery() {
                         else if(diff === 0) pars++;
                         else if(diff === 1) bogeys++;
                     });
+                    totalScores += roundTotalScore;
                 }
             });
 
@@ -472,7 +474,6 @@ async function executeCourseEngineQuery() {
             }
         }
 
-        // SECURED TAB RENDERING - Fixed broken matrix arrays
         function renderHistoryList() {
             const container = document.getElementById('history-rounds-container');
             if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) {
@@ -562,7 +563,6 @@ async function executeCourseEngineQuery() {
             reader.readAsText(file);
         }
 
-        // SECURED ANALYTICS ENGINE - Safe rendering fallback traps
         function buildChartsDashboard() {
             if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) return;
             let labels = [], metrics = [], e=0, br=0, p=0, bo=0;
@@ -603,11 +603,10 @@ async function executeCourseEngineQuery() {
         }
 
         function resetInputGridFormFields() {
-            liveFirState.fill(false); liveGirState.fill(false);
-            // Note: If the open API doesn't specify specific hole-by-hole pars, 
-            // we default them to standard 4s so you can adjust them manually.
-            let defaultPars = course.pars || Array(18).fill(4); 
-for(let i=1; i<=18; i++) {
+            liveFirState.fill(false); 
+            liveGirState.fill(false);
+            
+            for(let i=1; i<=18; i++) {
                 document.getElementById(`grid-score-${i}`).value = document.getElementById(`grid-par-${i}`).value;
                 document.getElementById(`grid-putts-${i}`).value = 2;
                 document.getElementById(`grid-fir-${i}`).className = "w-8 h-5 rounded text-[8px] font-bold bg-zinc-800 text-zinc-500";
@@ -637,17 +636,3 @@ for(let i=1; i<=18; i++) {
     </script>
 </body>
 </html>
-                document.getElementById(`grid-par-${i}`).value = defaultPars[i-1] || 4;
-                document.getElementById(`grid-score-${i}`).value = defaultPars[i-1] || 4;
-            }
-        } else {
-            // Fallback if not found
-            display.innerText = rawInput.toUpperCase();
-            logger.innerText = "⚠️ Not found in global directory. Using custom manual layout.";
-        }
-    } catch (error) {
-        console.error("Fetch failed, reverting to local matching.", error);
-        // Fallback to local hardcoded dictionary logic...
-    }
-    calculateGridTotals();
-}
