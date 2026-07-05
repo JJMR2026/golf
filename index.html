@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golf Tracker</title>
+    <!-- Include Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* --- GLOBAL & LAYOUT --- */
         :root {
@@ -28,7 +30,6 @@
             justify-content: center;
         }
 
-        /* Fixed: Expanded desktop width */
         .container {
             width: 100%;
             max-width: 1400px; 
@@ -42,6 +43,23 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 24px;
+        }
+
+        /* --- VIEW ROUTING --- */
+        .view-container {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-container.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* --- BUTTONS & INPUTS --- */
@@ -65,12 +83,12 @@
 
         button:hover { background-color: #1f1f1f; }
         
-        button.primary {
+        button.primary, button.nav-btn.active {
             background-color: var(--accent-green);
             color: #000;
             border: none;
         }
-        button.primary:hover { background-color: var(--accent-hover); }
+        button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
 
         .search-row {
             display: flex;
@@ -117,12 +135,11 @@
             padding-bottom: 10px;
         }
 
-        /* Fixed: Grid uses 1fr to expand across full desktop width */
         .matrix-grid {
             display: grid;
             grid-template-columns: 80px repeat(18, minmax(60px, 1fr));
             gap: 6px;
-            min-width: 1000px; /* Ensures mobile still scrolls */
+            min-width: 1000px;
         }
 
         .row-label {
@@ -162,7 +179,6 @@
             outline: none;
         }
 
-        /* Specific styling for the drive distance inputs */
         .cell.drive-cell input:disabled {
             color: #333;
             cursor: not-allowed;
@@ -197,6 +213,15 @@
         .data-management h4 { margin: 0; color: var(--text-muted); font-size: 12px; }
         .danger-btn { color: #ef4444; border-color: #ef4444; }
         .danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
+        
+        /* --- HISTORY LIST --- */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .history-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -205,55 +230,179 @@
     
     <!-- NAVIGATION -->
     <div class="nav-buttons">
-        <button class="primary">New Round</button>
-        <button>History</button>
-        <button>Analytics</button>
+        <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
+        <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
+        <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
     </div>
 
-    <!-- COURSE SEARCH -->
-    <div class="card">
-        <div style="font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">
-            🔍 Select or Fetch Golf Course
-        </div>
-        <div class="search-row">
-            <input type="text" id="course-search-input" placeholder="e.g., Blue Devil">
-            <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
-        </div>
-        <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
-    </div>
-
-    <!-- SCORECARD MATRIX -->
-    <div class="card">
-        <div class="scorecard-header">
-            <h3 id="current-course-display">STANDARD 18 LAYOUT</h3>
-            <div class="badge">18 HOLES</div>
+    <!-- ==================== NEW ROUND VIEW ==================== -->
+    <div id="view-new-round" class="view-container active">
+        <!-- COURSE SEARCH -->
+        <div class="card">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">
+                🔍 Select or Fetch Golf Course
+            </div>
+            <div class="search-row">
+                <input type="text" id="course-search-input" placeholder="e.g., Blue Devil">
+                <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
+            </div>
+            <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <div class="matrix-wrapper">
-            <div class="matrix-grid" id="scorecard-grid">
-                <!-- Grid injected via JS -->
+        <!-- SCORECARD MATRIX -->
+        <div class="card">
+            <div class="scorecard-header">
+                <h3 id="current-course-display">STANDARD 18 LAYOUT</h3>
+                <div class="badge">18 HOLES</div>
+            </div>
+
+            <div class="matrix-wrapper">
+                <div class="matrix-grid" id="scorecard-grid">
+                    <!-- Grid injected via JS -->
+                </div>
+            </div>
+
+            <div class="log-btn-container">
+                <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="logScorecard()">
+                    COMPLETE & LOG SCORECARD →
+                </button>
             </div>
         </div>
 
-        <div class="log-btn-container">
-            <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="logScorecard()">
-                COMPLETE & LOG SCORECARD →
-            </button>
+        <!-- DATA MANAGEMENT -->
+        <div class="card data-management">
+            <h4>⚙️ LOCAL DATA MANAGEMENT</h4>
+            <div style="display: flex; gap: 10px;">
+                <button>📊 Export CSV</button>
+                <button class="danger-btn">🗑️ Wipe Storage</button>
+            </div>
         </div>
     </div>
 
-    <!-- DATA MANAGEMENT -->
-    <div class="card data-management">
-        <h4>⚙️ LOCAL DATA MANAGEMENT</h4>
-        <div style="display: flex; gap: 10px;">
-            <button>📊 Export CSV</button>
-            <button class="danger-btn">🗑️ Wipe Storage</button>
+    <!-- ==================== HISTORY VIEW ==================== -->
+    <div id="view-history" class="view-container">
+        <div class="card">
+            <div class="scorecard-header">
+                <h3>ROUND HISTORY</h3>
+                <div class="badge" style="background: #2563eb; color: white; border: none;">SUPABASE SYNCED</div>
+            </div>
+            <div id="history-list">
+                <!-- Placeholder items waiting for Supabase logic -->
+                <div class="history-item">
+                    <div>
+                        <strong>Blue Devil</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">August 12, 2026</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Score: 82</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">Diff: 9.2</span>
+                    </div>
+                </div>
+                <div class="history-item">
+                    <div>
+                        <strong>Banff Springs</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">July 28, 2026</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Score: 88</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">Diff: 14.1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ANALYTICS VIEW ==================== -->
+    <div id="view-analytics" class="view-container">
+        <div class="card">
+            <div class="scorecard-header">
+                <h3>PERFORMANCE ANALYTICS</h3>
+            </div>
+            <!-- Chart.js Canvas -->
+            <div style="position: relative; height: 400px; width: 100%;">
+                <canvas id="scoringChart"></canvas>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">AVG DRIVE DISTANCE</h4>
+                <div style="font-size: 32px; font-weight: bold; color: var(--accent-green);">264 <span style="font-size: 16px; color: var(--text-muted);">YDS</span></div>
+            </div>
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR PERCENTAGE</h4>
+                <div style="font-size: 32px; font-weight: bold; color: #3b82f6;">42 <span style="font-size: 16px; color: var(--text-muted);">%</span></div>
+            </div>
         </div>
     </div>
 
 </div>
 
 <script>
+    // --- VIEW ROUTING LOGIC ---
+    let chartInstance = null;
+
+    function switchView(viewId, btnElement) {
+        // Hide all views
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        // Show target view & set active button
+        document.getElementById(viewId).classList.add('active');
+        btnElement.classList.add('active');
+
+        // Initialize chart only when Analytics view is opened
+        if (viewId === 'view-analytics' && !chartInstance) {
+            initChart();
+        }
+    }
+
+    // --- CHART.JS INITIALIZATION (Analytics Placeholder) ---
+    function initChart() {
+        const ctx = document.getElementById('scoringChart').getContext('2d');
+        
+        // Ensure chart styling matches the dark theme
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['May 1', 'May 15', 'Jun 2', 'Jun 18', 'Jul 5', 'Jul 28', 'Aug 12'], // Placeholder labels
+                datasets: [{
+                    label: 'Gross Score',
+                    data: [94, 91, 89, 92, 85, 88, 82], // Placeholder data
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#121212',
+                    pointBorderColor: '#10b981',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        grid: { color: '#2a2a2a' },
+                        suggestedMin: 70,
+                        suggestedMax: 100
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
     // --- STATE MANAGEMENT ---
     const globalCourseDatabase = {
         "blue devil": [4,4,4,5,3,4,3,4,5,4,4,3,4,4,5,3,5,4],
@@ -284,7 +433,6 @@
 
         // 2. Network Endpoint (Configured for Canadian Database)
         try {
-            // Updated endpoint structure targeting canadian DB logic
             const res = await fetch(`https://api.golfdata.ca/v1/courses/search?q=${encodeURIComponent(query)}`);
             if (res.ok) {
                 const data = await res.json();
@@ -322,17 +470,15 @@
             { label: 'PUTTS', type: 'input' },
             { label: 'FIR', type: 'toggle' },
             { label: 'GIR', type: 'toggle' },
-            { label: 'DRIVE (YDS)', type: 'drive' } // New Row
+            { label: 'DRIVE (YDS)', type: 'drive' } 
         ];
 
         rows.forEach(row => {
-            // Add Row Label
             const labelCell = document.createElement('div');
             labelCell.className = 'row-label';
             labelCell.innerText = row.label;
             grid.appendChild(labelCell);
 
-            // Add 18 Columns
             for (let i = 0; i < 18; i++) {
                 const cell = document.createElement('div');
                 
@@ -364,11 +510,9 @@
             }
         });
 
-        // Initialize drive distance fields based on current pars
         updateDriveDistances();
     }
 
-    // Allow manual par editing (3 -> 4 -> 5 -> 3)
     function cyclePar(index) {
         let current = currentCoursePars[index];
         let newPar = current + 1;
@@ -377,11 +521,9 @@
         currentCoursePars[index] = newPar;
         document.getElementById(`par-cell-${index}`).innerText = newPar;
         
-        // Update the drive distance inputs whenever par changes
         updateDriveDistances();
     }
 
-    // Toggles FIR/GIR buttons
     function toggleHit(btn) {
         if (btn.innerText === "MISS") {
             btn.innerText = "HIT";
@@ -392,14 +534,13 @@
         }
     }
 
-    // Disables drive distance input on Par 3s
     function updateDriveDistances() {
         for (let i = 0; i < 18; i++) {
             const input = document.getElementById(`drive-input-${i}`);
             const container = document.getElementById(`drive-container-${i}`);
             
             if (currentCoursePars[i] === 3) {
-                input.value = ""; // Clear any existing data
+                input.value = ""; 
                 input.disabled = true;
                 input.placeholder = "N/A";
                 container.classList.add("disabled");
@@ -417,7 +558,6 @@
         let validDrives = 0;
 
         for (let i = 0; i < 18; i++) {
-            // Only aggregate if it's not a par 3
             if (currentCoursePars[i] > 3) {
                 const driveVal = document.getElementById(`drive-input-${i}`).value;
                 if (driveVal && !isNaN(driveVal)) {
@@ -429,20 +569,18 @@
 
         const avgDrive = validDrives > 0 ? Math.round(totalDriveDist / validDrives) : 0;
         
-        // Log stats output (ready for Supabase payload)
         console.log("--- ROUND STATS ---");
         console.log(`Valid Drives Logged: ${validDrives}`);
         console.log(`Average Drive Distance: ${avgDrive} yds`);
         alert(`Scorecard ready for sync!\nCalculated Average Drive: ${avgDrive || 'N/A'} yds`);
     }
 
-    // Initialization
+    // Initialization Events
     document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
     document.getElementById('course-search-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') fetchCourseDetails();
     });
 
-    // Build the default grid on load
     document.addEventListener('DOMContentLoaded', buildGrid);
 
 </script>
