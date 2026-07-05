@@ -14,7 +14,7 @@
     <!-- THE DYNAMIC EXPANDABLE WORKSPACE CANVAS FRAME -->
     <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
         
-        <!-- MAIN TRACKING CONSOLE BLOCK (EXPUNDS WIDESCREEN ON DESKTOP INTERFACES) -->
+        <!-- MAIN TRACKING CONSOLE BLOCK (EXPANDS WIDESCREEN ON DESKTOP INTERFACES) -->
         <div class="lg:col-span-3 space-y-4">
             
             <nav class="grid grid-cols-3 gap-1 bg-zinc-900/60 p-1 border border-zinc-800/80 rounded-xl">
@@ -234,7 +234,7 @@
 
     <!-- ================= RUNTIME CORE SCRIPT LOGIC ENGINE ================= -->
     <script>
-        // CLIENT INTERFACE CONFIGURATION - USING SAFE PUBLISHABLE FRONTEND KEY
+        // CLIENT INTERFACE CONFIGURATION - USING SAFE PUBLISHABLE KEY
         const SUPABASE_URL = "https://KLpYENB7bIa_8SkAWN90uA_12BcxJKC.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC";
 
@@ -251,7 +251,7 @@
         let trendChartInstance = null;
         let distChartInstance = null;
 
-        // HIGHLY RESILIENT INTERNAL EMBEDDED ATLAS DICTIONARY MAPPING
+        // ATLAS DICTIONARY MAPPING
         const localCourseLookupAtlas = {
             "pebble beach": [4,4,4,4,3,5,3,4,4,4,4,3,4,5,4,4,3,5],
             "augusta": [4,5,4,4,4,3,4,5,4,4,4,3,5,4,4,3,4,5],
@@ -262,7 +262,7 @@
             "shinnecock": [4,3,4,4,5,4,3,4,4,4,4,3,4,4,4,5,3,4],
             "oakmont": [4,4,4,5,4,3,4,4,5,4,4,4,3,4,4,4,3,4],
             "merion": [4,5,4,4,4,4,4,3,3,4,4,4,3,4,4,4,3,4],
-            "wingo foot": [4,4,4,4,5,4,3,4,4,4,4,4,5,3,4,4,4,4],
+            "wingfoot": [4,4,4,4,5,4,3,4,4,4,4,4,5,3,4,4,4,4],
             "bandon dunes": [4,4,5,4,4,3,4,4,5,4,4,3,5,4,4,4,5,4],
             "pacific dunes": [4,4,5,4,4,3,4,4,4,4,4,3,5,4,3,4,3,5]
         };
@@ -281,13 +281,21 @@
             if(tabId === 'analytics') buildChartsDashboard();
         }
 
+        // RE-ENGINEERED WITH COMPREHENSIVE USER INPUT VALIDATION & SUBSTRING FUZZY MATCHING
         function executeCourseEngineQuery() {
-            const query = document.getElementById('course-search-input').value.toLowerCase().trim();
+            const rawInput = document.getElementById('course-search-input').value;
+            const query = rawInput.toLowerCase().trim();
             const logger = document.getElementById('api-status-log');
             const display = document.getElementById('current-course-display');
 
-            if(!query) return;
+            // Explicit User Validation Trap
+            if(!query || query.length === 0) {
+                alert("❌ Input Error: Please type a golf course name before hitting the fetch button!");
+                logger.innerText = "Error: Input query parameter empty.";
+                return;
+            }
 
+            // Enhanced Lookups - checks keys or checks if input matches substrings cleanly
             let atlasMatchKey = Object.keys(localCourseLookupAtlas).find(key => query.includes(key) || key.includes(query));
 
             if(atlasMatchKey) {
@@ -300,8 +308,9 @@
                     document.getElementById(`grid-score-${i}`).value = targetPars[i-1];
                 }
             } else {
-                display.innerText = query.toUpperCase();
-                logger.innerText = "⚠️ Course matrix not indexed. Enter custom par settings below.";
+                display.innerText = rawInput.toUpperCase().trim();
+                logger.innerText = "⚠️ Course matrix not indexed. Custom layout generated below.";
+                alert(`ℹ️ "${rawInput}" isn't in our atlas dictionary yet. We've set up a blank layout so you can manually map pars below!`);
             }
             calculateGridTotals();
         }
@@ -325,14 +334,11 @@
         function calculateGridTotals() {
             let outPar = 0, outScore = 0, outPutts = 0;
             let inPar = 0, inScore = 0, inPutts = 0;
-            let totalFir = 0, totalGir = 0;
 
             for(let i=1; i<=9; i++) {
                 outPar += parseInt(document.getElementById(`grid-par-${i}`).value) || 4;
                 outScore += parseInt(document.getElementById(`grid-score-${i}`).value) || 4;
                 outPutts += parseInt(document.getElementById(`grid-putts-${i}`).value) || 2;
-                if(liveFirState[i-1]) totalFir++;
-                if(liveGirState[i-1]) totalGir++;
             }
             document.getElementById('total-out-par').innerText = outPar;
             document.getElementById('total-out-score').innerText = outScore;
@@ -342,8 +348,6 @@
                 inPar += parseInt(document.getElementById(`grid-par-${i}`).value) || 4;
                 inScore += parseInt(document.getElementById(`grid-score-${i}`).value) || 4;
                 inPutts += parseInt(document.getElementById(`grid-putts-${i}`).value) || 2;
-                if(liveFirState[i-1]) totalFir++;
-                if(liveGirState[i-1]) totalGir++;
             }
             document.getElementById('total-in-par').innerText = inPar;
             document.getElementById('total-in-score').innerText = inScore;
@@ -365,7 +369,7 @@
                     score: parseInt(document.getElementById(`grid-score-${i}`).value) || 4,
                     putts: parseInt(document.getElementById(`grid-putts-${i}`).value) || 2,
                     fir: liveFirState[i-1],
-                    grid: liveGirState[i-1]
+                    gir: liveGirState[i-1]
                 });
             }
 
@@ -378,7 +382,7 @@
             if(supabase) {
                 try {
                     const { error } = await supabase.from('golf_history').insert([newRoundObj]);
-                    if(error) console.error("Database mismatch sync error: ", error.message);
+                    if(error) console.error("Database sync error: ", error.message);
                 } catch(e) {}
             }
 
@@ -409,7 +413,7 @@
         }
 
         function compileCoreDashboardKPIs() {
-            if(cachedRoundsInMemory.length === 0) return;
+            if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) return;
 
             document.getElementById('kpi-rounds').innerText = cachedRoundsInMemory.length;
             
@@ -417,45 +421,51 @@
             let putts = 0, fir = 0, gir = 0, totalHoles = 0;
 
             cachedRoundsInMemory.forEach(r => {
-                r.holes.forEach(h => {
-                    totalScores += h.score;
-                    putts += h.putts;
-                    totalHoles++;
-                    if(h.fir) fir++;
-                    if(h.gir) gir++;
+                if(r && r.holes && Array.isArray(r.holes)) {
+                    r.holes.forEach(h => {
+                        totalScores += h.score;
+                        putts += h.putts;
+                        totalHoles++;
+                        if(h.fir) fir++;
+                        if(h.gir) gir++;
 
-                    let diff = h.score - h.par;
-                    if(diff <= -2) eagles++;
-                    else if(diff === -1) birdies++;
-                    else if(diff === 0) pars++;
-                    else if(diff === 1) bogeys++;
-                });
+                        let diff = h.score - h.par;
+                        if(diff <= -2) eagles++;
+                        else if(diff === -1) birdies++;
+                        else if(diff === 0) pars++;
+                        else if(diff === 1) bogeys++;
+                    });
+                }
             });
 
-            document.getElementById('kpi-avg').innerText = (totalScores / cachedRoundsInMemory.length).toFixed(1);
-            document.getElementById('stat-eagles').innerText = eagles;
-            document.getElementById('stat-birdies').innerText = birdies;
-            document.getElementById('stat-pars').innerText = pars;
-            document.getElementById('stat-bogeys').innerText = bogeys;
-            document.getElementById('stat-putts').innerText = (putts / cachedRoundsInMemory.length).toFixed(1);
-            document.getElementById('stat-fir-pct').innerText = Math.round((fir / totalHoles) * 100) + "%";
-            document.getElementById('stat-gir-pct').innerText = Math.round((gir / totalHoles) * 100) + "%";
+            if (totalHoles > 0) {
+                document.getElementById('kpi-avg').innerText = (totalScores / cachedRoundsInMemory.length).toFixed(1);
+                document.getElementById('stat-eagles').innerText = eagles;
+                document.getElementById('stat-birdies').innerText = birdies;
+                document.getElementById('stat-pars').innerText = pars;
+                document.getElementById('stat-bogeys').innerText = bogeys;
+                document.getElementById('stat-putts').innerText = (putts / cachedRoundsInMemory.length).toFixed(1);
+                document.getElementById('stat-fir-pct').innerText = Math.round((fir / totalHoles) * 100) + "%";
+                document.getElementById('stat-gir-pct').innerText = Math.round((gir / totalHoles) * 100) + "%";
+            }
         }
 
+        // SECURED TAB RENDERING - Fixed broken matrix arrays
         function renderHistoryList() {
             const container = document.getElementById('history-rounds-container');
-            if(cachedRoundsInMemory.length === 0) {
+            if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) {
                 container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No records found.</p>`;
                 return;
             }
 
             container.innerHTML = cachedRoundsInMemory.map((round, idx) => {
-                let totalScore = round.holes.reduce((sum, h) => sum + h.score, 0);
+                if(!round || !round.holes) return '';
+                let totalScore = round.holes.reduce((sum, h) => sum + (h.score || 0), 0);
                 return `
                     <div class="bg-black border border-zinc-800 p-3 rounded-lg flex justify-between items-center font-mono text-xs">
                         <div>
-                            <span class="text-[9px] text-zinc-500 block">${round.date}</span>
-                            <span class="font-bold text-zinc-200 uppercase">${round.course}</span>
+                            <span class="text-[9px] text-zinc-500 block">${round.date || 'Unknown Date'}</span>
+                            <span class="font-bold text-zinc-200 uppercase">${round.course || 'CUSTOM'}</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="font-black text-emerald-400">${totalScore}</span>
@@ -468,9 +478,9 @@
 
         function inspectHistoricalRoundCardByIndex(idx) {
             const round = cachedRoundsInMemory[idx];
-            if(!round) return;
+            if(!round || !round.holes) return;
 
-            document.getElementById('inspect-course-title').innerText = round.course;
+            document.getElementById('inspect-course-title').innerText = round.course || "CUSTOM ROUND";
             document.getElementById('inspect-date-title').innerText = `Date Logged: ${round.date}`;
 
             const frontHoles = round.holes.slice(0, 9);
@@ -483,8 +493,8 @@
                             <tr class="text-zinc-500 text-[9px] border-b border-zinc-800"><th class="text-left p-1 text-zinc-400 uppercase font-sans">${label}</th>${hArray.map(h=>`<th>${h.hole}</th>`).join('')}</tr>
                         </thead>
                         <tbody>
-                            <tr class="text-zinc-500 border-b border-zinc-900"><td class="text-left font-bold text-[9px]">PAR</td>${hArray.map(h=>`<td>${h.par}</td>`).join('')}</tr>
-                            <tr class="text-white font-black"><td class="text-left text-zinc-400 text-[9px]">SCORE</td>${hArray.map(h=>`<td class="${h.score < h.par ? 'text-emerald-400': h.score > h.par ? 'text-red-400':''}">${h.score}</td>`).join('')}</tr>
+                            <tr class="text-zinc-500 border-b border-zinc-900"><td class="text-left font-bold text-[9px]">PAR</td>${hArray.map(h=>`<td>${h.par || 4}</td>`).join('')}</tr>
+                            <tr class="text-white font-black"><td class="text-left text-zinc-400 text-[9px]">SCORE</td>${hArray.map(h=>`<td class="${h.score < h.par ? 'text-emerald-400': h.score > h.par ? 'text-red-400':''}">${h.score || 4}</td>`).join('')}</tr>
                         </tbody>
                     </table>
                 </div>
@@ -530,17 +540,20 @@
             reader.readAsText(file);
         }
 
+        // SECURED ANALYTICS ENGINE - Safe rendering fallback traps
         function buildChartsDashboard() {
-            if(cachedRoundsInMemory.length === 0) return;
+            if(!cachedRoundsInMemory || cachedRoundsInMemory.length === 0) return;
             let labels = [], metrics = [], e=0, br=0, p=0, bo=0;
 
             cachedRoundsInMemory.forEach(r => {
-                labels.push(r.date);
-                metrics.push(r.holes.reduce((s, h) => s + h.score, 0));
-                r.holes.forEach(h => {
-                    let d = h.score - h.par;
-                    if(d <= -2) e++; else if(d === -1) br++; else if(d === 0) p++; else if(d === 1) bo++;
-                });
+                if (r && r.holes) {
+                    labels.push(r.date || 'Round');
+                    metrics.push(r.holes.reduce((s, h) => s + (h.score || 0), 0));
+                    r.holes.forEach(h => {
+                        let d = (h.score || 4) - (h.par || 4);
+                        if(d <= -2) e++; else if(d === -1) br++; else if(d === 0) p++; else if(d === 1) bo++;
+                    });
+                }
             });
 
             if(trendChartInstance) trendChartInstance.destroy();
@@ -548,17 +561,23 @@
 
             Chart.defaults.color = '#71717a'; Chart.defaults.font.family = 'monospace';
 
-            trendChartInstance = new Chart(document.getElementById('scoreTrendChart').getContext('2d'), {
-                type: 'line',
-                data: { labels: labels, datasets: [{ label: 'Aggregate Score', data: metrics, borderColor: '#10b981', tension: 0.1, fill: false }] },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+            const ctxTrend = document.getElementById('scoreTrendChart');
+            if (ctxTrend) {
+                trendChartInstance = new Chart(ctxTrend.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: labels, datasets: [{ label: 'Aggregate Score', data: metrics, borderColor: '#10b981', tension: 0.1, fill: false }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
 
-            distChartInstance = new Chart(document.getElementById('scoreDistributionChart').getContext('2d'), {
-                type: 'bar',
-                data: { labels: ['Eagles', 'Birdies', 'Pars', 'Bogeys'], datasets: [{ data: [e, br, p, bo], backgroundColor: '#10b981' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
+            const ctxDist = document.getElementById('scoreDistributionChart');
+            if (ctxDist) {
+                distChartInstance = new Chart(ctxDist.getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: ['Eagles', 'Birdies', 'Pars', 'Bogeys'], datasets: [{ data: [e, br, p, bo], backgroundColor: '#10b981' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
         }
 
         function resetInputGridFormFields() {
@@ -576,7 +595,11 @@
 
         function downloadBackupCSV() {
             let csv = "data:text/csv;charset=utf-8,Date,Course,Hole,Par,Score,Putts\n";
-            cachedRoundsInMemory.forEach(r => r.holes.forEach(h => csv += `"${r.date}","${r.course}",${h.hole},${h.par},${h.score},${h.putts}\n`));
+            cachedRoundsInMemory.forEach(r => {
+                if(r && r.holes) {
+                    r.holes.forEach(h => csv += `"${r.date}","${r.course}",${h.hole},${h.par},${h.score},${h.putts}\n`);
+                }
+            });
             const a = document.createElement('a'); a.setAttribute('href', encodeURI(csv)); a.setAttribute('download', 'data_backup.csv');
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
