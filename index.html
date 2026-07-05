@@ -9,60 +9,69 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="p-4 bg-black text-zinc-100 font-sans">
-
     <div class="max-w-4xl mx-auto space-y-6">
-        <!-- SEARCH & AUTO-POPULATE SECTION -->
+        
+        <!-- COURSE & HANDICAP SECTION -->
         <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
             <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4">Course Intelligence</h2>
             <div class="flex gap-2 mb-4">
-                <input id="course-search" class="flex-1 bg-black border border-zinc-700 p-3 rounded-lg text-sm" placeholder="Enter course name...">
-                <button onclick="fetchCourseData()" class="bg-emerald-500 text-black font-black px-6 py-3 rounded-lg text-xs uppercase">Fetch Data</button>
+                <input id="course-search" class="flex-1 bg-black border border-zinc-700 p-3 rounded-lg text-sm" placeholder="e.g. Blue Devil, Calgary">
+                <button onclick="fetchCourseData()" class="bg-emerald-500 text-black font-black px-6 py-3 rounded-lg text-xs uppercase">Fetch</button>
             </div>
+            
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[9px] text-zinc-500 uppercase">Auto-Detected Rating</label>
-                    <input id="rating-val" readonly class="w-full bg-black border border-zinc-800 p-2 rounded text-emerald-400 font-mono">
+                    <label class="text-[9px] text-zinc-500 uppercase block mb-1">Course Rating</label>
+                    <input id="rating-val" type="number" step="0.1" class="w-full bg-black border border-zinc-700 p-2 rounded text-emerald-400 font-mono" placeholder="74.4">
                 </div>
                 <div>
-                    <label class="text-[9px] text-zinc-500 uppercase">Auto-Detected Slope</label>
-                    <input id="slope-val" readonly class="w-full bg-black border border-zinc-800 p-2 rounded text-emerald-400 font-mono">
+                    <label class="text-[9px] text-zinc-500 uppercase block mb-1">Slope Rating</label>
+                    <input id="slope-val" type="number" class="w-full bg-black border border-zinc-700 p-2 rounded text-emerald-400 font-mono" placeholder="138">
                 </div>
             </div>
         </section>
 
-        <!-- HANDICAP MONITOR -->
-        <section class="bg-zinc-950 p-6 rounded-2xl border border-emerald-900/30 text-center">
-            <h2 class="text-[10px] text-zinc-500 uppercase">Handicap Index</h2>
-            <div id="hcp-index" class="text-5xl font-black text-white mt-1">--</div>
+        <!-- SCORECARD GRID (Restored) -->
+        <section class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+            <div id="scorecard-grid" class="grid grid-cols-9 gap-1">
+                <!-- 18 Inputs for Scores -->
+                <script>for(let i=1; i<=18; i++) document.write(`<input id="s${i}" placeholder="${i}" class="bg-black border border-zinc-800 p-2 text-center rounded text-xs">`);</script>
+            </div>
+            <button onclick="saveRound()" class="w-full mt-6 bg-emerald-500 text-black font-black py-3 rounded-lg uppercase text-xs">Sync Round</button>
         </section>
     </div>
 
     <script>
-        // Fetch logic that populates rating/slope automatically
+        // --- HANDICAP & DATA LOGIC ---
         async function fetchCourseData() {
             const query = document.getElementById('course-search').value;
-            // Simulated API call structure
-            try {
-                const response = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                if(data.courses.length > 0) {
-                    const course = data.courses[0];
-                    document.getElementById('rating-val').value = course.rating || 72.0;
-                    document.getElementById('slope-val').value = course.slope || 113;
-                    updateHandicap();
-                }
-            } catch(e) {
-                alert("Could not auto-fetch data. Defaulting to standard ratings.");
-                document.getElementById('rating-val').value = 72.0;
-                document.getElementById('slope-val').value = 113;
+            // Note: API might be wrong for local courses, so we prioritize the input fields
+            const response = await fetch(`https://api.opengolfapi.org/v1/courses/search?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if(data?.courses?.length > 0) {
+                const course = data.courses[0];
+                document.getElementById('rating-val').value = course.rating || 72.0;
+                document.getElementById('slope-val').value = course.slope || 113;
+            } else {
+                alert("Course not found in API. Please manually enter Rating and Slope.");
             }
         }
 
-        // Handicap math engine
-        function updateHandicap() {
-            // Logic: (Score - Rating) * 113 / Slope
-            // This would trigger whenever a new round is added
-            console.log("Handicap recalibrated.");
+        function saveRound() {
+            const rating = parseFloat(document.getElementById('rating-val').value);
+            const slope = parseInt(document.getElementById('slope-val').value);
+            const totalScore = Array.from({length: 18}, (_, i) => parseInt(document.getElementById(`s${i+1}`).value) || 0).reduce((a, b) => a + b, 0);
+            
+            const diff = (totalScore - rating) * 113 / slope;
+            
+            // Push to LocalStorage/Supabase
+            const round = { date: new Date().toISOString(), score: totalScore, diff: diff };
+            let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
+            history.push(round);
+            localStorage.setItem('golf_history', JSON.stringify(history));
+            
+            alert(`Round Saved! Differential: ${diff.toFixed(1)}`);
         }
     </script>
 </body>
