@@ -9,6 +9,11 @@ permissions:
   pages: write
   id-token: write
 
+# This ensures only one deployment can run at a time
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,7 +27,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # This tells GitHub to upload the root folder where index.html lives
+          path: '.'
 
       - name: Deploy
         uses: actions/deploy-pages@v4
