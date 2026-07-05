@@ -4,24 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pro Golf Analytics & Scorecard</title>
-    <!-- Tailwind CSS for Styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for Client-Side Visualization without Server Dependencies -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="p-3 max-w-md mx-auto bg-black text-zinc-100 font-sans antialiased min-h-screen flex flex-col justify-between">
 
     <div>
-        <!-- TOP APP BAR HERO HEADER -->
+        <!-- HERO HEADER -->
         <header class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-lg mb-4 flex justify-between items-center">
             <div>
                 <h1 class="text-xs font-black tracking-widest text-emerald-400">GOLF CADDIE PRO</h1>
-                <p class="text-[10px] text-zinc-500 uppercase font-mono">Offline-First Scorecard Engine</p>
+                <p class="text-[10px] text-zinc-500 uppercase font-mono">Offline-First Scorecard</p>
             </div>
             <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/20 px-2 py-0.5 rounded">V2.0 LOCAL</span>
         </header>
 
-        <!-- NAVIGATION TABS SWITCH PANEL -->
+        <!-- NAVIGATION TABS -->
         <nav class="grid grid-cols-3 gap-1 bg-zinc-900/60 p-1 border border-zinc-800/80 rounded-xl mb-4">
             <button onclick="switchTab('new-round')" id="tab-new-round" class="text-xs font-bold py-2 rounded-lg bg-emerald-500 text-black transition-all">New Round</button>
             <button onclick="switchTab('history')" id="tab-history" class="text-xs font-bold py-2 rounded-lg text-zinc-400 hover:text-white transition-all">History</button>
@@ -30,21 +30,20 @@
 
         <!-- ================= TAB 1: NEW ROUND VIEW ================= -->
         <div id="view-new-round" class="tab-view block space-y-4">
-            <!-- COURSE FETCH & LOADER BLOCK -->
+            
             <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">🔍 Select or Fetch Golf Course</h2>
                 <div class="flex gap-2">
-                    <input id="course-search-input" type="text" placeholder="e.g. Pebble Beach, Augusta, Custom..." class="flex-1 bg-black text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    <input id="course-search-input" type="text" placeholder="e.g. Pebble Beach..." class="flex-1 bg-black text-sm p-2 rounded-lg border border-zinc-700 text-white focus:outline-none focus:border-emerald-500 font-mono">
                     <button onclick="fetchCourseDetails()" class="bg-emerald-500 text-black text-xs font-black px-4 py-2 rounded-lg active:scale-95 transition-transform">Fetch</button>
                 </div>
-                <p id="api-status" class="text-[10px] font-mono text-zinc-500 mt-2">Enter any course name. Matches pull par layouts instantly.</p>
+                <p id="api-status" class="text-[10px] font-mono text-zinc-500 mt-2">Enter any course name. Editable fallback available if search fails.</p>
             </section>
 
-            <!-- LIVE SCORECARD GRID CANVAS -->
             <section class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl shadow-md">
                 <div class="flex justify-between items-center mb-2">
                     <h2 id="current-course-display" class="text-xs font-black uppercase tracking-wider text-emerald-400">STANDARD 18 LAYOUT</h2>
-                    <span class="text-[9px] font-mono text-zinc-400 bg-black px-2 py-0.5 rounded border border-zinc-800">18 HOLES MATCHPLAY</span>
+                    <span class="text-[9px] font-mono text-zinc-400 bg-black px-2 py-0.5 rounded border border-zinc-800">18 HOLES</span>
                 </div>
 
                 <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-black">
@@ -57,31 +56,35 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- PAR DATA VALUE MAPPING -->
+                            <!-- EDITABLE PAR ROW -->
                             <tr class="border-b border-zinc-900 text-zinc-500 bg-zinc-950/30">
                                 <td class="p-2 text-left font-bold sticky left-0 bg-zinc-950 text-[10px] border-r border-zinc-800">PAR</td>
-                                <script>for(let i=1; i<=18; i++) document.write(`<td id="grid-par-${i}" class="p-1 font-bold border-r border-zinc-800/30">4</td>`);</script>
+                                <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-par-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-950 text-center font-bold rounded text-zinc-300 border border-zinc-800 focus:border-emerald-500 focus:outline-none"></td>`);</script>
                                 <td id="grid-par-total" class="p-2 font-bold bg-zinc-950 text-zinc-400">72</td>
                             </tr>
-                            <!-- LIVE ACTIVE SCORE ROW -->
+                            
+                            <!-- SCORE ROW -->
                             <tr class="border-b border-zinc-800 text-white">
                                 <td class="p-2 text-left font-bold sticky left-0 bg-zinc-900 text-zinc-300 text-[10px] border-r border-zinc-800">SCORE</td>
                                 <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-score-${i}" type="number" value="4" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center font-black rounded text-white border border-zinc-700 focus:border-emerald-500 focus:outline-none"></td>`);</script>
                                 <td id="grid-score-total" class="p-2 font-black bg-zinc-950 text-emerald-400 text-sm">72</td>
                             </tr>
-                            <!-- PUTTS TRACKER INPUT ROW -->
+                            
+                            <!-- PUTTS ROW -->
                             <tr class="border-b border-zinc-900 text-zinc-400">
                                 <td class="p-2 text-left font-bold sticky left-0 bg-zinc-950 text-[10px] border-r border-zinc-800 text-zinc-500">PUTTS</td>
                                 <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><input id="grid-putts-${i}" type="number" value="2" onchange="calculateGridTotals()" class="w-8 h-8 bg-zinc-900 text-center rounded text-zinc-400 border border-zinc-800 focus:border-emerald-500 focus:outline-none"></td>`);</script>
                                 <td id="grid-putts-total" class="p-2 font-bold bg-zinc-950 text-zinc-400">36</td>
                             </tr>
-                            <!-- FAIRWAY IN REGULATION (FIR) TOGGLE FIELD -->
+
+                            <!-- FIR ROW -->
                             <tr class="border-b border-zinc-900 text-zinc-400 text-[10px]">
                                 <td class="p-2 text-left font-bold sticky left-0 bg-zinc-900 text-[9px] border-r border-zinc-800 text-zinc-500">FIR</td>
                                 <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-fir-${i}" onclick="toggleStat('fir', ${i})" class="w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
                                 <td id="grid-fir-total" class="p-1 text-[10px] font-bold bg-zinc-950 text-zinc-400">0%</td>
                             </tr>
-                            <!-- GREEN IN REGULATION (GIR) TOGGLE FIELD -->
+
+                            <!-- GIR ROW -->
                             <tr class="text-zinc-400 text-[10px]">
                                 <td class="p-2 text-left font-bold sticky left-0 bg-zinc-950 text-[9px] border-r border-zinc-800 text-zinc-500">GIR</td>
                                 <script>for(let i=1; i<=18; i++) document.write(`<td class="p-1 border-r border-zinc-800/30"><button id="grid-gir-${i}" onclick="toggleStat('gir', ${i})" class="w-8 h-5 rounded text-[9px] font-bold bg-zinc-800 text-zinc-500 hover:bg-zinc-700">MISS</button></td>`);</script>
@@ -103,17 +106,16 @@
             </section>
         </div>
 
-        <!-- ================= TAB 2: HISTORICAL ARCHIVE VIEW ================= -->
+        <!-- ================= TAB 2: HISTORICAL ARCHIVE ================= -->
         <div id="view-history" class="tab-view hidden space-y-4">
             <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📁 Past Logged Scorecards</h2>
                 <div id="history-rounds-container" class="space-y-2">
-                    <!-- Loaded dynamically via runtime Javascript array cycles -->
-                    <p class="text-xs text-zinc-500 text-center py-4 font-mono">No historical cards submitted on this terminal environment yet.</p>
+                    <p class="text-xs text-zinc-500 text-center py-4 font-mono">No historical cards submitted yet.</p>
                 </div>
             </section>
 
-            <!-- ARCHIVE INSPECTOR FULL SCORECARD CONTAINER MODAL OVERLAY -->
+            <!-- ARCHIVE INSPECTOR -->
             <section id="history-card-inspector" class="bg-zinc-900 border border-emerald-500/20 p-4 rounded-xl shadow-md hidden">
                 <div class="flex justify-between items-center mb-3">
                     <div>
@@ -123,16 +125,14 @@
                     <button onclick="document.getElementById('history-card-inspector').classList.add('hidden')" class="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded hover:bg-zinc-700 font-mono">Close</button>
                 </div>
                 <div id="inspector-table-wrapper" class="overflow-x-auto border border-zinc-800 rounded-lg bg-black text-xs font-mono">
-                    <!-- Table injects programmatically during individual click selection -->
                 </div>
             </section>
         </div>
 
-        <!-- ================= TAB 3: ANALYTICS CORE DASHBOARD ================= -->
+        <!-- ================= TAB 3: ANALYTICS DASHBOARD ================= -->
         <div id="view-analytics" class="tab-view hidden space-y-4">
-            <!-- KPIS SUMMARY ROW PANEL -->
             <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📊 Advanced Performance KPI Metrics</h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-3">📊 Performance Metrics</h2>
                 <div class="grid grid-cols-2 gap-2 mb-3">
                     <div class="border border-zinc-800 p-3 rounded-lg bg-black text-center">
                         <span class="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">Rounds Tracked</span>
@@ -165,19 +165,14 @@
 
                 <div class="grid grid-cols-3 gap-2 mt-2 text-center text-xs border-t border-zinc-800/40 pt-2 font-mono">
                     <div><span class="text-[8px] text-zinc-500 block">AVG PUTTS</span><span id="stat-putts" class="text-zinc-300 font-bold">0.0</span></div>
-                    <div><span class="text-[8px] text-zinc-500 block">FIR ACCURACY</span><span id="stat-fir-pct" class="text-zinc-300 font-bold">0%</span></div>
-                    <div><span class="text-[8px] text-zinc-500 block">GIR ACCURACY</span><span id="stat-gir-pct" class="text-zinc-300 font-bold">0%</span></div>
-                </div>
-                <div class="text-center text-xs mt-2 font-mono border-t border-zinc-800/40 pt-2">
-                    <span class="text-[8px] text-zinc-500 block">AVG DRIVING DISTANCE</span>
-                    <span id="stat-avg-drive" class="text-emerald-400 font-bold text-sm">-- yds</span>
+                    <div><span class="text-[8px] text-zinc-500 block">FIR %</span><span id="stat-fir-pct" class="text-zinc-300 font-bold">0%</span></div>
+                    <div><span class="text-[8px] text-zinc-500 block">GIR %</span><span id="stat-gir-pct" class="text-zinc-300 font-bold">0%</span></div>
                 </div>
             </section>
 
-            <!-- GRAPHING ENGINE CANVAS WRAPPERS -->
             <section class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md space-y-4">
                 <div>
-                    <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📈 Scoring Trend Line</h3>
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">📈 Scoring Trend</h3>
                     <div class="bg-black p-2 rounded-lg border border-zinc-800 max-h-[220px]">
                         <canvas id="scoreTrendChart"></canvas>
                     </div>
@@ -192,18 +187,17 @@
         </div>
     </div>
 
-    <!-- BACKUP NODE MANAGER AND STORAGE ACTIONS FOOTER -->
-    <footer class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mt-6">
+    <!-- FOOTER / DB TOOLS -->
+    <footer class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shadow-md mt-6 mb-4">
         <h2 class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">⚙️ Local Data Management</h2>
         <div class="grid grid-cols-2 gap-2">
-            <button onclick="exportHistoryToCSV()" class="bg-zinc-800 border border-zinc-700 text-[11px] font-bold py-2 rounded-lg text-zinc-200 active:bg-zinc-700 transition-colors">📥 Export Data (CSV)</button>
+            <button onclick="exportHistoryToCSV()" class="bg-zinc-800 border border-zinc-700 text-[11px] font-bold py-2 rounded-lg text-zinc-200 active:bg-zinc-700 transition-colors">📥 Export CSV</button>
             <button onclick="wipeLocalDatabase()" class="bg-red-950/20 border border-red-900/30 text-[11px] font-bold py-2 rounded-lg text-red-400 active:bg-red-900/40 transition-colors">🗑️ Wipe Storage</button>
         </div>
     </footer>
 
-    <!-- ================= RUNTIME CORE BUSINESS ARCHITECTURE SCRIPT ================= -->
+    <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
-        // State Array Controllers
         let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
         let liveFirState = Array(18).fill(false);
         let liveGirState = Array(18).fill(false);
@@ -211,18 +205,14 @@
         let trendChartInstance = null;
         let distChartInstance = null;
 
-        // Static Offline Native Course Array Directory Matrix (Zero Network Failure Point)
         const globalCourseDatabase = {
             "pebble beach": [4,4,4,4,3,5,3,4,4,4,4,3,4,5,4,4,3,5],
             "augusta": [4,5,4,4,4,3,4,5,4,4,4,3,5,4,4,3,4,5],
             "st andrews": [4,4,4,4,5,4,4,3,4,4,3,4,4,5,4,4,4,4],
             "tpc sawgrass": [4,5,3,4,4,4,4,3,5,4,5,4,3,4,4,5,3,4],
-            "pinehurst": [4,4,4,4,4,3,4,4,4,4,4,4,4,4,3,4,4,4],
-            "cypress point": [4,4,4,4,3,5,4,3,4,4,5,4,3,5,4,3,4,4],
-            "shinnecock": [4,3,4,4,5,4,3,4,4,4,4,3,4,4,4,5,3,4]
+            "pinehurst": [4,4,4,4,4,3,4,4,4,4,4,4,4,4,3,4,4,4]
         };
 
-        // Screen Tab Switch Controller Routing Routine
         function switchTab(tabId) {
             document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
             document.getElementById(`view-${tabId}`).classList.remove('hidden');
@@ -231,16 +221,66 @@
                 btn.classList.remove('bg-emerald-500', 'text-black');
                 btn.classList.add('text-zinc-400');
             });
-
             const activeBtn = document.getElementById(`tab-${tabId}`);
             activeBtn.classList.remove('text-zinc-400');
             activeBtn.classList.add('bg-emerald-500', 'text-black');
 
             if(tabId === 'history') loadHistoryView();
-            if(tabId === 'analytics') loadAnalyticsDashboard();
+            if(tabId === 'analytics') calculateKPIs();
         }
 
-        // Toggle Grid State Values UI Matrix Elements
+        async function fetchCourseDetails() {
+            const query = document.getElementById('course-search-input').value.toLowerCase().trim();
+            const statusText = document.getElementById('api-status');
+            const displayTitle = document.getElementById('current-course-display');
+            
+            if(!query) return;
+            statusText.innerText = "⏳ Querying offline and network databases...";
+
+            // 1. Try Offline Matrix
+            let foundKey = Object.keys(globalCourseDatabase).find(key => query.includes(key) || key.includes(query));
+            if(foundKey) {
+                currentCoursePars = globalCourseDatabase[foundKey];
+                displayTitle.innerText = foundKey.toUpperCase();
+                statusText.innerText = `✅ Loaded ${foundKey.toUpperCase()} from local offline cache!`;
+                applyParsToGrid();
+                return;
+            }
+
+            // 2. Try API Network
+            try {
+                const res = await fetch(`https://open-golf-api.onrender.com/v1/courses/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                if(data && data.courses && data.courses.length > 0) {
+                    const course = data.courses[0];
+                    displayTitle.innerText = course.name;
+                    statusText.innerText = `✅ Found ${course.name} via network!`;
+                    if(course.pars && course.pars.length === 18) {
+                        currentCoursePars = course.pars;
+                    }
+                    applyParsToGrid();
+                    return;
+                }
+            } catch(e) {
+                console.log("API offline or error", e);
+            }
+
+            // 3. Complete Fallback
+            displayTitle.innerText = query.toUpperCase();
+            statusText.innerText = "⚠️ Course not found. Default Par 72 loaded. Tap any Par below to edit manually.";
+            currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
+            applyParsToGrid();
+        }
+
+        function applyParsToGrid() {
+            for(let i=1; i<=18; i++) {
+                document.getElementById(`grid-par-${i}`).value = currentCoursePars[i-1];
+                document.getElementById(`grid-score-${i}`).value = currentCoursePars[i-1];
+            }
+            calculateGridTotals();
+        }
+
         function toggleStat(type, holeNum) {
             const index = holeNum - 1;
             if(type === 'fir') {
@@ -257,38 +297,12 @@
             calculateGridTotals();
         }
 
-        function fetchCourseDetails() {
-            const query = document.getElementById('course-search-input').value.toLowerCase().trim();
-            const statusText = document.getElementById('api-status');
-            const displayTitle = document.getElementById('current-course-display');
-            
-            if(!query) return;
-            statusText.innerText = "⏳ Querying internal dictionary mapping arrays...";
-
-            let foundKey = Object.keys(globalCourseDatabase).find(key => query.includes(key) || key.includes(query));
-
-            if (foundKey) {
-                currentCoursePars = globalCourseDatabase[foundKey];
-                displayTitle.innerText = foundKey.toUpperCase();
-                statusText.innerText = `✅ Loaded ${foundKey.toUpperCase()} layout dataset!`;
-            } else {
-                displayTitle.innerText = query.toUpperCase();
-                statusText.innerText = "ℹ️ Course layout missing. Generated default Par 72 matrix system structural layout.";
-                currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
-            }
-
-            for(let i=1; i<=18; i++) {
-                document.getElementById(`grid-par-${i}`).innerText = currentCoursePars[i-1];
-                document.getElementById(`grid-score-${i}`).value = currentCoursePars[i-1];
-            }
-            calculateGridTotals();
-        }
-
         function calculateGridTotals() {
             let parTotal = 0, scoreTotal = 0, puttsTotal = 0, firTotal = 0, girTotal = 0;
 
             for(let i=1; i<=18; i++) {
-                parTotal += parseInt(document.getElementById(`grid-par-${i}`).innerText) || 4;
+                // Now reads dynamically from the editable input fields
+                parTotal += parseInt(document.getElementById(`grid-par-${i}`).value) || 4;
                 scoreTotal += parseInt(document.getElementById(`grid-score-${i}`).value) || 4;
                 puttsTotal += parseInt(document.getElementById(`grid-putts-${i}`).value) || 2;
                 if(liveFirState[i-1]) firTotal++;
@@ -310,7 +324,7 @@
             for(let i=1; i<=18; i++) {
                 finalHolesArray.push({
                     hole: i,
-                    par: parseInt(document.getElementById(`grid-par-${i}`).innerText),
+                    par: parseInt(document.getElementById(`grid-par-${i}`).value) || 4, // Captures any manual edits
                     score: parseInt(document.getElementById(`grid-score-${i}`).value) || 4,
                     putts: parseInt(document.getElementById(`grid-putts-${i}`).value) || 2,
                     fir: liveFirState[i-1],
@@ -327,10 +341,15 @@
                 holes: finalHolesArray
             });
             localStorage.setItem('golf_history', JSON.stringify(history));
-
-            alert(`🎉 Scorecard compiled and saved securely to cache matrix memory for ${courseName}!`);
             
-            // Clear current inputs reset operational space state variables
+            alert(`🎉 Scorecard compiled and saved securely for ${courseName}!`);
+            
+            // Reset state
+            document.getElementById('course-search-input').value = "";
+            document.getElementById('current-course-display').innerText = "STANDARD 18 LAYOUT";
+            currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5];
+            applyParsToGrid();
+            
             liveFirState.fill(false);
             liveGirState.fill(false);
             for(let i=1; i<=18; i++) {
@@ -342,17 +361,16 @@
             calculateGridTotals();
         }
 
-        // ================= HISTORICAL RENDER VIEWER LOGIC ENGINE =================
         function loadHistoryView() {
             const container = document.getElementById('history-rounds-container');
             let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
             
             if(history.length === 0) {
-                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No historical cards submitted on this terminal environment yet.</p>`;
+                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4 font-mono">No historical cards submitted on this terminal yet.</p>`;
                 return;
             }
 
-            container.innerHTML = history.map((round, idx) => {
+            container.innerHTML = history.map((round) => {
                 let totalScore = round.holes.reduce((sum, h) => sum + h.score, 0);
                 let totalPar = round.holes.reduce((sum, h) => sum + h.par, 0);
                 let diff = totalScore - totalPar;
@@ -369,7 +387,7 @@
                                 <span class="text-sm font-black text-emerald-400 block">${totalScore}</span>
                                 <span class="text-[9px] text-zinc-400 block">${diffText}</span>
                             </div>
-                            <button onclick="inspectHistoricalCard(${round.id})" class="bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold text-white px-2 py-1.5 rounded transition-colors">Inspect Card</button>
+                            <button onclick="inspectHistoricalCard(${round.id})" class="bg-zinc-800 hover:bg-zinc-700 text-[10px] font-bold text-white px-2 py-1.5 rounded">Inspect</button>
                         </div>
                     </div>
                 `;
@@ -382,7 +400,7 @@
             if(!round) return;
 
             document.getElementById('inspect-course-title').innerText = round.course;
-            document.getElementById('inspect-date-title').innerText = `Logged Date: ${round.date} | Driving Avg: ${round.avgDrive || 250} yds`;
+            document.getElementById('inspect-date-title').innerText = `Date: ${round.date} | Driving Avg: ${round.avgDrive || 250} yds`;
 
             let totalPar = round.holes.reduce((s, h) => s + h.par, 0);
             let totalScore = round.holes.reduce((s, h) => s + h.score, 0);
@@ -416,14 +434,11 @@
                     </tbody>
                 </table>
             `;
-
             document.getElementById('inspector-table-wrapper').innerHTML = tableHtml;
             document.getElementById('history-card-inspector').classList.remove('hidden');
-            document.getElementById('history-card-inspector').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ================= ANALYTICS CHARTING ENGINE LOGIC LAYER =================
-        function loadAnalyticsDashboard() {
+        function calculateKPIs() {
             let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
             
             if(history.length === 0) {
@@ -433,12 +448,12 @@
             }
 
             document.getElementById('kpi-rounds').innerText = history.length;
-            
+
             let totalScores = 0, totalEagles = 0, totalBirdies = 0, totalPars = 0, totalBogeys = 0, totalDblsPlus = 0;
-            let totalPutts = 0, totalFir = 0, totalGir = 0, totalDriveDist = 0, totalHoles = 0;
+            let totalPutts = 0, totalFir = 0, totalGir = 0, totalHoles = 0;
             let trendLabels = [], trendData = [];
 
-            history.forEach((round, idx) => {
+            history.forEach(round => {
                 let roundScore = 0;
                 round.holes.forEach(h => {
                     roundScore += h.score;
@@ -455,7 +470,6 @@
                     else if(diff >= 2) totalDblsPlus++;
                 });
                 totalScores += roundScore;
-                totalDriveDist += (round.avgDrive || 250);
                 
                 trendLabels.push(round.date);
                 trendData.push(roundScore);
@@ -469,9 +483,7 @@
             document.getElementById('stat-putts').innerText = (totalPutts / history.length).toFixed(1);
             document.getElementById('stat-fir-pct').innerText = Math.round((totalFir / totalHoles) * 100) + "%";
             document.getElementById('stat-gir-pct').innerText = Math.round((totalGir / totalHoles) * 100) + "%";
-            document.getElementById('stat-avg-drive').innerText = Math.round(totalDriveDist / history.length) + " yds";
 
-            // Render Chart.js Multi-Trend Canvas Elements
             if(trendChartInstance) trendChartInstance.destroy();
             if(distChartInstance) distChartInstance.destroy();
 
@@ -484,7 +496,7 @@
                 data: {
                     labels: trendLabels,
                     datasets: [{
-                        label: 'Total Round Score',
+                        label: 'Total Score',
                         data: trendData,
                         borderColor: '#10b981',
                         borderWidth: 2,
@@ -493,7 +505,7 @@
                         tension: 0.1
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             const ctx2 = document.getElementById('scoreDistributionChart').getContext('2d');
@@ -512,7 +524,7 @@
 
         function exportHistoryToCSV() {
             let history = JSON.parse(localStorage.getItem('golf_history') || '[]');
-            if(history.length === 0) { alert("No stats data recorded to compile output export parameters."); return; }
+            if(history.length === 0) { alert("No stats data recorded to compile output."); return; }
 
             let csvContent = "data:text/csv;charset=utf-8,Date,Course,Hole,Par,Score,Putts,FIR,GIR\n";
             history.forEach(r => {
@@ -521,22 +533,24 @@
                 });
             });
 
+            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", "golf_analytics_export.csv");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `golf_analytics_export_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
         function wipeLocalDatabase() {
-            if(confirm("Permanently wipe local device storage archive cache records? All rounds will be lost.")) {
+            if(confirm("Permanently wipe local device storage archive? All rounds will be lost.")) {
                 localStorage.removeItem('golf_history');
+                alert("Database completely purged.");
                 switchTab('new-round');
             }
         }
 
-        // Initialize Application Defaults
+        // Initialize Defaults
         calculateGridTotals();
     </script>
 </body>
