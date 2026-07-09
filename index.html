@@ -4,271 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golf Tracker</title>
-    <!-- Include Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Include Supabase for Backend Sync -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* --- GLOBAL & LAYOUT --- */
         :root {
-            --bg-color: #050505;
-            --card-bg: #121212;
-            --border-color: #2a2a2a;
-            --accent-green: #10b981;
-            --accent-hover: #059669;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --cell-bg: #1a1a1a;
-            --cell-border: #333;
+            --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a;
+            --accent-green: #10b981; --accent-hover: #059669; --text-main: #f3f4f6;
+            --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: var(--bg-color); color: var(--text-main);
             font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            margin: 0; padding: 20px; display: flex; justify-content: center;
         }
 
-        .container {
-            width: 100%;
-            max-width: 1400px; 
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
+        .container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 20px; }
+        
         .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 24px;
         }
 
         /* --- VIEW ROUTING --- */
-        .view-container {
-            display: none;
-            flex-direction: column;
-            gap: 20px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .view-container.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .view-container { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
+        .view-container.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- BUTTONS & INPUTS --- */
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 5px;
-        }
-
-        button {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            flex: 1;
-        }
-
-        button:hover { background-color: #1f1f1f; }
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; }
         
-        button.primary, button.nav-btn.active {
-            background-color: var(--accent-green);
-            color: #000;
-            border: none;
+        button {
+            background-color: transparent; color: var(--text-main);
+            border: 1px solid var(--border-color); padding: 12px 20px;
+            border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1;
         }
+        button:hover { background-color: #1f1f1f; }
+        button.primary, button.nav-btn.active { background-color: var(--accent-green); color: #000; border: none; }
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
 
-        /* --- SEARCH & AUTOCOMPLETE --- */
-        .search-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            position: relative; 
-        }
-
+        /* --- SEARCH --- */
+        .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
         input[type="text"] {
-            flex: 1;
-            background-color: #0a0a0a;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 16px;
+            flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px;
         }
-
+        
         .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 90px; 
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin: 4px 0 0 0;
-            padding: 0;
-            list-style: none;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 100;
-            display: none;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            position: absolute; top: 100%; left: 0; right: 90px; 
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none;
+            max-height: 250px; overflow-y: auto; z-index: 100; display: none;
         }
+        .dropdown-list.active { display: block; }
+        .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .dropdown-list li:hover { background-color: #1f1f1f; color: var(--accent-green); }
 
-        .dropdown-list.active {
-            display: block;
-        }
-
-        .dropdown-list li {
-            padding: 14px 16px; 
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .dropdown-list li:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-list li:hover {
-            background-color: #1f1f1f;
-            color: var(--accent-green);
-        }
-
-        /* --- SCORECARD MATRIX --- */
-        .scorecard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .scorecard-header h3 {
-            margin: 0;
-            color: var(--accent-green);
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-
-        .badge {
-            background-color: #1f1f1f;
-            border: 1px solid var(--border-color);
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-
-        .matrix-wrapper {
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-
-        .matrix-grid {
-            display: grid;
-            grid-template-columns: 80px repeat(18, minmax(60px, 1fr));
-            gap: 6px;
-            min-width: 1000px;
-        }
-
-        .row-label {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
+        /* --- SCORECARD MATRIX (GRID MODE) --- */
+        .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 14px; letter-spacing: 1px; }
+        .badge { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11px; }
+        
+        .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
+        
+        .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
+        .matrix-grid { display: grid; grid-template-columns: 80px repeat(18, minmax(60px, 1fr)); gap: 6px; min-width: 1000px; }
+        
+        .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); }
         .cell {
-            background-color: var(--cell-bg);
-            border: 1px solid var(--cell-border);
-            border-radius: 6px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
+            background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px;
+            height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;
         }
-
         .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
-
-        .cell input {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            outline: none;
+        
+        .cell input, .play-input input {
+            width: 100%; height: 100%; background: transparent; border: none;
+            color: var(--text-main); text-align: center; font-weight: bold; font-size: 14px; outline: none;
         }
-
-        .cell input:focus {
-            background-color: #222;
-            border-radius: 6px;
-        }
-
-        .cell.drive-cell input:disabled {
-            color: #333;
-            cursor: not-allowed;
-            background-color: #141414;
-        }
+        .cell input:focus { background-color: #222; border-radius: 6px; }
+        .cell.drive-cell input:disabled { color: #333; cursor: not-allowed; background-color: #141414; }
         .cell.drive-cell.disabled { opacity: 0.5; }
 
         .toggle-btn {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-weight: bold;
-            font-size: 11px;
-            cursor: pointer;
-            border-radius: 6px;
+            width: 100%; height: 100%; background: transparent; border: none;
+            color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer;
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
         }
         .toggle-btn.hit { color: var(--accent-green); }
 
-        .log-btn-container {
-            margin-top: 25px;
-            display: flex;
-        }
-
-        /* --- DATA MANAGEMENT --- */
-        .data-management {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .data-management h4 { margin: 0; color: var(--text-muted); font-size: 12px; }
-        .danger-btn { color: #ef4444; border-color: #ef4444; }
-        .danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
+        /* --- PLAY MODE (HOLE-BY-HOLE) --- */
+        #play-mode-container { display: none; flex-direction: column; gap: 20px; }
+        .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
+        .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
+        .play-label { font-size: 16px; font-weight: 600; }
+        .play-input { width: 80px; height: 50px; background: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 8px; }
+        .play-input input { font-size: 20px; }
         
-        /* --- HISTORY LIST --- */
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .history-item:last-child { border-bottom: none; }
+        .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; }
+        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: #1a1a1a; border: 1px solid #333; color: var(--text-muted); }
+        .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+
+        .play-nav { display: flex; gap: 15px; margin-top: 20px; }
+        .play-nav button { padding: 16px; font-size: 16px; }
+
+        /* --- ANALYTICS TABLE --- */
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .stats-table td { padding: 12px 15px; border: 1px solid var(--border-color); font-size: 14px; }
+        .stats-table td:first-child { font-weight: 600; color: var(--text-muted); width: 70%; }
+        .stats-table td:last-child { font-weight: bold; text-align: center; color: var(--text-main); }
+        .stats-table tr:hover { background-color: #1a1a1a; }
     </style>
 </head>
 <body>
@@ -284,11 +130,10 @@
 
     <!-- ==================== NEW ROUND VIEW ==================== -->
     <div id="view-new-round" class="view-container active">
-        <!-- COURSE SEARCH -->
+        
+        <!-- SEARCH -->
         <div class="card">
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">
-                🔍 Select or Fetch Golf Course
-            </div>
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: bold;">SEARCH GOLF COURSES</div>
             <div class="search-row">
                 <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
                 <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
@@ -297,32 +142,86 @@
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <!-- SCORECARD MATRIX -->
         <div class="card">
             <div class="scorecard-header">
                 <h3 id="current-course-display">STANDARD LAYOUT</h3>
                 <div class="badge">18 HOLES</div>
             </div>
 
-            <div class="matrix-wrapper">
-                <div class="matrix-grid" id="scorecard-grid">
-                    <!-- Grid injected via JS -->
+            <!-- TOGGLE VIEWS -->
+            <div class="view-toggle-row">
+                <button class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
+                <button class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button>
+            </div>
+
+            <!-- GRID MODE -->
+            <div id="grid-mode-container" class="matrix-wrapper">
+                <div class="matrix-grid" id="scorecard-grid"></div>
+            </div>
+
+            <!-- PLAY MODE (HOLE-BY-HOLE) -->
+            <div id="play-mode-container">
+                <div class="play-header">
+                    <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
+                    <span id="play-par-title" style="color: var(--text-muted); font-size: 16px;">PAR 4</span>
+                </div>
+                
+                <div class="play-row">
+                    <div class="play-label">SCORE</div>
+                    <div class="play-input"><input type="number" id="play-score" inputmode="numeric" pattern="[0-9]*" placeholder="-"></div>
+                </div>
+                <div class="play-row">
+                    <div class="play-label">PUTTS</div>
+                    <div class="play-input"><input type="number" id="play-putts" inputmode="numeric" pattern="[0-9]*" placeholder="-"></div>
+                </div>
+                
+                <!-- FIR Block -->
+                <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;" id="play-fir-block">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="play-label">FIR</div>
+                        <div style="display: flex; gap: 10px; width: 120px;">
+                            <button class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button>
+                            <button class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
+                        </div>
+                    </div>
+                    <div class="advanced-tracking" id="adv-fir-options">
+                        <button class="adv-btn" onclick="setAdvToggle(this)">LEFT</button>
+                        <button class="adv-btn" onclick="setAdvToggle(this)">RIGHT</button>
+                        <button class="adv-btn" onclick="setAdvToggle(this)">BUNKER</button>
+                        <button class="adv-btn" onclick="setAdvToggle(this)">HAZARD</button>
+                    </div>
+                </div>
+
+                <!-- GIR Block -->
+                <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="play-label">GIR</div>
+                        <div style="display: flex; gap: 10px; width: 120px;">
+                            <button class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button>
+                            <button class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button>
+                        </div>
+                    </div>
+                    <div class="advanced-tracking" id="adv-gir-options">
+                        <button class="adv-btn" onclick="setAdvToggle(this)">SHORT</button>
+                        <button class="adv-btn" onclick="setAdvToggle(this)">LONG</button>
+                        <button class="adv-btn" onclick="setAdvToggle(this)">BUNKER</button>
+                        <button class="adv-btn" onclick="setAdvToggle(this)">HAZARD</button>
+                    </div>
+                </div>
+
+                <div class="play-row" id="play-drive-block">
+                    <div class="play-label">DRIVE (YDS)</div>
+                    <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" pattern="[0-9]*" placeholder="yds"></div>
+                </div>
+
+                <div class="play-nav">
+                    <button onclick="changePlayHole(-1)" id="play-prev-btn" style="background: #1a1a1a;">← PREV</button>
+                    <button onclick="changePlayHole(1)" class="primary" id="play-next-btn">NEXT HOLE →</button>
                 </div>
             </div>
 
             <div class="log-btn-container">
-                <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="logScorecard()">
-                    COMPLETE & LOG SCORECARD →
-                </button>
-            </div>
-        </div>
-
-        <!-- DATA MANAGEMENT -->
-        <div class="card data-management">
-            <h4>⚙️ LOCAL DATA MANAGEMENT</h4>
-            <div style="display: flex; gap: 10px;">
-                <button>📊 Export CSV</button>
-                <button class="danger-btn">🗑️ Wipe Storage</button>
+                <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;">COMPLETE & LOG SCORECARD →</button>
             </div>
         </div>
     </div>
@@ -353,188 +252,101 @@
     <div id="view-analytics" class="view-container">
         <div class="card">
             <div class="scorecard-header">
-                <h3>PERFORMANCE ANALYTICS</h3>
+                <h3>PERFORMANCE STATS</h3>
+                <div class="badge">FULL SEASON</div>
             </div>
-            <div style="position: relative; height: 400px; width: 100%;">
-                <canvas id="scoringChart"></canvas>
-            </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="card">
-                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">AVG DRIVE DISTANCE</h4>
-                <div style="font-size: 32px; font-weight: bold; color: var(--accent-green);">264 <span style="font-size: 16px; color: var(--text-muted);">YDS</span></div>
-            </div>
-            <div class="card">
-                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR PERCENTAGE</h4>
-                <div style="font-size: 32px; font-weight: bold; color: #3b82f6;">42 <span style="font-size: 16px; color: var(--text-muted);">%</span></div>
-            </div>
+            <table class="stats-table">
+                <tr><td>Hole in One</td><td>0</td></tr>
+                <tr><td>Albatross</td><td>0</td></tr>
+                <tr><td>Eagle</td><td>1</td></tr>
+                <tr><td>Birdie</td><td>14</td></tr>
+                <tr><td>Par</td><td>82</td></tr>
+                <tr><td>Bogey</td><td>45</td></tr>
+                <tr><td>Double</td><td>12</td></tr>
+                <tr><td>Triple</td><td>3</td></tr>
+                <tr><td>Quad</td><td>0</td></tr>
+                <tr><td>+5</td><td>0</td></tr>
+                <tr><td>3+Putt</td><td>8</td></tr>
+                <tr><td>Drops</td><td>4</td></tr>
+                <tr><td>FIR</td><td>48%</td></tr>
+                <tr><td>GIR</td><td>42%</td></tr>
+            </table>
         </div>
     </div>
 
 </div>
 
 <script>
-    // --- SUPABASE INITIALIZATION ---
+    // --- SUPABASE CONFIG ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- VIEW ROUTING LOGIC ---
-    let chartInstance = null;
+    // --- STATE ---
+    let currentCoursePars = Array(18).fill(""); 
+    let currentPlayHole = 0; // 0-17 index for Play Mode
 
+    // --- ROUTING ---
     function switchView(viewId, btnElement) {
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        
         document.getElementById(viewId).classList.add('active');
         btnElement.classList.add('active');
-
-        if (viewId === 'view-analytics' && !chartInstance) {
-            initChart();
-        }
     }
 
-    function initChart() {
-        const ctx = document.getElementById('scoringChart').getContext('2d');
-        Chart.defaults.color = '#9ca3af';
-        Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
-
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['May 15', 'Jun 2', 'Jun 10', 'Jun 18', 'Jun 26', 'Jul 3', 'Jul 9'],
-                datasets: [{
-                    label: 'Gross Score',
-                    data: [94, 91, 89, 92, 85, 88, 82], 
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: true,
-                    pointBackgroundColor: '#121212',
-                    pointBorderColor: '#10b981',
-                    pointRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { color: '#2a2a2a' }, suggestedMin: 70, suggestedMax: 100 },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-    }
-
-    // --- GLOBAL STATE ---
-    let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
-
-    // --- LIVE SEARCH / AUTOCOMPLETE LOGIC ---
-    let searchTimeout = null;
-
-    document.getElementById('course-search-input').addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        const dropdown = document.getElementById('search-dropdown');
-        
-        clearTimeout(searchTimeout);
-        
-        if (query.length < 2) {
-            dropdown.classList.remove('active');
-            return;
-        }
-        
-        searchTimeout = setTimeout(async () => {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('course_directory')
-                    .select('course_name')
-                    .ilike('course_name', `%${query}%`)
-                    .limit(10);
-
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                    dropdown.innerHTML = data.map(course => {
-                        const safeName = course.course_name.replace(/'/g, "\\'"); 
-                        return `<li onclick="selectCourseFromDropdown('${safeName}')">${course.course_name.toUpperCase()} ⚡</li>`;
-                    }).join('');
-                    dropdown.classList.add('active');
-                } else {
-                    dropdown.classList.remove('active');
-                }
-            } catch(err) {
-                console.error("Supabase Autocomplete Error:", err);
-            }
-        }, 250); 
-    });
-
-    function selectCourseFromDropdown(courseName) {
-        document.getElementById('course-search-input').value = courseName.toUpperCase();
-        document.getElementById('search-dropdown').classList.remove('active');
-        fetchCourseDetails(); 
-    }
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.search-row')) {
-            document.getElementById('search-dropdown').classList.remove('active');
-        }
-    });
-
-    // --- FIXED COURSE FETCH LOGIC (LIMIT 1 BYPASSES MULTI-ROW CRASHES) ---
+    // --- SEARCH / FETCH (WITH ARRAY FIX) ---
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim();
         const statusText = document.getElementById('api-status');
         const displayTitle = document.getElementById('current-course-display');
-        const dropdown = document.getElementById('search-dropdown');
+        document.getElementById('search-dropdown').classList.remove('active'); 
         
         if(!query) return;
-        dropdown.classList.remove('active'); 
-        statusText.innerText = "⏳ Loading course from database...";
+        statusText.innerText = "⏳ Loading course...";
 
         try {
             const { data, error } = await supabaseClient
                 .from('course_directory')
                 .select('course_name, pars')
-                .ilike('course_name', query)
+                .ilike('course_name', `%${query}%`)
                 .limit(1);
 
             if (error) throw error;
 
             if (data && data.length > 0) {
                 const course = data[0];
-                currentCoursePars = [...course.pars];
+                
+                // BUG 1 FIX: Cleanly parse Postgres string arrays to avoid alternating blanks
+                let parsedPars = course.pars;
+                if (typeof parsedPars === 'string') {
+                    parsedPars = JSON.parse(parsedPars.replace('{', '[').replace('}', ']'));
+                }
+                
+                currentCoursePars = [...parsedPars];
                 displayTitle.innerText = course.course_name.toUpperCase();
-                statusText.innerText = `✅ Loaded ${course.course_name.toUpperCase()} directly from database.`;
+                statusText.innerText = `✅ Loaded ${course.course_name.toUpperCase()}.`;
                 buildGrid();
+                updatePlayModeUI();
                 return;
             }
-        } catch(e) {
-            console.error("Supabase fetch error:", e);
-        }
+        } catch(e) { console.error("Fetch error:", e); }
 
-        // NO DEFAULTS: Generates a blank matrix for secure manual mobile configuration
         displayTitle.innerText = query.toUpperCase();
-        statusText.innerText = "ℹ️ Course layout not found. Please enter pars manually below.";
+        statusText.innerText = "ℹ️ Course not found. Please enter pars manually.";
         currentCoursePars = Array(18).fill(""); 
         buildGrid();
+        updatePlayModeUI();
     }
 
-    // --- GRID GENERATION & LAYOUT ---
+    // --- GRID GENERATOR (WITH UX NUMPAD FIX) ---
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid');
         grid.innerHTML = ''; 
 
         const rows = [
-            { label: 'HOLE', type: 'header' },
-            { label: 'PAR', type: 'par' },
-            { label: 'SCORE', type: 'input' },
-            { label: 'PUTTS', type: 'input' },
-            { label: 'FIR', type: 'toggle' },
-            { label: 'GIR', type: 'toggle' },
-            { label: 'DRIVE (YDS)', type: 'drive' } 
+            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' },
+            { label: 'SCORE', type: 'input' }, { label: 'PUTTS', type: 'input' },
+            { label: 'FIR', type: 'toggle' }, { label: 'GIR', type: 'toggle' }, { label: 'DRIVE (YDS)', type: 'drive' } 
         ];
 
         rows.forEach(row => {
@@ -549,109 +361,108 @@
                 if (row.type === 'header') {
                     cell.className = 'cell hole-header';
                     cell.innerText = i + 1;
-                } 
-                else if (row.type === 'par') {
+                } else if (row.type === 'par') {
                     cell.className = 'cell';
-                    cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i] ?? ''}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
-                }
-                else if (row.type === 'input') {
+                    // UX Fix: inputmode="numeric" added to all inputs
+                    cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" pattern="[0-9]*" value="${currentCoursePars[i] ?? ''}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
+                } else if (row.type === 'input') {
                     cell.className = 'cell';
-                    cell.innerHTML = `<input type="number" min="1" max="20" placeholder="-">`;
-                }
-                else if (row.type === 'toggle') {
+                    cell.innerHTML = `<input type="number" inputmode="numeric" pattern="[0-9]*" placeholder="-">`;
+                } else if (row.type === 'toggle') {
                     cell.className = 'cell';
                     cell.innerHTML = `<button class="toggle-btn" onclick="toggleHit(this)">MISS</button>`;
-                }
-                else if (row.type === 'drive') {
+                } else if (row.type === 'drive') {
                     cell.className = 'cell drive-cell';
                     cell.id = `drive-container-${i}`;
-                    cell.innerHTML = `<input type="number" id="drive-input-${i}" placeholder="yds">`;
+                    cell.innerHTML = `<input type="number" id="drive-input-${i}" inputmode="numeric" pattern="[0-9]*" placeholder="yds">`;
                 }
-                
                 grid.appendChild(cell);
             }
         });
-
         updateDriveDistances();
     }
 
+    // --- LOGIC HELPERS ---
     function updatePar(index, val) {
         let newPar = parseInt(val);
-        if (isNaN(newPar)) {
-            currentCoursePars[index] = "";
-            document.getElementById(`par-input-${index}`).value = "";
-            updateDriveDistances();
-            return;
-        }
-        if (newPar < 3) newPar = 3;
-        if (newPar > 5) newPar = 5;
-        
-        currentCoursePars[index] = newPar;
-        document.getElementById(`par-input-${index}`).value = newPar; 
-        
+        if (isNaN(newPar)) { currentCoursePars[index] = ""; } 
+        else { currentCoursePars[index] = Math.max(3, Math.min(5, newPar)); }
+        document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; 
         updateDriveDistances();
+        if(currentPlayHole === index) updatePlayModeUI();
     }
 
     function toggleHit(btn) {
-        if (btn.innerText === "MISS") {
-            btn.innerText = "HIT";
-            btn.classList.add("hit");
-        } else {
-            btn.innerText = "MISS";
-            btn.classList.remove("hit");
-        }
+        if (btn.innerText === "MISS") { btn.innerText = "HIT"; btn.classList.add("hit"); } 
+        else { btn.innerText = "MISS"; btn.classList.remove("hit"); }
     }
 
     function updateDriveDistances() {
         for (let i = 0; i < 18; i++) {
             const input = document.getElementById(`drive-input-${i}`);
             const container = document.getElementById(`drive-container-${i}`);
-            const parVal = currentCoursePars[i];
-            
-            if (parVal === 3) {
-                input.value = ""; 
-                input.disabled = true;
-                input.placeholder = "N/A";
-                container.classList.add("disabled");
+            if (currentCoursePars[i] === 3) {
+                input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled");
             } else {
-                input.disabled = false;
-                input.placeholder = "yds";
-                container.classList.remove("disabled");
+                input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled");
             }
         }
     }
 
-    // --- DATA AGGREGATION & STATS ---
-    function logScorecard() {
-        let totalDriveDist = 0;
-        let validDrives = 0;
-
-        for (let i = 0; i < 18; i++) {
-            if (currentCoursePars[i] && currentCoursePars[i] > 3) {
-                const driveVal = document.getElementById(`drive-input-${i}`).value;
-                if (driveVal && !isNaN(driveVal)) {
-                    totalDriveDist += parseInt(driveVal);
-                    validDrives++;
-                }
-            }
-        }
-
-        const avgDrive = validDrives > 0 ? Math.round(totalDriveDist / validDrives) : 0;
+    // --- PLAY MODE UI LOGIC ---
+    function togglePlayMode(isPlayMode) {
+        document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn';
+        document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn';
         
-        console.log("--- ROUND STATS ---");
-        console.log(`Valid Drives Logged: ${validDrives}`);
-        print(`Average Drive Distance: ${avgDrive} yds`);
-        alert(`Scorecard ready for sync!\nCalculated Average Drive: ${avgDrive || 'N/A'} yds`);
+        document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block';
+        document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none';
+        
+        if(isPlayMode) updatePlayModeUI();
     }
 
-    // Initialization Events
+    function updatePlayModeUI() {
+        const par = currentCoursePars[currentPlayHole];
+        document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`;
+        document.getElementById('play-par-title').innerText = par ? `PAR ${par}` : `PAR N/A`;
+        
+        // Hide Drive input and FIR advanced tracking if Par 3
+        const isPar3 = par === 3;
+        document.getElementById('play-drive-block').style.display = isPar3 ? 'none' : 'flex';
+        document.getElementById('play-fir-block').style.display = isPar3 ? 'none' : 'block';
+
+        document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible';
+        document.getElementById('play-next-btn').innerText = currentPlayHole === 17 ? 'FINISH' : 'NEXT HOLE →';
+        
+        // Reset sub-toggles for demo purposes
+        document.getElementById('adv-fir-options').style.display = 'none';
+        document.getElementById('adv-gir-options').style.display = 'none';
+        document.querySelectorAll('.adv-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    function changePlayHole(dir) {
+        currentPlayHole += dir;
+        if (currentPlayHole < 0) currentPlayHole = 0;
+        if (currentPlayHole > 17) currentPlayHole = 17;
+        updatePlayModeUI();
+    }
+
+    function setPlayToggle(type, status) {
+        document.getElementById(`${type}-hit-btn`).classList.remove('active');
+        document.getElementById(`${type}-miss-btn`).classList.remove('active');
+        document.getElementById(`${type}-${status}-btn`).classList.add('active');
+        
+        // Dynamic expanding MISS options
+        document.getElementById(`adv-${type}-options`).style.display = status === 'miss' ? 'flex' : 'none';
+    }
+
+    function setAdvToggle(btn) {
+        btn.parentElement.querySelectorAll('.adv-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // Init
     document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
-    document.getElementById('course-search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') fetchCourseDetails();
-    });
-
     document.addEventListener('DOMContentLoaded', buildGrid);
-
 </script>
 </body>
 </html>
