@@ -7,61 +7,38 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* --- GLOBAL & LAYOUT --- */
         :root {
             --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a;
             --accent-green: #10b981; --accent-hover: #059669; --text-main: #f3f4f6;
             --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333;
         }
-
-        body {
-            background-color: var(--bg-color); color: var(--text-main);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0; padding: 20px; display: flex; justify-content: center;
-        }
-
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
         
-        .card {
-            background-color: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 24px;
-        }
-
-        /* --- VIEW ROUTING --- */
         .view-container { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- BUTTONS & INPUTS --- */
-        .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; }
         
-        button {
-            background-color: transparent; color: var(--text-main);
-            border: 1px solid var(--border-color); padding: 12px 20px;
-            border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1;
-        }
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; }
+        button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1; }
         button:hover { background-color: #1f1f1f; }
         button.primary, button.nav-btn.active { background-color: var(--accent-green); color: #000; border: none; }
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
-
-        /* --- SEARCH --- */
-        .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
-        input[type="text"] {
-            flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color);
-            color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px;
-        }
+        button.danger-btn { color: #ef4444; border-color: #ef4444; background: transparent; }
+        button.danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
         
-        .dropdown-list {
-            position: absolute; top: 100%; left: 0; right: 90px; 
-            background-color: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none;
-            max-height: 250px; overflow-y: auto; z-index: 100; display: none;
-        }
+        .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
+        .search-toggle { cursor: pointer; color: var(--accent-green); }
+        .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
+        input[type="text"], input[type="number"] { outline: none; }
+        input[type="text"] { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; }
+        
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 90px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 100; display: none; }
         .dropdown-list.active { display: block; }
         .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         .dropdown-list li:hover { background-color: #1f1f1f; color: var(--accent-green); }
-
-        /* --- SCORECARD MATRIX (GRID MODE) --- */
+        
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 14px; letter-spacing: 1px; }
         .badge { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11px; }
@@ -71,30 +48,17 @@
         
         .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
         .matrix-grid { display: grid; grid-template-columns: 80px repeat(18, minmax(60px, 1fr)); gap: 6px; min-width: 1000px; }
-        
         .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); }
-        .cell {
-            background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px;
-            height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;
-        }
+        .cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
         .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
-        
-        .cell input, .play-input input {
-            width: 100%; height: 100%; background: transparent; border: none;
-            color: var(--text-main); text-align: center; font-weight: bold; font-size: 14px; outline: none;
-        }
+        .cell input, .play-input input { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; font-size: 14px; }
         .cell input:focus { background-color: #222; border-radius: 6px; }
         .cell.drive-cell input:disabled { color: #333; cursor: not-allowed; background-color: #141414; }
         .cell.drive-cell.disabled { opacity: 0.5; }
-
-        .toggle-btn {
-            width: 100%; height: 100%; background: transparent; border: none;
-            color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer;
-            border-radius: 6px; display: flex; align-items: center; justify-content: center;
-        }
+        
+        .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
-
-        /* --- PLAY MODE (HOLE-BY-HOLE) --- */
+        
         #play-mode-container { display: none; flex-direction: column; gap: 20px; }
         .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
         .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
@@ -103,13 +67,26 @@
         .play-input input { font-size: 20px; }
         
         .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; }
-        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: #1a1a1a; border: 1px solid #333; color: var(--text-muted); }
+        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: #1a1a1a; border: 1px solid #333; color: var(--text-muted); cursor: pointer;}
         .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-
+        
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
-        /* --- ANALYTICS TABLE --- */
+        /* --- HISTORY ITEM & MODAL --- */
+        .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; }
+        .history-item:hover { background-color: #1a1a1a; }
+        .history-item:last-child { border-bottom: none; }
+        
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; }
+        .modal-overlay.active { display: flex; flex-direction: column; }
+        .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
+        .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+
+        /* --- ANALYTICS FILTERS & TABLE --- */
+        .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 150px; }
+        
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .stats-table td { padding: 12px 15px; border: 1px solid var(--border-color); font-size: 14px; }
         .stats-table td:first-child { font-weight: 600; color: var(--text-muted); width: 70%; }
@@ -121,25 +98,28 @@
 
 <div class="container">
     
-    <!-- NAVIGATION -->
     <div class="nav-buttons">
         <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
         <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
         <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
     </div>
 
-    <!-- ==================== NEW ROUND VIEW ==================== -->
+    <!-- NEW ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
         
-        <!-- SEARCH -->
-        <div class="card">
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: bold;">SEARCH GOLF COURSES</div>
-            <div class="search-row">
-                <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
-                <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
-                <ul id="search-dropdown" class="dropdown-list"></ul>
+        <div class="card" id="search-card">
+            <div class="search-header">
+                SEARCH GOLF COURSES
+                <span class="search-toggle" id="search-toggle-btn" onclick="toggleSearchBody()">HIDE</span>
             </div>
-            <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
+            <div id="search-body">
+                <div class="search-row">
+                    <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
+                    <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
+                    <ul id="search-dropdown" class="dropdown-list"></ul>
+                </div>
+                <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
+            </div>
         </div>
 
         <div class="card">
@@ -148,18 +128,15 @@
                 <div class="badge">18 HOLES</div>
             </div>
 
-            <!-- TOGGLE VIEWS -->
             <div class="view-toggle-row">
                 <button class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
                 <button class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button>
             </div>
 
-            <!-- GRID MODE -->
             <div id="grid-mode-container" class="matrix-wrapper">
                 <div class="matrix-grid" id="scorecard-grid"></div>
             </div>
 
-            <!-- PLAY MODE (HOLE-BY-HOLE) -->
             <div id="play-mode-container">
                 <div class="play-header">
                     <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
@@ -168,14 +145,13 @@
                 
                 <div class="play-row">
                     <div class="play-label">SCORE</div>
-                    <div class="play-input"><input type="number" id="play-score" inputmode="numeric" pattern="[0-9]*" placeholder="-"></div>
+                    <div class="play-input"><input type="number" id="play-score" inputmode="numeric" pattern="[0-9]*" placeholder="-" onchange="syncPlayToState('score', this.value)"></div>
                 </div>
                 <div class="play-row">
                     <div class="play-label">PUTTS</div>
-                    <div class="play-input"><input type="number" id="play-putts" inputmode="numeric" pattern="[0-9]*" placeholder="-"></div>
+                    <div class="play-input"><input type="number" id="play-putts" inputmode="numeric" pattern="[0-9]*" placeholder="-" onchange="syncPlayToState('putts', this.value)"></div>
                 </div>
                 
-                <!-- FIR Block -->
                 <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;" id="play-fir-block">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div class="play-label">FIR</div>
@@ -185,14 +161,13 @@
                         </div>
                     </div>
                     <div class="advanced-tracking" id="adv-fir-options">
-                        <button class="adv-btn" onclick="setAdvToggle(this)">LEFT</button>
-                        <button class="adv-btn" onclick="setAdvToggle(this)">RIGHT</button>
-                        <button class="adv-btn" onclick="setAdvToggle(this)">BUNKER</button>
-                        <button class="adv-btn" onclick="setAdvToggle(this)">HAZARD</button>
+                        <button class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button>
+                        <button class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button>
+                        <button class="adv-btn" onclick="setAdvToggle('fir', 'BUNKER')">BUNKER</button>
+                        <button class="adv-btn" onclick="setAdvToggle('fir', 'HAZARD')">HAZARD</button>
                     </div>
                 </div>
 
-                <!-- GIR Block -->
                 <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div class="play-label">GIR</div>
@@ -202,16 +177,16 @@
                         </div>
                     </div>
                     <div class="advanced-tracking" id="adv-gir-options">
-                        <button class="adv-btn" onclick="setAdvToggle(this)">SHORT</button>
-                        <button class="adv-btn" onclick="setAdvToggle(this)">LONG</button>
-                        <button class="adv-btn" onclick="setAdvToggle(this)">BUNKER</button>
-                        <button class="adv-btn" onclick="setAdvToggle(this)">HAZARD</button>
+                        <button class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button>
+                        <button class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button>
+                        <button class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button>
+                        <button class="adv-btn" onclick="setAdvToggle('gir', 'HAZARD')">HAZARD</button>
                     </div>
                 </div>
 
                 <div class="play-row" id="play-drive-block">
                     <div class="play-label">DRIVE (YDS)</div>
-                    <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" pattern="[0-9]*" placeholder="yds"></div>
+                    <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" pattern="[0-9]*" placeholder="yds" onchange="syncPlayToState('drive', this.value)"></div>
                 </div>
 
                 <div class="play-nav">
@@ -221,12 +196,12 @@
             </div>
 
             <div class="log-btn-container">
-                <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;">COMPLETE & LOG SCORECARD →</button>
+                <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="submitRound()">COMPLETE & LOG SCORECARD →</button>
             </div>
         </div>
     </div>
 
-    <!-- ==================== HISTORY VIEW ==================== -->
+    <!-- HISTORY VIEW -->
     <div id="view-history" class="view-container">
         <div class="card">
             <div class="scorecard-header">
@@ -234,27 +209,53 @@
                 <div class="badge" style="background: #2563eb; color: white; border: none;">SUPABASE SYNCED</div>
             </div>
             <div id="history-list">
-                <div class="history-item">
+                <!-- Mocked Item: Clicking opens full screen scorecard modal -->
+                <div class="history-item" onclick="openHistoryModal('BLUE DEVIL GOLF CLUB', 'July 4, 2026', 82)">
                     <div>
-                        <strong>Blue Devil</strong><br>
+                        <strong>Blue Devil Golf Club</strong><br>
                         <span style="font-size: 12px; color: var(--text-muted);">July 4, 2026</span>
                     </div>
                     <div style="text-align: right;">
-                        <strong>Score: 82</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">Diff: 9.2</span>
+                        <strong style="color: var(--accent-green); font-size: 18px;">82</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">Tap to view</span>
+                    </div>
+                </div>
+                
+                <div class="history-item" onclick="openHistoryModal('MCKENZIE MEADOWS', 'July 1, 2026', 85)">
+                    <div>
+                        <strong>McKenzie Meadows</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">July 1, 2026</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: var(--accent-green); font-size: 18px;">85</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">Tap to view</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ==================== ANALYTICS VIEW ==================== -->
+    <!-- ANALYTICS VIEW -->
     <div id="view-analytics" class="view-container">
         <div class="card">
             <div class="scorecard-header">
                 <h3>PERFORMANCE STATS</h3>
-                <div class="badge">FULL SEASON</div>
             </div>
+            
+            <!-- Dynamic Filters -->
+            <div class="filter-row">
+                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                    <option value="full">Full Season</option>
+                    <option value="last3">Last 3 Rounds</option>
+                    <option value="last5">Last 5 Rounds</option>
+                </select>
+                <select class="filter-select" id="filter-course" onchange="updateAnalytics()">
+                    <option value="all">All Courses</option>
+                    <option value="exclude_lil_devil">Excluding Lil Devil</option>
+                    <option value="blue_devil_only">Only Blue Devil</option>
+                </select>
+            </div>
+
             <table class="stats-table">
                 <tr><td>Hole in One</td><td>0</td></tr>
                 <tr><td>Albatross</td><td>0</td></tr>
@@ -276,105 +277,124 @@
 
 </div>
 
+<!-- FULL SCREEN HISTORY MODAL -->
+<div id="history-modal" class="modal-overlay">
+    <div class="modal-content card" style="margin-top: 40px;">
+        <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
+        <div class="scorecard-header" style="margin-bottom: 5px;">
+            <h3 id="modal-course-title">COURSE NAME</h3>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div>
+        </div>
+        <div style="font-size: 24px; font-weight: bold; color: var(--accent-green); margin-bottom: 20px;">
+            Score: <span id="modal-total-score">80</span>
+        </div>
+
+        <div class="matrix-wrapper">
+            <div class="matrix-grid" id="modal-scorecard-grid">
+                <!-- Modal Grid injected via JS -->
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
+            <button class="danger-btn" style="flex: 0 0 auto; padding: 12px 24px;" onclick="deleteActiveRound()">
+                🗑️ Delete Round Data
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // --- SUPABASE CONFIG ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- STATE ---
+    // --- STATE MANAGEMENT ---
     let currentCoursePars = Array(18).fill(""); 
-    let currentPlayHole = 0; // 0-17 index for Play Mode
+    let currentPlayHole = 0; 
+    let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: "", gir: "", girAdv: "", drive: "" }));
 
-    // --- ROUTING ---
-    function switchView(viewId, btnElement) {
-        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(viewId).classList.add('active');
-        btnElement.classList.add('active');
+    // --- SEARCH LOGIC ---
+    let searchTimeout = null;
+    document.getElementById('course-search-input').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        const dropdown = document.getElementById('search-dropdown');
+        clearTimeout(searchTimeout);
+        if (query.length < 2) { dropdown.classList.remove('active'); return; }
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const { data } = await supabaseClient.from('course_directory').select('course_name').ilike('course_name', `%${query}%`).limit(10);
+                if (data && data.length > 0) {
+                    dropdown.innerHTML = data.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join('');
+                    dropdown.innerHTML += `<li style="color:#9ca3af; text-align:center; font-size:12px;">Missing course? Add it manually.</li>`;
+                    dropdown.classList.add('active');
+                } else { dropdown.classList.remove('active'); }
+            } catch(err) { console.error(err); }
+        }, 250); 
+    });
+
+    function selectCourseFromDropdown(courseName) {
+        document.getElementById('course-search-input').value = courseName.toUpperCase();
+        document.getElementById('search-dropdown').classList.remove('active');
+        fetchCourseDetails(); 
     }
 
-    // --- SEARCH / FETCH (WITH ARRAY FIX) ---
+    function toggleSearchBody() {
+        const body = document.getElementById('search-body');
+        const btn = document.getElementById('search-toggle-btn');
+        if(body.style.display === 'none') { body.style.display = 'block'; btn.innerText = 'HIDE'; } 
+        else { body.style.display = 'none'; btn.innerText = 'SHOW'; }
+    }
+
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim();
-        const statusText = document.getElementById('api-status');
-        const displayTitle = document.getElementById('current-course-display');
-        document.getElementById('search-dropdown').classList.remove('active'); 
-        
         if(!query) return;
-        statusText.innerText = "⏳ Loading course...";
-
+        document.getElementById('api-status').innerText = "⏳ Loading...";
+        
         try {
-            const { data, error } = await supabaseClient
-                .from('course_directory')
-                .select('course_name, pars')
-                .ilike('course_name', `%${query}%`)
-                .limit(1);
-
-            if (error) throw error;
-
+            const { data } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', `%${query}%`).limit(1);
             if (data && data.length > 0) {
-                const course = data[0];
-                
-                // BUG 1 FIX: Cleanly parse Postgres string arrays to avoid alternating blanks
-                let parsedPars = course.pars;
-                if (typeof parsedPars === 'string') {
-                    parsedPars = JSON.parse(parsedPars.replace('{', '[').replace('}', ']'));
-                }
-                
+                let parsedPars = data[0].pars;
+                if (typeof parsedPars === 'string') parsedPars = JSON.parse(parsedPars.replace('{', '[').replace('}', ']'));
                 currentCoursePars = [...parsedPars];
-                displayTitle.innerText = course.course_name.toUpperCase();
-                statusText.innerText = `✅ Loaded ${course.course_name.toUpperCase()}.`;
+                document.getElementById('current-course-display').innerText = data[0].course_name.toUpperCase();
+                
+                roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: "", gir: "", girAdv: "", drive: "" }));
+                toggleSearchBody();
                 buildGrid();
                 updatePlayModeUI();
                 return;
             }
-        } catch(e) { console.error("Fetch error:", e); }
-
-        displayTitle.innerText = query.toUpperCase();
-        statusText.innerText = "ℹ️ Course not found. Please enter pars manually.";
+        } catch(e) {}
+        
+        document.getElementById('current-course-display').innerText = query.toUpperCase();
         currentCoursePars = Array(18).fill(""); 
-        buildGrid();
-        updatePlayModeUI();
+        buildGrid(); updatePlayModeUI();
     }
 
-    // --- GRID GENERATOR (WITH UX NUMPAD FIX) ---
+    // --- GRID GENERATOR & SYNC ---
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid');
         grid.innerHTML = ''; 
-
-        const rows = [
-            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' },
-            { label: 'SCORE', type: 'input' }, { label: 'PUTTS', type: 'input' },
-            { label: 'FIR', type: 'toggle' }, { label: 'GIR', type: 'toggle' }, { label: 'DRIVE (YDS)', type: 'drive' } 
-        ];
+        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE (YDS)', type: 'drive' }];
 
         rows.forEach(row => {
-            const labelCell = document.createElement('div');
-            labelCell.className = 'row-label';
-            labelCell.innerText = row.label;
-            grid.appendChild(labelCell);
-
+            const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
             for (let i = 0; i < 18; i++) {
                 const cell = document.createElement('div');
-                
-                if (row.type === 'header') {
-                    cell.className = 'cell hole-header';
-                    cell.innerText = i + 1;
-                } else if (row.type === 'par') {
+                if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; } 
+                else if (row.type === 'par') {
                     cell.className = 'cell';
-                    // UX Fix: inputmode="numeric" added to all inputs
-                    cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" pattern="[0-9]*" value="${currentCoursePars[i] ?? ''}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
-                } else if (row.type === 'input') {
+                    cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`;
+                } 
+                else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') {
+                    cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell';
+                    cell.id = row.type === 'drive' ? `drive-container-${i}` : '';
+                    cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" placeholder="${row.type === 'drive' ? 'yds' : '-'}" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
+                } 
+                else if (row.type === 'fir' || row.type === 'gir') {
                     cell.className = 'cell';
-                    cell.innerHTML = `<input type="number" inputmode="numeric" pattern="[0-9]*" placeholder="-">`;
-                } else if (row.type === 'toggle') {
-                    cell.className = 'cell';
-                    cell.innerHTML = `<button class="toggle-btn" onclick="toggleHit(this)">MISS</button>`;
-                } else if (row.type === 'drive') {
-                    cell.className = 'cell drive-cell';
-                    cell.id = `drive-container-${i}`;
-                    cell.innerHTML = `<input type="number" id="drive-input-${i}" inputmode="numeric" pattern="[0-9]*" placeholder="yds">`;
+                    cell.innerHTML = `<button class="toggle-btn ${roundData[i][row.type] === 'hit' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${roundData[i][row.type] === 'hit' ? 'HIT' : 'MISS'}</button>`;
                 }
                 grid.appendChild(cell);
             }
@@ -382,85 +402,169 @@
         updateDriveDistances();
     }
 
-    // --- LOGIC HELPERS ---
-    function updatePar(index, val) {
-        let newPar = parseInt(val);
-        if (isNaN(newPar)) { currentCoursePars[index] = ""; } 
-        else { currentCoursePars[index] = Math.max(3, Math.min(5, newPar)); }
-        document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; 
-        updateDriveDistances();
+    function syncGridToState(index, field, val) {
+        roundData[index][field] = val;
         if(currentPlayHole === index) updatePlayModeUI();
     }
 
-    function toggleHit(btn) {
-        if (btn.innerText === "MISS") { btn.innerText = "HIT"; btn.classList.add("hit"); } 
-        else { btn.innerText = "MISS"; btn.classList.remove("hit"); }
+    function toggleGridHit(index, type) {
+        const btn = document.getElementById(`grid-${type}-${index}`);
+        const newState = btn.innerText === "MISS" ? "hit" : "miss";
+        btn.innerText = newState.toUpperCase();
+        if(newState === 'hit') btn.classList.add('hit'); else btn.classList.remove('hit');
+        roundData[index][type] = newState;
+        if(newState === 'hit') roundData[index][type + 'Adv'] = ""; 
+        if(currentPlayHole === index) updatePlayModeUI();
     }
 
-    function updateDriveDistances() {
-        for (let i = 0; i < 18; i++) {
-            const input = document.getElementById(`drive-input-${i}`);
-            const container = document.getElementById(`drive-container-${i}`);
-            if (currentCoursePars[i] === 3) {
-                input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled");
-            } else {
-                input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled");
-            }
-        }
-    }
-
-    // --- PLAY MODE UI LOGIC ---
+    // --- PLAY MODE UI & SYNC ---
     function togglePlayMode(isPlayMode) {
         document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn';
         document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn';
-        
         document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block';
         document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none';
-        
         if(isPlayMode) updatePlayModeUI();
     }
 
     function updatePlayModeUI() {
         const par = currentCoursePars[currentPlayHole];
+        const state = roundData[currentPlayHole];
+        
         document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`;
         document.getElementById('play-par-title').innerText = par ? `PAR ${par}` : `PAR N/A`;
         
-        // Hide Drive input and FIR advanced tracking if Par 3
+        document.getElementById('play-score').value = state.score;
+        document.getElementById('play-putts').value = state.putts;
+        document.getElementById('play-drive').value = state.drive;
+        
+        ['fir', 'gir'].forEach(type => {
+            document.getElementById(`${type}-hit-btn`).classList.remove('active');
+            document.getElementById(`${type}-miss-btn`).classList.remove('active');
+            document.getElementById(`adv-${type}-options`).style.display = 'none';
+            document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
+
+            if(state[type] === 'hit') document.getElementById(`${type}-hit-btn`).classList.add('active');
+            else if(state[type] === 'miss') {
+                document.getElementById(`${type}-miss-btn`).classList.add('active');
+                document.getElementById(`adv-${type}-options`).style.display = 'flex';
+                if(state[type + 'Adv']) {
+                    const btns = document.querySelectorAll(`#adv-${type}-options .adv-btn`);
+                    btns.forEach(b => { if(b.innerText === state[type + 'Adv']) b.classList.add('active'); });
+                }
+            }
+        });
+        
         const isPar3 = par === 3;
         document.getElementById('play-drive-block').style.display = isPar3 ? 'none' : 'flex';
         document.getElementById('play-fir-block').style.display = isPar3 ? 'none' : 'block';
-
         document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible';
         document.getElementById('play-next-btn').innerText = currentPlayHole === 17 ? 'FINISH' : 'NEXT HOLE →';
-        
-        // Reset sub-toggles for demo purposes
-        document.getElementById('adv-fir-options').style.display = 'none';
-        document.getElementById('adv-gir-options').style.display = 'none';
-        document.querySelectorAll('.adv-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    function syncPlayToState(field, val) {
+        roundData[currentPlayHole][field] = val;
+        const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`);
+        if(gridInput) gridInput.value = val;
     }
 
     function changePlayHole(dir) {
-        currentPlayHole += dir;
-        if (currentPlayHole < 0) currentPlayHole = 0;
-        if (currentPlayHole > 17) currentPlayHole = 17;
+        currentPlayHole = Math.max(0, Math.min(17, currentPlayHole + dir));
         updatePlayModeUI();
     }
 
     function setPlayToggle(type, status) {
-        document.getElementById(`${type}-hit-btn`).classList.remove('active');
-        document.getElementById(`${type}-miss-btn`).classList.remove('active');
-        document.getElementById(`${type}-${status}-btn`).classList.add('active');
+        roundData[currentPlayHole][type] = status;
+        if(status === 'hit') roundData[currentPlayHole][type + 'Adv'] = "";
+        const gridBtn = document.getElementById(`grid-${type}-${currentPlayHole}`);
+        if(gridBtn) {
+            gridBtn.innerText = status.toUpperCase();
+            if(status === 'hit') gridBtn.classList.add('hit'); else gridBtn.classList.remove('hit');
+        }
+        updatePlayModeUI();
+    }
+
+    function setAdvToggle(type, value) {
+        roundData[currentPlayHole][type + 'Adv'] = value;
+        updatePlayModeUI();
+    }
+
+    function updatePar(index, val) {
+        let newPar = parseInt(val);
+        currentCoursePars[index] = isNaN(newPar) ? "" : Math.max(3, Math.min(5, newPar));
+        document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; 
+        updateDriveDistances();
+        if(currentPlayHole === index) updatePlayModeUI();
+    }
+
+    function updateDriveDistances() {
+        for (let i = 0; i < 18; i++) {
+            const input = document.getElementById(`grid-drive-${i}`);
+            const container = document.getElementById(`drive-container-${i}`);
+            if(input && container) {
+                if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } 
+                else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); }
+            }
+        }
+    }
+
+    // --- MODAL & HISTORY LOGIC ---
+    function openHistoryModal(courseName, dateStr, totalScore) {
+        document.getElementById('modal-course-title').innerText = courseName.toUpperCase();
+        document.getElementById('modal-course-date').innerText = dateStr;
+        document.getElementById('modal-total-score').innerText = totalScore;
         
-        // Dynamic expanding MISS options
-        document.getElementById(`adv-${type}-options`).style.display = status === 'miss' ? 'flex' : 'none';
+        // Build Read-Only Grid
+        const grid = document.getElementById('modal-scorecard-grid');
+        grid.innerHTML = ''; 
+        const rows = [{ label: 'HOLE' }, { label: 'PAR' }, { label: 'SCORE' }, { label: 'PUTTS' }, { label: 'FIR' }, { label: 'GIR' }];
+
+        rows.forEach(row => {
+            const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
+            for (let i = 0; i < 18; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (row.label === 'HOLE') { cell.className = 'cell hole-header'; cell.innerText = i + 1; }
+                else {
+                    // Mock data visualization for the modal
+                    cell.style.color = 'var(--text-muted)';
+                    cell.innerText = '-'; 
+                }
+                grid.appendChild(cell);
+            }
+        });
+
+        document.getElementById('history-modal').classList.add('active');
     }
 
-    function setAdvToggle(btn) {
-        btn.parentElement.querySelectorAll('.adv-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    function closeHistoryModal() {
+        document.getElementById('history-modal').classList.remove('active');
     }
 
-    // Init
+    function deleteActiveRound() {
+        if(confirm("Are you sure you want to delete this round? This cannot be undone.")) {
+            alert("Round deleted successfully. (Mock action)");
+            closeHistoryModal();
+        }
+    }
+
+    // --- ROUTING & ACTIONS ---
+    function switchView(viewId, btnElement) {
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        btnElement.classList.add('active');
+    }
+
+    function updateAnalytics() {
+        // Triggered when dropdown filters change
+        console.log("Filters Updated:", document.getElementById('filter-timeframe').value, document.getElementById('filter-course').value);
+    }
+
+    function submitRound() {
+        console.log("Submitting Round Data:", roundData);
+        alert("Scorecard State successfully logged in console!");
+    }
+
     document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
     document.addEventListener('DOMContentLoaded', buildGrid);
 </script>
