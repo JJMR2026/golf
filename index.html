@@ -66,8 +66,8 @@
         .play-input { width: 80px; height: 50px; background: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 8px; }
         .play-input input { font-size: 20px; }
         
-        .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; }
-        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: #1a1a1a; border: 1px solid #333; color: var(--text-muted); cursor: pointer;}
+        .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; flex-wrap: wrap; }
+        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: #1a1a1a; border: 1px solid #333; color: var(--text-muted); cursor: pointer; min-width: 60px; }
         .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
@@ -87,7 +87,6 @@
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: stretch;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 150px; }
         
-        /* Custom Checkbox Dropdown */
         .multi-select-container { position: relative; flex: 1; min-width: 200px; }
         .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
         .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
@@ -165,6 +164,7 @@
                             <button class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
                         </div>
                     </div>
+                    <!-- Multi-select advanced tracking -->
                     <div class="advanced-tracking" id="adv-fir-options">
                         <button class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button>
                         <button class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button>
@@ -182,6 +182,8 @@
                         </div>
                     </div>
                     <div class="advanced-tracking" id="adv-gir-options">
+                        <button class="adv-btn" onclick="setAdvToggle('gir', 'LEFT')">LEFT</button>
+                        <button class="adv-btn" onclick="setAdvToggle('gir', 'RIGHT')">RIGHT</button>
                         <button class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button>
                         <button class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button>
                         <button class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button>
@@ -294,7 +296,7 @@
     </div>
 </div>
 
-<!-- FULL SCREEN HISTORY MODAL (NOW EDITABLE) -->
+<!-- FULL SCREEN HISTORY MODAL -->
 <div id="history-modal" class="modal-overlay">
     <div class="modal-content card" style="margin-top: 40px;">
         <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
@@ -307,9 +309,7 @@
         </div>
 
         <div class="matrix-wrapper">
-            <div class="matrix-grid" id="modal-scorecard-grid">
-                <!-- Editable Modal Grid injected via JS -->
-            </div>
+            <div class="matrix-grid" id="modal-scorecard-grid"></div>
         </div>
 
         <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
@@ -327,10 +327,9 @@
     // --- STATE MANAGEMENT ---
     let currentCoursePars = Array(18).fill(""); 
     let currentPlayHole = 0; 
-    let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: "", gir: "", girAdv: "", drive: "" }));
+    let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "" }));
     
-    // Independent state for the History Modal
-    let modalCoursePars = Array(18).fill(4); // Mock default for historical par
+    let modalCoursePars = Array(18).fill(4); 
     let modalRoundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", gir: "", drive: "" }));
 
     // --- SEARCH LOGIC ---
@@ -369,22 +368,36 @@
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim();
         if(!query) return;
-        document.getElementById('api-status').innerText = "⏳ Loading...";
+        const statusEl = document.getElementById('api-status');
+        statusEl.innerText = "⏳ Loading...";
         
         try {
-            const { data } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', `%${query}%`).limit(1);
+            const { data, error } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', `%${query}%`).limit(1);
+            if (error) throw error;
+
             if (data && data.length > 0) {
                 let parsedPars = data[0].pars;
-                if (typeof parsedPars === 'string') parsedPars = JSON.parse(parsedPars.replace('{', '[').replace('}', ']'));
+                if (typeof parsedPars === 'string') {
+                    parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']'));
+                }
+                if (!Array.isArray(parsedPars)) parsedPars = Array(18).fill("");
+                
                 currentCoursePars = [...parsedPars];
                 document.getElementById('current-course-display').innerText = data[0].course_name.toUpperCase();
                 
-                roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: "", gir: "", girAdv: "", drive: "" }));
+                roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "" }));
+                statusEl.innerText = "";
                 toggleSearchBody(); buildGrid(); updatePlayModeUI();
                 return;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error("Fetch Error:", e);
+            statusEl.innerText = "❌ Error loading course. Please try again.";
+            return;
+        }
+        
         document.getElementById('current-course-display').innerText = query.toUpperCase();
+        statusEl.innerText = "ℹ️ Course not found. Please enter pars manually.";
         currentCoursePars = Array(18).fill(""); buildGrid(); updatePlayModeUI();
     }
 
@@ -421,7 +434,7 @@
         btn.innerText = newState.toUpperCase();
         if(newState === 'hit') btn.classList.add('hit'); else btn.classList.remove('hit');
         roundData[index][type] = newState;
-        if(newState === 'hit') roundData[index][type + 'Adv'] = ""; 
+        if(newState === 'hit') roundData[index][type + 'Adv'] = []; 
         if(currentPlayHole === index) updatePlayModeUI();
     }
 
@@ -448,7 +461,9 @@
             if(state[type] === 'hit') document.getElementById(`${type}-hit-btn`).classList.add('active');
             else if(state[type] === 'miss') {
                 document.getElementById(`${type}-miss-btn`).classList.add('active'); document.getElementById(`adv-${type}-options`).style.display = 'flex';
-                if(state[type + 'Adv']) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(b.innerText === state[type + 'Adv']) b.classList.add('active'); });
+                if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) {
+                    document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); });
+                }
             }
         });
         
@@ -461,18 +476,29 @@
 
     function syncPlayToState(field, val) { roundData[currentPlayHole][field] = val; const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); if(gridInput) gridInput.value = val; }
     function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min(17, currentPlayHole + dir)); updatePlayModeUI(); }
+    
     function setPlayToggle(type, status) {
-        roundData[currentPlayHole][type] = status; if(status === 'hit') roundData[currentPlayHole][type + 'Adv'] = "";
+        roundData[currentPlayHole][type] = status; if(status === 'hit') roundData[currentPlayHole][type + 'Adv'] = [];
         const gridBtn = document.getElementById(`grid-${type}-${currentPlayHole}`);
         if(gridBtn) { gridBtn.innerText = status.toUpperCase(); if(status === 'hit') gridBtn.classList.add('hit'); else gridBtn.classList.remove('hit'); }
         updatePlayModeUI();
     }
-    function setAdvToggle(type, value) { roundData[currentPlayHole][type + 'Adv'] = value; updatePlayModeUI(); }
+    
+    function setAdvToggle(type, value) {
+        let currentArray = roundData[currentPlayHole][type + 'Adv'];
+        if (!Array.isArray(currentArray)) currentArray = [];
+        if (currentArray.includes(value)) { currentArray = currentArray.filter(v => v !== value); } 
+        else { currentArray.push(value); }
+        roundData[currentPlayHole][type + 'Adv'] = currentArray;
+        updatePlayModeUI();
+    }
+    
     function updatePar(index, val) {
         let newPar = parseInt(val); currentCoursePars[index] = isNaN(newPar) ? "" : Math.max(3, Math.min(5, newPar));
         document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; 
         updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI();
     }
+    
     function updateDriveDistances() {
         for (let i = 0; i < 18; i++) {
             const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`);
@@ -489,7 +515,6 @@
         document.getElementById('modal-course-date').innerText = dateStr;
         document.getElementById('modal-total-score').innerText = totalScore;
         
-        // Setup mock data for editing
         modalRoundData = Array.from({length: 18}, () => ({ score: "4", putts: "2", fir: "hit", gir: "miss", drive: "250" }));
         
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; 
@@ -499,7 +524,6 @@
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
             for (let i = 0; i < 18; i++) {
                 const cell = document.createElement('div'); cell.className = 'cell';
-                
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; }
                 else if (row.type === 'par') {
                     cell.innerHTML = `<input type="number" inputmode="numeric" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
@@ -525,14 +549,8 @@
     }
 
     function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); }
-    function saveModalChanges() {
-        console.log("Saving Edited Round Data:", modalRoundData);
-        alert("Historical round changes saved successfully!");
-        closeHistoryModal();
-    }
-    function deleteActiveRound() {
-        if(confirm("Are you sure you want to delete this round? This cannot be undone.")) { alert("Round deleted."); closeHistoryModal(); }
-    }
+    function saveModalChanges() { console.log("Saving Edited Round Data:", modalRoundData); alert("Historical round changes saved successfully!"); closeHistoryModal(); }
+    function deleteActiveRound() { if(confirm("Are you sure you want to delete this round? This cannot be undone.")) { alert("Round deleted."); closeHistoryModal(); } }
 
     // --- ANALYTICS MULTI-SELECT ---
     function toggleCourseFilter() {
@@ -550,12 +568,7 @@
         allBox.checked = Array.from(boxes).every(b => b.checked);
         updateAnalytics();
     }
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.multi-select-container')) {
-            document.getElementById('course-checkbox-list').style.display = 'none';
-        }
-    });
+    document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.getElementById('course-checkbox-list').style.display = 'none'; } });
 
     // --- ROUTING & ACTIONS ---
     function switchView(viewId, btnElement) {
