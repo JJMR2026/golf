@@ -73,7 +73,6 @@
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
-        /* --- HISTORY ITEM & MODAL --- */
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; }
         .history-item:hover { background-color: #1a1a1a; }
         .history-item:last-child { border-bottom: none; }
@@ -84,11 +83,10 @@
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
         .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; }
 
-        /* --- ANALYTICS FILTERS & TABLE --- */
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: stretch;}
-        .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 150px; }
+        .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
         
-        .multi-select-container { position: relative; flex: 1; min-width: 200px; }
+        .multi-select-container { position: relative; flex: 1; min-width: 180px; }
         .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
         .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
         .multi-select-dropdown label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
@@ -107,7 +105,6 @@
 <body>
 
 <div class="container">
-    
     <div class="nav-buttons">
         <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
         <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
@@ -197,6 +194,18 @@
                     <div class="play-label">DRIVE (YDS)</div>
                     <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" pattern="[0-9]*" placeholder="yds" onchange="syncPlayToState('drive', this.value)"></div>
                 </div>
+                <div class="play-row">
+                    <div class="play-label">DROPS (PENALTY)</div>
+                    <div class="play-input"><input type="number" id="play-drops" inputmode="numeric" pattern="[0-9]*" placeholder="0" onchange="syncPlayToState('drops', this.value)"></div>
+                </div>
+                <div class="play-row">
+                    <div class="play-label">SAND SAVE</div>
+                    <div style="display: flex; gap: 10px; width: 120px;">
+                        <button class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button>
+                        <button class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button>
+                    </div>
+                </div>
+
                 <div class="play-nav">
                     <button onclick="changePlayHole(-1)" id="play-prev-btn" style="background: #1a1a1a;">← PREV</button>
                     <button onclick="changePlayHole(1)" class="primary" id="play-next-btn">NEXT HOLE →</button>
@@ -215,8 +224,6 @@
             <div class="scorecard-header">
                 <h3>ROUND HISTORY</h3>
                 <div style="display: flex; gap: 10px;">
-                    <input type="file" id="csv-upload" accept=".csv" style="display: none;" onchange="handleCSVUpload(event)">
-                    <button class="view-toggle-btn" style="border-color: var(--text-muted);" onclick="document.getElementById('csv-upload').click()">+ Bulk Import (CSV)</button>
                     <div class="badge" style="background: #2563eb; color: white; border: none; align-content: center;">SUPABASE SYNCED</div>
                 </div>
             </div>
@@ -241,7 +248,27 @@
                     <option value="last3">Last 3 Rounds</option>
                     <option value="last4">Last 4 Rounds</option>
                     <option value="last5">Last 5 Rounds</option>
-                    <option value="full" selected>Full Season</option>
+                    <option value="full" selected>All Time</option>
+                </select>
+                
+                <select class="filter-select" id="filter-year" onchange="updateAnalytics()">
+                    <option value="all">All Years</option>
+                </select>
+
+                <select class="filter-select" id="filter-month" onchange="updateAnalytics()">
+                    <option value="all">All Months</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
                 </select>
                 
                 <div class="multi-select-container">
@@ -250,33 +277,13 @@
                         <span style="font-size: 10px;">▼</span>
                     </div>
                     <div class="multi-select-dropdown" id="course-checkbox-list">
-                        <label><input type="checkbox" id="cb-all-courses" checked onchange="toggleAllCourses(this)"> <strong>All Courses</strong></label>
-                        <hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <!-- Dynamically populated in the future -->
+                        <!-- Dynamically populated -->
                     </div>
                 </div>
             </div>
 
             <table class="stats-table" id="analytics-data-table">
-                <thead>
-                    <tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Hole in One</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Albatross</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Eagle</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Birdie</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Par</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Bogey</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Double</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Triple</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Quad</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>+5</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>3+Putt</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>Drops</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>FIR</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                    <tr><td>GIR</td><td>0</td><td>0.0</td><td>0%</td></tr>
-                </tbody>
+                <!-- Dynamically populated -->
             </table>
         </div>
     </div>
@@ -314,12 +321,12 @@
     // --- STATE MANAGEMENT ---
     let currentCoursePars = Array(18).fill(""); 
     let currentPlayHole = 0; 
-    let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "" }));
+    let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: "", sandSave: "" }));
     
     // Modal State
     let activeModalRoundId = null;
     let modalCoursePars = Array(18).fill(""); 
-    let modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "" }));
+    let modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: "", sandSave: "" }));
 
     // --- SEARCH LOGIC ---
     let searchTimeout = null;
@@ -372,7 +379,7 @@
                 currentCoursePars = [...parsedPars];
                 document.getElementById('current-course-display').innerText = data[0].course_name.toUpperCase();
                 
-                roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "" }));
+                roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: "", sandSave: "" }));
                 statusEl.innerText = "";
                 toggleSearchBody(); buildGrid(); updatePlayModeUI();
                 return;
@@ -390,7 +397,11 @@
     // --- NEW ROUND GRID ---
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; 
-        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE (YDS)', type: 'drive' }];
+        const rows = [
+            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, 
+            { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, 
+            { label: 'DRIVE (YDS)', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }
+        ];
 
         rows.forEach(row => {
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
@@ -400,12 +411,17 @@
                 else if (row.type === 'par') {
                     cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" pattern="[0-9]*" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`;
                 } 
-                else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') {
+                else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive' || row.type === 'drops') {
                     cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : '';
-                    cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" pattern="[0-9]*" placeholder="${row.type === 'drive' ? 'yds' : '-'}" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
+                    let placeholderText = "-"; if(row.type === 'drive') placeholderText = 'yds'; if(row.type === 'drops') placeholderText = '0';
+                    cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" pattern="[0-9]*" placeholder="${placeholderText}" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
                 } 
-                else if (row.type === 'fir' || row.type === 'gir') {
-                    cell.className = 'cell'; cell.innerHTML = `<button class="toggle-btn ${roundData[i][row.type] === 'hit' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${roundData[i][row.type] === 'hit' ? 'HIT' : 'MISS'}</button>`;
+                else if (row.type === 'fir' || row.type === 'gir' || row.type === 'sandSave') {
+                    cell.className = 'cell'; 
+                    let currentVal = roundData[i][row.type];
+                    let btnText = row.type === 'sandSave' ? (currentVal === 'yes' ? 'YES' : (currentVal === 'no' ? 'NO' : '-')) : (currentVal === 'hit' ? 'HIT' : (currentVal === 'miss' ? 'MISS' : '-'));
+                    let hitClass = (currentVal === 'hit' || currentVal === 'yes') ? 'hit' : '';
+                    cell.innerHTML = `<button class="toggle-btn ${hitClass}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`;
                 }
                 grid.appendChild(cell);
             }
@@ -414,13 +430,22 @@
     }
 
     function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); }
+    
     function toggleGridHit(index, type) {
         const btn = document.getElementById(`grid-${type}-${index}`);
-        const newState = btn.innerText === "MISS" ? "hit" : "miss";
-        btn.innerText = newState.toUpperCase();
-        if(newState === 'hit') btn.classList.add('hit'); else btn.classList.remove('hit');
-        roundData[index][type] = newState;
-        if(newState === 'hit') roundData[index][type + 'Adv'] = []; 
+        let newState = "";
+        
+        if (type === 'sandSave') {
+            newState = btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no");
+        } else {
+            newState = btn.innerText === "MISS" ? "hit" : "miss";
+        }
+        
+        btn.innerText = newState === "-" ? "-" : newState.toUpperCase();
+        if(newState === 'hit' || newState === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit');
+        
+        roundData[index][type] = newState === "-" ? "" : newState;
+        if(newState === 'hit' && type !== 'sandSave') roundData[index][type + 'Adv'] = []; 
         if(currentPlayHole === index) updatePlayModeUI();
     }
 
@@ -440,15 +465,30 @@
         document.getElementById('play-score').value = state.score;
         document.getElementById('play-putts').value = state.putts;
         document.getElementById('play-drive').value = state.drive;
+        document.getElementById('play-drops').value = state.drops;
         
-        ['fir', 'gir'].forEach(type => {
-            document.getElementById(`${type}-hit-btn`).classList.remove('active'); document.getElementById(`${type}-miss-btn`).classList.remove('active');
-            document.getElementById(`adv-${type}-options`).style.display = 'none'; document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
-            if(state[type] === 'hit') document.getElementById(`${type}-hit-btn`).classList.add('active');
-            else if(state[type] === 'miss') {
-                document.getElementById(`${type}-miss-btn`).classList.add('active'); document.getElementById(`adv-${type}-options`).style.display = 'flex';
-                if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) {
-                    document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); });
+        ['fir', 'gir', 'sandSave'].forEach(type => {
+            let hitBtnId = type === 'sandSave' ? `${type}-yes-btn` : `${type}-hit-btn`;
+            let missBtnId = type === 'sandSave' ? `${type}-no-btn` : `${type}-miss-btn`;
+            let hitTarget = type === 'sandSave' ? 'yes' : 'hit';
+            let missTarget = type === 'sandSave' ? 'no' : 'miss';
+
+            document.getElementById(hitBtnId).classList.remove('active'); 
+            document.getElementById(missBtnId).classList.remove('active');
+            
+            if (type !== 'sandSave') {
+                document.getElementById(`adv-${type}-options`).style.display = 'none'; 
+                document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
+            }
+
+            if(state[type] === hitTarget) document.getElementById(hitBtnId).classList.add('active');
+            else if(state[type] === missTarget) {
+                document.getElementById(missBtnId).classList.add('active'); 
+                if (type !== 'sandSave') {
+                    document.getElementById(`adv-${type}-options`).style.display = 'flex';
+                    if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) {
+                        document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); });
+                    }
                 }
             }
         });
@@ -464,9 +504,20 @@
     function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min(17, currentPlayHole + dir)); updatePlayModeUI(); }
     
     function setPlayToggle(type, status) {
-        roundData[currentPlayHole][type] = status; if(status === 'hit') roundData[currentPlayHole][type + 'Adv'] = [];
+        if (roundData[currentPlayHole][type] === status) {
+            roundData[currentPlayHole][type] = ""; // Toggle off if already selected
+        } else {
+            roundData[currentPlayHole][type] = status; 
+        }
+        
+        if((status === 'hit' || status === 'yes') && type !== 'sandSave') roundData[currentPlayHole][type + 'Adv'] = [];
+        
         const gridBtn = document.getElementById(`grid-${type}-${currentPlayHole}`);
-        if(gridBtn) { gridBtn.innerText = status.toUpperCase(); if(status === 'hit') gridBtn.classList.add('hit'); else gridBtn.classList.remove('hit'); }
+        if(gridBtn) { 
+            let displayState = roundData[currentPlayHole][type] === "" ? "-" : roundData[currentPlayHole][type].toUpperCase();
+            gridBtn.innerText = displayState; 
+            if(status === 'hit' || status === 'yes') gridBtn.classList.add('hit'); else gridBtn.classList.remove('hit'); 
+        }
         updatePlayModeUI();
     }
     
@@ -523,7 +574,9 @@
                         round_id: roundId, hole_number: i + 1, par: currentCoursePars[i] ? parseInt(currentCoursePars[i]) : null, score: s, putts: parseInt(roundData[i].putts) || 0,
                         fir: roundData[i].fir || null, fir_detail: (roundData[i].firAdv && roundData[i].firAdv.length > 0) ? roundData[i].firAdv.join(", ") : null,
                         gir: roundData[i].gir || null, gir_detail: (roundData[i].girAdv && roundData[i].girAdv.length > 0) ? roundData[i].girAdv.join(", ") : null,
-                        drive_distance: parseInt(roundData[i].drive) || null
+                        drive_distance: parseInt(roundData[i].drive) || null,
+                        drops: parseInt(roundData[i].drops) || 0,
+                        sand_save: roundData[i].sandSave || null
                     });
                 }
             }
@@ -534,6 +587,7 @@
             alert(`✅ Round successfully logged!\nCourse: ${courseName}\nScore: ${totalScore}`);
             fetchCourseDetails(); 
             if(document.getElementById('view-history').classList.contains('active')) fetchHistory();
+            if(document.getElementById('view-analytics').classList.contains('active')) loadAnalyticsData();
         } catch (error) { console.error("Error saving round:", error); alert("❌ Failed to save round."); } 
         finally { submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false; }
     }
@@ -544,37 +598,19 @@
         listDiv.innerHTML = '<div class="empty-state">⏳ Fetching your history...</div>';
         
         try {
-            const { data, error } = await supabaseClient
-                .from('logged_rounds')
-                .select('*')
-                .order('date_played', { ascending: false });
-                
+            const { data, error } = await supabaseClient.from('logged_rounds').select('*').order('date_played', { ascending: false });
             if (error) throw error;
-            
-            if (!data || data.length === 0) {
-                listDiv.innerHTML = '<div class="empty-state">No rounds logged yet. Get out there!</div>';
-                return;
-            }
+            if (!data || data.length === 0) { listDiv.innerHTML = '<div class="empty-state">No rounds logged yet. Get out there!</div>'; return; }
             
             listDiv.innerHTML = data.map(round => {
                 const displayDate = new Date(round.date_played).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
                 return `
                 <div class="history-item" onclick="openHistoryModal('${round.id}', '${round.course_name.replace(/'/g, "\\'")}', '${displayDate}', ${round.total_score})">
-                    <div>
-                        <strong>${round.course_name}</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">${displayDate}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <strong style="color: var(--accent-green); font-size: 18px;">${round.total_score}</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">Tap to edit</span>
-                    </div>
+                    <div><strong>${round.course_name}</strong><br><span style="font-size: 12px; color: var(--text-muted);">${displayDate}</span></div>
+                    <div style="text-align: right;"><strong style="color: var(--accent-green); font-size: 18px;">${round.total_score}</strong><br><span style="font-size: 12px; color: var(--text-muted);">Tap to edit</span></div>
                 </div>`;
             }).join('');
-            
-        } catch(err) {
-            console.error("Error fetching history:", err);
-            listDiv.innerHTML = '<div class="empty-state">❌ Failed to load history. Check console.</div>';
-        }
+        } catch(err) { console.error("Error fetching history:", err); listDiv.innerHTML = '<div class="empty-state">❌ Failed to load history. Check console.</div>'; }
     }
 
     // --- DYNAMIC HISTORY MODAL ---
@@ -588,41 +624,36 @@
         grid.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">⏳ Loading scorecard data...</div>';
         document.getElementById('history-modal').classList.add('active');
 
-        // Reset state
         modalCoursePars = Array(18).fill("");
-        modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "" }));
+        modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: "", sandSave: "" }));
 
         try {
             const { data, error } = await supabaseClient.from('hole_scores').select('*').eq('round_id', roundId).order('hole_number', { ascending: true });
             if (error) throw error;
-
-            // Map data to state
             if (data) {
                 data.forEach(hole => {
                     const idx = hole.hole_number - 1;
                     if (idx >= 0 && idx < 18) {
                         modalCoursePars[idx] = hole.par || "";
                         modalRoundData[idx] = {
-                            id: hole.id,
-                            score: hole.score || "",
-                            putts: hole.putts !== null ? hole.putts : "",
-                            fir: hole.fir || "",
-                            gir: hole.gir || "",
-                            drive: hole.drive_distance || ""
+                            id: hole.id, score: hole.score || "", putts: hole.putts !== null ? hole.putts : "",
+                            fir: hole.fir || "", gir: hole.gir || "", drive: hole.drive_distance || "",
+                            drops: hole.drops || "", sandSave: hole.sand_save || ""
                         };
                     }
                 });
             }
             buildModalGrid();
-        } catch(err) {
-            console.error("Error loading hole data:", err);
-            grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">❌ Failed to load scorecard.</div>';
-        }
+        } catch(err) { console.error("Error loading hole data:", err); grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">❌ Failed to load scorecard.</div>'; }
     }
 
     function buildModalGrid() {
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; 
-        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }];
+        const rows = [
+            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, 
+            { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, 
+            { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }
+        ];
 
         rows.forEach(row => {
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
@@ -630,25 +661,33 @@
                 const cell = document.createElement('div'); cell.className = 'cell';
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; }
                 else if (row.type === 'par') { cell.innerHTML = `<input type="number" inputmode="numeric" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`; }
-                else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { cell.innerHTML = `<input type="number" inputmode="numeric" value="${modalRoundData[i][row.type]}" onchange="modalRoundData[${i}]['${row.type}'] = this.value">`; }
-                else if (row.type === 'fir' || row.type === 'gir') {
-                    const isHit = modalRoundData[i][row.type] === 'hit';
-                    cell.innerHTML = `<button class="toggle-btn ${isHit ? 'hit' : ''}" onclick="toggleModalHit(this, ${i}, '${row.type}')">${isHit ? 'HIT' : 'MISS'}</button>`;
+                else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive' || row.type === 'drops') { 
+                    cell.innerHTML = `<input type="number" inputmode="numeric" value="${modalRoundData[i][row.type]}" onchange="modalRoundData[${i}]['${row.type}'] = this.value">`; 
+                }
+                else if (row.type === 'fir' || row.type === 'gir' || row.type === 'sandSave') {
+                    let currentVal = modalRoundData[i][row.type];
+                    let btnText = row.type === 'sandSave' ? (currentVal === 'yes' ? 'YES' : (currentVal === 'no' ? 'NO' : '-')) : (currentVal === 'hit' ? 'HIT' : (currentVal === 'miss' ? 'MISS' : '-'));
+                    let hitClass = (currentVal === 'hit' || currentVal === 'yes') ? 'hit' : '';
+                    cell.innerHTML = `<button class="toggle-btn ${hitClass}" onclick="toggleModalHit(this, ${i}, '${row.type}')">${btnText}</button>`;
                 }
                 grid.appendChild(cell);
             }
         });
         
-        // Setup Modal Buttons
         document.getElementById('modal-delete-btn').onclick = () => deleteActiveRound(activeModalRoundId);
         document.getElementById('modal-save-btn').onclick = () => saveModalChanges(activeModalRoundId);
     }
 
     function toggleModalHit(btn, index, type) {
-        const newState = btn.innerText === "MISS" ? "hit" : "miss";
-        btn.innerText = newState.toUpperCase();
-        if(newState === 'hit') btn.classList.add('hit'); else btn.classList.remove('hit');
-        modalRoundData[index][type] = newState;
+        let newState = "";
+        if (type === 'sandSave') {
+            newState = btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no");
+        } else {
+            newState = btn.innerText === "MISS" ? "hit" : "miss";
+        }
+        btn.innerText = newState === "-" ? "-" : newState.toUpperCase();
+        if(newState === 'hit' || newState === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit');
+        modalRoundData[index][type] = newState === "-" ? "" : newState;
     }
 
     function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); activeModalRoundId = null; }
@@ -661,69 +700,36 @@
         let totalScore = 0; let totalPutts = 0;
         
         try {
-            // Update individual holes
             for (let i = 0; i < 18; i++) {
-                const hd = modalRoundData[i];
-                const s = parseInt(hd.score);
+                const hd = modalRoundData[i]; const s = parseInt(hd.score);
                 if (!isNaN(s)) totalScore += s;
                 if (!isNaN(parseInt(hd.putts))) totalPutts += parseInt(hd.putts);
 
                 if (hd.id) {
                     await supabaseClient.from('hole_scores').update({
                         par: parseInt(modalCoursePars[i]) || null, score: s || null, putts: parseInt(hd.putts) || 0,
-                        fir: hd.fir || null, gir: hd.gir || null, drive_distance: parseInt(hd.drive) || null
+                        fir: hd.fir || null, gir: hd.gir || null, drive_distance: parseInt(hd.drive) || null,
+                        drops: parseInt(hd.drops) || 0, sand_save: hd.sandSave || null
                     }).eq('id', hd.id);
                 }
             }
 
-            // Update main header totals
             await supabaseClient.from('logged_rounds').update({ total_score: totalScore, total_putts: totalPutts }).eq('id', roundId);
             
             alert("✅ Historical round updated.");
-            fetchHistory(); // Refresh list
-            closeHistoryModal();
-        } catch(err) {
-            console.error(err); alert("❌ Failed to update round.");
-        } finally {
-            saveBtn.innerText = "💾 Save Changes"; saveBtn.disabled = false;
-        }
+            fetchHistory(); closeHistoryModal(); loadAnalyticsData();
+        } catch(err) { console.error(err); alert("❌ Failed to update round."); } 
+        finally { saveBtn.innerText = "💾 Save Changes"; saveBtn.disabled = false; }
     }
 
     async function deleteActiveRound(roundId) {
         if(!roundId) return;
         if(confirm("Are you sure you want to delete this round? This cannot be undone.")) { 
             try {
-                // Cascading delete handles hole_scores if foreign key setup correctly, else manual
                 await supabaseClient.from('logged_rounds').delete().eq('id', roundId);
-                alert("🗑️ Round deleted.");
-                fetchHistory();
-                closeHistoryModal();
+                alert("🗑️ Round deleted."); fetchHistory(); closeHistoryModal(); loadAnalyticsData();
             } catch(err) { console.error(err); alert("Error deleting round."); }
         } 
-    }
-
-    // --- CSV UPLOAD LOGIC (STUB) ---
-    function handleCSVUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        alert(`Selected: ${file.name}. \n\nThe Bulk Importer template mapping is ready to be built.`);
-        event.target.value = '';
-    }
-
-    // --- ANALYTICS MULTI-SELECT ---
-    function toggleCourseFilter() { const el = document.getElementById('course-checkbox-list'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
-    function toggleAllCourses(checkbox) { document.querySelectorAll('.course-cb').forEach(b => b.checked = checkbox.checked); updateAnalytics(); }
-    function checkCourseToggles() { document.getElementById('cb-all-courses').checked = Array.from(document.querySelectorAll('.course-cb')).every(b => b.checked); updateAnalytics(); }
-    document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.getElementById('course-checkbox-list').style.display = 'none'; } });
-
-    // --- ROUTING ---
-  function switchView(viewId, btnElement) {
-        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(viewId).classList.add('active'); btnElement.classList.add('active');
-        
-        if (viewId === 'view-history') fetchHistory();
-        if (viewId === 'view-analytics') loadAnalyticsData();
     }
 
     // --- DYNAMIC ANALYTICS ENGINE ---
@@ -734,45 +740,53 @@
         table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center;">⏳ Crunching the numbers...</td></tr></tbody>';
 
         try {
-            // Fetch all rounds and their associated hole scores in one massive join
-            const { data, error } = await supabaseClient
-                .from('logged_rounds')
-                .select('*, hole_scores(*)')
-                .order('date_played', { ascending: false });
-
+            const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').order('date_played', { ascending: false });
             if (error) throw error;
             masterAnalyticsData = data || [];
             
-            populateCourseFilter();
-            updateAnalytics(); // Run initial math
-        } catch(err) {
-            console.error("Analytics fetch error:", err);
-            table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; color:#ef4444;">❌ Failed to load stats.</td></tr></tbody>';
-        }
+            populateFilters();
+            updateAnalytics(); 
+        } catch(err) { console.error("Analytics fetch error:", err); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; color:#ef4444;">❌ Failed to load stats.</td></tr></tbody>'; }
     }
 
-    function populateCourseFilter() {
+    function populateFilters() {
+        // Course Filter
         const uniqueCourses = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
         const dropdown = document.getElementById('course-checkbox-list');
-        
         let html = `<label><input type="checkbox" id="cb-all-courses" checked onchange="toggleAllCourses(this)"> <strong>All Courses</strong></label>
                     <hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">`;
-        
-        uniqueCourses.forEach(course => {
-            html += `<label><input type="checkbox" class="course-cb" value="${course}" checked onchange="checkCourseToggles()"> ${course}</label>`;
-        });
-        
+        uniqueCourses.forEach(course => { html += `<label><input type="checkbox" class="course-cb" value="${course}" checked onchange="checkCourseToggles()"> ${course}</label>`; });
         dropdown.innerHTML = html;
+
+        // Year Filter
+        const yearSelect = document.getElementById('filter-year');
+        const uniqueYears = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b) => b-a);
+        
+        let yearHtml = `<option value="all">All Years</option>`;
+        uniqueYears.forEach(year => { yearHtml += `<option value="${year}">${year}</option>`; });
+        
+        // Preserve selection if it exists
+        const currentYearVal = yearSelect.value;
+        yearSelect.innerHTML = yearHtml;
+        if(uniqueYears.includes(currentYearVal)) yearSelect.value = currentYearVal;
     }
 
     function updateAnalytics() {
-        // 1. Get Active Filters
         const timeframe = document.getElementById('filter-timeframe').value;
+        const yearFilter = document.getElementById('filter-year').value;
+        const monthFilter = document.getElementById('filter-month').value;
         const activeCourseBoxes = document.querySelectorAll('.course-cb:checked');
         const activeCourses = Array.from(activeCourseBoxes).map(cb => cb.value);
 
-        // 2. Filter the Master Data
-        let filteredRounds = masterAnalyticsData.filter(r => activeCourses.includes(r.course_name));
+        let filteredRounds = masterAnalyticsData.filter(r => {
+            if (!activeCourses.includes(r.course_name)) return false;
+            
+            const dateObj = new Date(r.date_played);
+            if (yearFilter !== 'all' && dateObj.getUTCFullYear().toString() !== yearFilter) return false;
+            if (monthFilter !== 'all' && (dateObj.getUTCMonth() + 1).toString() !== monthFilter) return false;
+            
+            return true;
+        });
         
         if (timeframe.startsWith('last')) {
             const numRounds = parseInt(timeframe.replace('last', ''));
@@ -781,17 +795,16 @@
 
         const roundCount = filteredRounds.length;
 
-        // 3. Initialize Stat Counters
         let stats = {
-            hio: 0, albatross: 0, eagle: 0, birdie: 0, par: 0, bogey: 0, 
-            double: 0, triple: 0, quad: 0, plus5: 0,
-            putts3: 0, drops: 0, firHit: 0, firTotal: 0, girHit: 0, girTotal: 0
+            hio: 0, albatross: 0, eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0, plus5: 0,
+            putts: 0, puttsHolesPlayed: 0, drops: 0, 
+            firHit: 0, firTotal: 0, girHit: 0, girTotal: 0,
+            ssHit: 0, ssTotal: 0
         };
 
-        // 4. Run the Math
         filteredRounds.forEach(round => {
             round.hole_scores.forEach(hole => {
-                if (!hole.score || !hole.par) return; // Skip incomplete holes
+                if (!hole.score || !hole.par) return;
 
                 const diff = hole.score - hole.par;
                 
@@ -806,42 +819,33 @@
                 else if (diff === 4) stats.quad++;
                 else if (diff >= 5) stats.plus5++;
 
-                if (hole.putts >= 3) stats.putts3++;
-                if (hole.score > hole.par + 2) stats.drops++; // Approximation for drops/penalties if not explicitly tracked yet
+                if (hole.putts !== null && hole.putts > 0) {
+                    stats.putts += hole.putts;
+                    stats.puttsHolesPlayed++;
+                }
 
-                if (hole.fir === 'hit' || hole.fir === 'miss') {
-                    stats.firTotal++;
-                    if (hole.fir === 'hit') stats.firHit++;
-                }
-                if (hole.gir === 'hit' || hole.gir === 'miss') {
-                    stats.girTotal++;
-                    if (hole.gir === 'hit') stats.girHit++;
-                }
+                if (hole.drops !== null && hole.drops > 0) stats.drops += hole.drops;
+
+                if (hole.fir === 'hit' || hole.fir === 'miss') { stats.firTotal++; if (hole.fir === 'hit') stats.firHit++; }
+                if (hole.gir === 'hit' || hole.gir === 'miss') { stats.girTotal++; if (hole.gir === 'hit') stats.girHit++; }
+                if (hole.sand_save === 'yes' || hole.sand_save === 'no') { stats.ssTotal++; if (hole.sand_save === 'yes') stats.ssHit++; }
             });
         });
 
-        // 5. Build the Table UI
         const table = document.getElementById('analytics-data-table');
         if (roundCount === 0) {
-            table.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr></thead>
-                               <tbody><tr><td colspan="4" style="text-align:center;">No rounds match these filters.</td></tr></tbody>`;
+            table.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">No rounds match these filters.</td></tr></tbody>`;
             return;
         }
 
-        // Helper for safely calculating Avg per Round (Assuming 18 holes)
         const calcAvg = (total) => (total / roundCount).toFixed(1);
-        
-        // Helper for safely calculating standard % based on 18 holes * roundCount
         const calcPct = (total) => ((total / (roundCount * 18)) * 100).toFixed(1) + '%';
-        
-        // Custom helpers for FIR/GIR which use their own total logged opportunities
         const firPct = stats.firTotal > 0 ? ((stats.firHit / stats.firTotal) * 100).toFixed(1) + '%' : '0.0%';
         const girPct = stats.girTotal > 0 ? ((stats.girHit / stats.girTotal) * 100).toFixed(1) + '%' : '0.0%';
+        const ssPct = stats.ssTotal > 0 ? ((stats.ssHit / stats.ssTotal) * 100).toFixed(1) + '%' : '0.0%';
 
         table.innerHTML = `
-            <thead>
-                <tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr>
-            </thead>
+            <thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr></thead>
             <tbody>
                 <tr><td>Hole in One</td><td>${stats.hio}</td><td>${calcAvg(stats.hio)}</td><td>${calcPct(stats.hio)}</td></tr>
                 <tr><td>Albatross</td><td>${stats.albatross}</td><td>${calcAvg(stats.albatross)}</td><td>${calcPct(stats.albatross)}</td></tr>
@@ -853,12 +857,28 @@
                 <tr><td>Triple</td><td>${stats.triple}</td><td>${calcAvg(stats.triple)}</td><td>${calcPct(stats.triple)}</td></tr>
                 <tr><td>Quad</td><td>${stats.quad}</td><td>${calcAvg(stats.quad)}</td><td>${calcPct(stats.quad)}</td></tr>
                 <tr><td>+5</td><td>${stats.plus5}</td><td>${calcAvg(stats.plus5)}</td><td>${calcPct(stats.plus5)}</td></tr>
-                <tr><td>3+Putt</td><td>${stats.putts3}</td><td>${calcAvg(stats.putts3)}</td><td>${calcPct(stats.putts3)}</td></tr>
-                <tr><td>Drops (Est.)</td><td>${stats.drops}</td><td>${calcAvg(stats.drops)}</td><td>${calcPct(stats.drops)}</td></tr>
+                <tr><td>Putts</td><td>${stats.putts}</td><td>${stats.puttsHolesPlayed > 0 ? (stats.putts / stats.puttsHolesPlayed).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
+                <tr><td>Drops (Penalties)</td><td>${stats.drops}</td><td>${calcAvg(stats.drops)}</td><td>-</td></tr>
                 <tr><td>FIR</td><td>${stats.firHit} / ${stats.firTotal}</td><td>${stats.firTotal > 0 ? (stats.firHit / (stats.firTotal / 14)).toFixed(1) : '0.0'}</td><td>${firPct}</td></tr>
                 <tr><td>GIR</td><td>${stats.girHit} / ${stats.girTotal}</td><td>${stats.girTotal > 0 ? (stats.girHit / (stats.girTotal / 18)).toFixed(1) : '0.0'}</td><td>${girPct}</td></tr>
+                <tr><td>Sand Saves</td><td>${stats.ssHit} / ${stats.ssTotal}</td><td>${stats.ssTotal > 0 ? (stats.ssHit / roundCount).toFixed(1) : '0.0'}</td><td>${ssPct}</td></tr>
             </tbody>
         `;
+    }
+
+    // --- ANALYTICS MULTI-SELECT ---
+    function toggleCourseFilter() { const el = document.getElementById('course-checkbox-list'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+    function toggleAllCourses(checkbox) { document.querySelectorAll('.course-cb').forEach(b => b.checked = checkbox.checked); updateAnalytics(); }
+    function checkCourseToggles() { document.getElementById('cb-all-courses').checked = Array.from(document.querySelectorAll('.course-cb')).every(b => b.checked); updateAnalytics(); }
+    document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.getElementById('course-checkbox-list').style.display = 'none'; } });
+
+    // --- ROUTING ---
+    function switchView(viewId, btnElement) {
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active'); btnElement.classList.add('active');
+        if (viewId === 'view-history') fetchHistory();
+        if (viewId === 'view-analytics') loadAnalyticsData();
     }
 
     document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
