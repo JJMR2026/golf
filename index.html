@@ -1,118 +1,582 @@
-<!-- SCORECARD MATRIX -->
-<div class="card">
-<div class="scorecard-header">
-                <h3 id="current-course-display">STANDARD 18 LAYOUT</h3>
-                <h3 id="current-course-display">STANDARD LAYOUT</h3>
-<div class="badge">18 HOLES</div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Tracker</title>
+    <!-- Include Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Supabase for Backend Sync -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* --- GLOBAL & LAYOUT --- */
+        :root {
+            --bg-color: #050505;
+            --card-bg: #121212;
+            --border-color: #2a2a2a;
+            --accent-green: #10b981;
+            --accent-hover: #059669;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --cell-bg: #1a1a1a;
+            --cell-border: #333;
+        }
 
-@@ -335,7 +335,6 @@ <h3>ROUND HISTORY</h3>
-<div class="badge" style="background: #2563eb; color: white; border: none;">SUPABASE SYNCED</div>
-</div>
-<div id="history-list">
-                <!-- Placeholder items waiting for Supabase logic -->
-<div class="history-item">
-<div>
-<strong>Blue Devil</strong><br>
-@@ -346,16 +345,6 @@ <h3>ROUND HISTORY</h3>
-<span style="font-size: 12px; color: var(--text-muted);">Diff: 9.2</span>
-</div>
-</div>
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        /* --- VIEW ROUTING --- */
+        .view-container {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view-container.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- BUTTONS & INPUTS --- */
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        button {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        button:hover { background-color: #1f1f1f; }
+        
+        button.primary, button.nav-btn.active {
+            background-color: var(--accent-green);
+            color: #000;
+            border: none;
+        }
+        button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
+
+        /* --- SEARCH & AUTOCOMPLETE --- */
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            position: relative; 
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background-color: #0a0a0a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 90px; 
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 4px 0 0 0;
+            padding: 0;
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-list li {
+            padding: 14px 16px; 
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .dropdown-list li:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-list li:hover {
+            background-color: #1f1f1f;
+            color: var(--accent-green);
+        }
+
+        /* --- SCORECARD MATRIX --- */
+        .scorecard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scorecard-header h3 {
+            margin: 0;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .badge {
+            background-color: #1f1f1f;
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .matrix-wrapper {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(18, minmax(60px, 1fr));
+            gap: 6px;
+            min-width: 1000px;
+        }
+
+        .row-label {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            border: 1px solid var(--cell-border);
+            border-radius: 6px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
+
+        .cell input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .cell input:focus {
+            background-color: #222;
+            border-radius: 6px;
+        }
+
+        .cell.drive-cell input:disabled {
+            color: #333;
+            cursor: not-allowed;
+            background-color: #141414;
+        }
+        .cell.drive-cell.disabled { opacity: 0.5; }
+
+        .toggle-btn {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .toggle-btn.hit { color: var(--accent-green); }
+
+        .log-btn-container {
+            margin-top: 25px;
+            display: flex;
+        }
+
+        /* --- DATA MANAGEMENT --- */
+        .data-management {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-management h4 { margin: 0; color: var(--text-muted); font-size: 12px; }
+        .danger-btn { color: #ef4444; border-color: #ef4444; }
+        .danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
+        
+        /* --- HISTORY LIST --- */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .history-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- NAVIGATION -->
+    <div class="nav-buttons">
+        <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
+        <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
+        <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
+    </div>
+
+    <!-- ==================== NEW ROUND VIEW ==================== -->
+    <div id="view-new-round" class="view-container active">
+        <!-- COURSE SEARCH -->
+        <div class="card">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">
+                🔍 Select or Fetch Golf Course
+            </div>
+            <div class="search-row">
+                <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
+                <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
+                <ul id="search-dropdown" class="dropdown-list"></ul>
+            </div>
+            <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
+        </div>
+
+        <!-- SCORECARD MATRIX -->
+        <div class="card">
+            <div class="scorecard-header">
+                <h3 id="current-course-display">STANDARD LAYOUT</h3>
+                <div class="badge">18 HOLES</div>
+            </div>
+
+            <div class="matrix-wrapper">
+                <div class="matrix-grid" id="scorecard-grid">
+                    <!-- Grid injected via JS -->
+                </div>
+            </div>
+
+            <div class="log-btn-container">
+                <button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="logScorecard()">
+                    COMPLETE & LOG SCORECARD →
+                </button>
+            </div>
+        </div>
+
+        <!-- DATA MANAGEMENT -->
+        <div class="card data-management">
+            <h4>⚙️ LOCAL DATA MANAGEMENT</h4>
+            <div style="display: flex; gap: 10px;">
+                <button>📊 Export CSV</button>
+                <button class="danger-btn">🗑️ Wipe Storage</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== HISTORY VIEW ==================== -->
+    <div id="view-history" class="view-container">
+        <div class="card">
+            <div class="scorecard-header">
+                <h3>ROUND HISTORY</h3>
+                <div class="badge" style="background: #2563eb; color: white; border: none;">SUPABASE SYNCED</div>
+            </div>
+            <div id="history-list">
                 <div class="history-item">
                     <div>
-                        <strong>Banff Springs</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">June 18, 2026</span>
+                        <strong>Blue Devil</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">July 4, 2026</span>
                     </div>
                     <div style="text-align: right;">
-                        <strong>Score: 88</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">Diff: 14.1</span>
+                        <strong>Score: 82</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">Diff: 9.2</span>
                     </div>
                 </div>
-</div>
-</div>
-</div>
-@@ -443,7 +432,7 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-// --- GLOBAL STATE ---
-let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+            </div>
+        </div>
+    </div>
 
-    // --- LIVE SEARCH / AUTOCOMPLETE LOGIC (Pings your Supabase table) ---
+    <!-- ==================== ANALYTICS VIEW ==================== -->
+    <div id="view-analytics" class="view-container">
+        <div class="card">
+            <div class="scorecard-header">
+                <h3>PERFORMANCE ANALYTICS</h3>
+            </div>
+            <div style="position: relative; height: 400px; width: 100%;">
+                <canvas id="scoringChart"></canvas>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">AVG DRIVE DISTANCE</h4>
+                <div style="font-size: 32px; font-weight: bold; color: var(--accent-green);">264 <span style="font-size: 16px; color: var(--text-muted);">YDS</span></div>
+            </div>
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR PERCENTAGE</h4>
+                <div style="font-size: 32px; font-weight: bold; color: #3b82f6;">42 <span style="font-size: 16px; color: var(--text-muted);">%</span></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- SUPABASE INITIALIZATION ---
+    const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- VIEW ROUTING LOGIC ---
+    let chartInstance = null;
+
+    function switchView(viewId, btnElement) {
+        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(viewId).classList.add('active');
+        btnElement.classList.add('active');
+
+        if (viewId === 'view-analytics' && !chartInstance) {
+            initChart();
+        }
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('scoringChart').getContext('2d');
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['May 15', 'Jun 2', 'Jun 10', 'Jun 18', 'Jun 26', 'Jul 3', 'Jul 9'],
+                datasets: [{
+                    label: 'Gross Score',
+                    data: [94, 91, 89, 92, 85, 88, 82], 
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: '#121212',
+                    pointBorderColor: '#10b981',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#2a2a2a' }, suggestedMin: 70, suggestedMax: 100 },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // --- GLOBAL STATE ---
+    let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+
     // --- LIVE SEARCH / AUTOCOMPLETE LOGIC ---
-let searchTimeout = null;
+    let searchTimeout = null;
 
-document.getElementById('course-search-input').addEventListener('input', function(e) {
-@@ -477,7 +466,7 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-dropdown.classList.remove('active');
-}
-} catch(err) {
-                console.log("Supabase Autocomplete Error:", err);
+    document.getElementById('course-search-input').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        const dropdown = document.getElementById('search-dropdown');
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            dropdown.classList.remove('active');
+            return;
+        }
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('course_directory')
+                    .select('course_name')
+                    .ilike('course_name', `%${query}%`)
+                    .limit(10);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    dropdown.innerHTML = data.map(course => {
+                        const safeName = course.course_name.replace(/'/g, "\\'"); 
+                        return `<li onclick="selectCourseFromDropdown('${safeName}')">${course.course_name.toUpperCase()} ⚡</li>`;
+                    }).join('');
+                    dropdown.classList.add('active');
+                } else {
+                    dropdown.classList.remove('active');
+                }
+            } catch(err) {
                 console.error("Supabase Autocomplete Error:", err);
-}
-}, 250); 
-});
-@@ -494,7 +483,7 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-}
-});
+            }
+        }, 250); 
+    });
 
-    // --- FULL COURSE FETCH LOGIC (Queries Supabase Table) ---
+    function selectCourseFromDropdown(courseName) {
+        document.getElementById('course-search-input').value = courseName.toUpperCase();
+        document.getElementById('search-dropdown').classList.remove('active');
+        fetchCourseDetails(); 
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-row')) {
+            document.getElementById('search-dropdown').classList.remove('active');
+        }
+    });
+
     // --- FIXED COURSE FETCH LOGIC (LIMIT 1 BYPASSES MULTI-ROW CRASHES) ---
-async function fetchCourseDetails() {
-const query = document.getElementById('course-search-input').value.trim();
-const statusText = document.getElementById('api-status');
-@@ -510,29 +499,30 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-.from('course_directory')
-.select('course_name, pars')
-.ilike('course_name', query)
-                .maybeSingle();
+    async function fetchCourseDetails() {
+        const query = document.getElementById('course-search-input').value.trim();
+        const statusText = document.getElementById('api-status');
+        const displayTitle = document.getElementById('current-course-display');
+        const dropdown = document.getElementById('search-dropdown');
+        
+        if(!query) return;
+        dropdown.classList.remove('active'); 
+        statusText.innerText = "⏳ Loading course from database...";
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('course_directory')
+                .select('course_name, pars')
+                .ilike('course_name', query)
                 .limit(1);
 
-if (error) throw error;
+            if (error) throw error;
 
-            if (data) {
-                currentCoursePars = [...data.pars];
-                displayTitle.innerText = data.course_name.toUpperCase();
-                statusText.innerText = `✅ Loaded ${data.course_name.toUpperCase()} directly from database.`;
             if (data && data.length > 0) {
                 const course = data[0];
                 currentCoursePars = [...course.pars];
                 displayTitle.innerText = course.course_name.toUpperCase();
                 statusText.innerText = `✅ Loaded ${course.course_name.toUpperCase()} directly from database.`;
-buildGrid();
-return;
-}
-} catch(e) {
-            console.log("Supabase fetch error:", e);
+                buildGrid();
+                return;
+            }
+        } catch(e) {
             console.error("Supabase fetch error:", e);
-}
+        }
 
-        // Fallback if no exact entry found
         // NO DEFAULTS: Generates a blank matrix for secure manual mobile configuration
-displayTitle.innerText = query.toUpperCase();
-        statusText.innerText = "⚠️ Course not found in database. Default Par 72 loaded.";
-        currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+        displayTitle.innerText = query.toUpperCase();
         statusText.innerText = "ℹ️ Course layout not found. Please enter pars manually below.";
         currentCoursePars = Array(18).fill(""); 
-buildGrid();
-}
+        buildGrid();
+    }
 
-    // --- GRID GENERATION & LOGIC ---
     // --- GRID GENERATION & LAYOUT ---
-function buildGrid() {
-const grid = document.getElementById('scorecard-grid');
-grid.innerHTML = ''; 
-@@ -562,7 +552,7 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-} 
-else if (row.type === 'par') {
-cell.className = 'cell';
-                    cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i]}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
-                    cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i] ?? ''}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
-}
-else if (row.type === 'input') {
-cell.className = 'cell';
-@@ -587,7 +577,13 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
+    function buildGrid() {
+        const grid = document.getElementById('scorecard-grid');
+        grid.innerHTML = ''; 
 
-function updatePar(index, val) {
-let newPar = parseInt(val);
-        if (isNaN(newPar) || newPar < 3) newPar = 3;
+        const rows = [
+            { label: 'HOLE', type: 'header' },
+            { label: 'PAR', type: 'par' },
+            { label: 'SCORE', type: 'input' },
+            { label: 'PUTTS', type: 'input' },
+            { label: 'FIR', type: 'toggle' },
+            { label: 'GIR', type: 'toggle' },
+            { label: 'DRIVE (YDS)', type: 'drive' } 
+        ];
+
+        rows.forEach(row => {
+            const labelCell = document.createElement('div');
+            labelCell.className = 'row-label';
+            labelCell.innerText = row.label;
+            grid.appendChild(labelCell);
+
+            for (let i = 0; i < 18; i++) {
+                const cell = document.createElement('div');
+                
+                if (row.type === 'header') {
+                    cell.className = 'cell hole-header';
+                    cell.innerText = i + 1;
+                } 
+                else if (row.type === 'par') {
+                    cell.className = 'cell';
+                    cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i] ?? ''}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
+                }
+                else if (row.type === 'input') {
+                    cell.className = 'cell';
+                    cell.innerHTML = `<input type="number" min="1" max="20" placeholder="-">`;
+                }
+                else if (row.type === 'toggle') {
+                    cell.className = 'cell';
+                    cell.innerHTML = `<button class="toggle-btn" onclick="toggleHit(this)">MISS</button>`;
+                }
+                else if (row.type === 'drive') {
+                    cell.className = 'cell drive-cell';
+                    cell.id = `drive-container-${i}`;
+                    cell.innerHTML = `<input type="number" id="drive-input-${i}" placeholder="yds">`;
+                }
+                
+                grid.appendChild(cell);
+            }
+        });
+
+        updateDriveDistances();
+    }
+
+    function updatePar(index, val) {
+        let newPar = parseInt(val);
         if (isNaN(newPar)) {
             currentCoursePars[index] = "";
             document.getElementById(`par-input-${index}`).value = "";
@@ -120,34 +584,74 @@ let newPar = parseInt(val);
             return;
         }
         if (newPar < 3) newPar = 3;
-if (newPar > 5) newPar = 5;
+        if (newPar > 5) newPar = 5;
+        
+        currentCoursePars[index] = newPar;
+        document.getElementById(`par-input-${index}`).value = newPar; 
+        
+        updateDriveDistances();
+    }
 
-currentCoursePars[index] = newPar;
-@@ -610,8 +606,9 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-for (let i = 0; i < 18; i++) {
-const input = document.getElementById(`drive-input-${i}`);
-const container = document.getElementById(`drive-container-${i}`);
+    function toggleHit(btn) {
+        if (btn.innerText === "MISS") {
+            btn.innerText = "HIT";
+            btn.classList.add("hit");
+        } else {
+            btn.innerText = "MISS";
+            btn.classList.remove("hit");
+        }
+    }
+
+    function updateDriveDistances() {
+        for (let i = 0; i < 18; i++) {
+            const input = document.getElementById(`drive-input-${i}`);
+            const container = document.getElementById(`drive-container-${i}`);
             const parVal = currentCoursePars[i];
-
-            if (currentCoursePars[i] === 3) {
+            
             if (parVal === 3) {
-input.value = ""; 
-input.disabled = true;
-input.placeholder = "N/A";
-@@ -630,7 +627,7 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
-let validDrives = 0;
+                input.value = ""; 
+                input.disabled = true;
+                input.placeholder = "N/A";
+                container.classList.add("disabled");
+            } else {
+                input.disabled = false;
+                input.placeholder = "yds";
+                container.classList.remove("disabled");
+            }
+        }
+    }
 
-for (let i = 0; i < 18; i++) {
-            if (currentCoursePars[i] > 3) {
+    // --- DATA AGGREGATION & STATS ---
+    function logScorecard() {
+        let totalDriveDist = 0;
+        let validDrives = 0;
+
+        for (let i = 0; i < 18; i++) {
             if (currentCoursePars[i] && currentCoursePars[i] > 3) {
-const driveVal = document.getElementById(`drive-input-${i}`).value;
-if (driveVal && !isNaN(driveVal)) {
-totalDriveDist += parseInt(driveVal);
-@@ -643,7 +640,7 @@ <h4 style="margin: 0 0 10px 0; color: var(--text-muted); font-size: 12px;">GIR P
+                const driveVal = document.getElementById(`drive-input-${i}`).value;
+                if (driveVal && !isNaN(driveVal)) {
+                    totalDriveDist += parseInt(driveVal);
+                    validDrives++;
+                }
+            }
+        }
 
-console.log("--- ROUND STATS ---");
-console.log(`Valid Drives Logged: ${validDrives}`);
-        console.log(`Average Drive Distance: ${avgDrive} yds`);
+        const avgDrive = validDrives > 0 ? Math.round(totalDriveDist / validDrives) : 0;
+        
+        console.log("--- ROUND STATS ---");
+        console.log(`Valid Drives Logged: ${validDrives}`);
         print(`Average Drive Distance: ${avgDrive} yds`);
-alert(`Scorecard ready for sync!\nCalculated Average Drive: ${avgDrive || 'N/A'} yds`);
-}
+        alert(`Scorecard ready for sync!\nCalculated Average Drive: ${avgDrive || 'N/A'} yds`);
+    }
+
+    // Initialization Events
+    document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
+    document.getElementById('course-search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') fetchCourseDetails();
+    });
+
+    document.addEventListener('DOMContentLoaded', buildGrid);
+
+</script>
+</body>
+</html>
