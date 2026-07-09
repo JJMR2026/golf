@@ -300,7 +300,7 @@
         <!-- SCORECARD MATRIX -->
         <div class="card">
             <div class="scorecard-header">
-                <h3 id="current-course-display">STANDARD 18 LAYOUT</h3>
+                <h3 id="current-course-display">STANDARD LAYOUT</h3>
                 <div class="badge">18 HOLES</div>
             </div>
 
@@ -335,7 +335,6 @@
                 <div class="badge" style="background: #2563eb; color: white; border: none;">SUPABASE SYNCED</div>
             </div>
             <div id="history-list">
-                <!-- Placeholder items waiting for Supabase logic -->
                 <div class="history-item">
                     <div>
                         <strong>Blue Devil</strong><br>
@@ -344,16 +343,6 @@
                     <div style="text-align: right;">
                         <strong>Score: 82</strong><br>
                         <span style="font-size: 12px; color: var(--text-muted);">Diff: 9.2</span>
-                    </div>
-                </div>
-                <div class="history-item">
-                    <div>
-                        <strong>Banff Springs</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">June 18, 2026</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <strong>Score: 88</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">Diff: 14.1</span>
                     </div>
                 </div>
             </div>
@@ -443,7 +432,7 @@
     // --- GLOBAL STATE ---
     let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
 
-    // --- LIVE SEARCH / AUTOCOMPLETE LOGIC (Pings your Supabase table) ---
+    // --- LIVE SEARCH / AUTOCOMPLETE LOGIC ---
     let searchTimeout = null;
 
     document.getElementById('course-search-input').addEventListener('input', function(e) {
@@ -477,7 +466,7 @@
                     dropdown.classList.remove('active');
                 }
             } catch(err) {
-                console.log("Supabase Autocomplete Error:", err);
+                console.error("Supabase Autocomplete Error:", err);
             }
         }, 250); 
     });
@@ -494,7 +483,7 @@
         }
     });
 
-    // --- FULL COURSE FETCH LOGIC (Queries Supabase Table) ---
+    // --- FIXED COURSE FETCH LOGIC (LIMIT 1 BYPASSES MULTI-ROW CRASHES) ---
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim();
         const statusText = document.getElementById('api-status');
@@ -510,29 +499,30 @@
                 .from('course_directory')
                 .select('course_name, pars')
                 .ilike('course_name', query)
-                .maybeSingle();
+                .limit(1);
 
             if (error) throw error;
 
-            if (data) {
-                currentCoursePars = [...data.pars];
-                displayTitle.innerText = data.course_name.toUpperCase();
-                statusText.innerText = `✅ Loaded ${data.course_name.toUpperCase()} directly from database.`;
+            if (data && data.length > 0) {
+                const course = data[0];
+                currentCoursePars = [...course.pars];
+                displayTitle.innerText = course.course_name.toUpperCase();
+                statusText.innerText = `✅ Loaded ${course.course_name.toUpperCase()} directly from database.`;
                 buildGrid();
                 return;
             }
         } catch(e) {
-            console.log("Supabase fetch error:", e);
+            console.error("Supabase fetch error:", e);
         }
 
-        // Fallback if no exact entry found
+        // NO DEFAULTS: Generates a blank matrix for secure manual mobile configuration
         displayTitle.innerText = query.toUpperCase();
-        statusText.innerText = "⚠️ Course not found in database. Default Par 72 loaded.";
-        currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
+        statusText.innerText = "ℹ️ Course layout not found. Please enter pars manually below.";
+        currentCoursePars = Array(18).fill(""); 
         buildGrid();
     }
 
-    // --- GRID GENERATION & LOGIC ---
+    // --- GRID GENERATION & LAYOUT ---
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid');
         grid.innerHTML = ''; 
@@ -562,7 +552,7 @@
                 } 
                 else if (row.type === 'par') {
                     cell.className = 'cell';
-                    cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i]}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
+                    cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i] ?? ''}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
                 }
                 else if (row.type === 'input') {
                     cell.className = 'cell';
@@ -587,7 +577,13 @@
 
     function updatePar(index, val) {
         let newPar = parseInt(val);
-        if (isNaN(newPar) || newPar < 3) newPar = 3;
+        if (isNaN(newPar)) {
+            currentCoursePars[index] = "";
+            document.getElementById(`par-input-${index}`).value = "";
+            updateDriveDistances();
+            return;
+        }
+        if (newPar < 3) newPar = 3;
         if (newPar > 5) newPar = 5;
         
         currentCoursePars[index] = newPar;
@@ -610,8 +606,9 @@
         for (let i = 0; i < 18; i++) {
             const input = document.getElementById(`drive-input-${i}`);
             const container = document.getElementById(`drive-container-${i}`);
+            const parVal = currentCoursePars[i];
             
-            if (currentCoursePars[i] === 3) {
+            if (parVal === 3) {
                 input.value = ""; 
                 input.disabled = true;
                 input.placeholder = "N/A";
@@ -630,7 +627,7 @@
         let validDrives = 0;
 
         for (let i = 0; i < 18; i++) {
-            if (currentCoursePars[i] > 3) {
+            if (currentCoursePars[i] && currentCoursePars[i] > 3) {
                 const driveVal = document.getElementById(`drive-input-${i}`).value;
                 if (driveVal && !isNaN(driveVal)) {
                     totalDriveDist += parseInt(driveVal);
@@ -643,7 +640,7 @@
         
         console.log("--- ROUND STATS ---");
         console.log(`Valid Drives Logged: ${validDrives}`);
-        console.log(`Average Drive Distance: ${avgDrive} yds`);
+        print(`Average Drive Distance: ${avgDrive} yds`);
         alert(`Scorecard ready for sync!\nCalculated Average Drive: ${avgDrive || 'N/A'} yds`);
     }
 
