@@ -724,7 +724,140 @@
         if (viewId === 'view-history') fetchHistory();
     }
 
-    function updateAnalytics() { console.log("Updating Stats with new filters..."); }
+    // --- DYNAMIC ANALYTICS ENGINE ---
+    let masterAnalyticsData = [];
+
+    async function loadAnalyticsData() {
+        const table = document.getElementById('analytics-data-table');
+        table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center;">⏳ Crunching the numbers...</td></tr></tbody>';
+
+        try {
+            // Fetch all rounds and their associated hole scores in one massive join
+            const { data, error } = await supabaseClient
+                .from('logged_rounds')
+                .select('*, hole_scores(*)')
+                .order('date_played', { ascending: false });
+
+            if (error) throw error;
+            masterAnalyticsData = data || [];
+            
+            populateCourseFilter();
+            updateAnalytics(); // Run initial math
+        } catch(err) {
+            console.error("Analytics fetch error:", err);
+            table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; color:#ef4444;">❌ Failed to load stats.</td></tr></tbody>';
+        }
+    }
+
+    function populateCourseFilter() {
+        const uniqueCourses = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
+        const dropdown = document.getElementById('course-checkbox-list');
+        
+        let html = `<label><input type="checkbox" id="cb-all-courses" checked onchange="toggleAllCourses(this)"> <strong>All Courses</strong></label>
+                    <hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">`;
+        
+        uniqueCourses.forEach(course => {
+            html += `<label><input type="checkbox" class="course-cb" value="${course}" checked onchange="checkCourseToggles()"> ${course}</label>`;
+        });
+        
+        dropdown.innerHTML = html;
+    }
+
+    function updateAnalytics() {
+        // 1. Get Active Filters
+        const timeframe = document.getElementById('filter-timeframe').value;
+        const activeCourseBoxes = document.querySelectorAll('.course-cb:checked');
+        const activeCourses = Array.from(activeCourseBoxes).map(cb => cb.value);
+
+        // 2. Filter the Master Data
+        let filteredRounds = masterAnalyticsData.filter(r => activeCourses.includes(r.course_name));
+        
+        if (timeframe.startsWith('last')) {
+            const numRounds = parseInt(timeframe.replace('last', ''));
+            filteredRounds = filteredRounds.slice(0, numRounds);
+        }
+
+        const roundCount = filteredRounds.length;
+
+        // 3. Initialize Stat Counters
+        let stats = {
+            hio: 0, albatross: 0, eagle: 0, birdie: 0, par: 0, bogey: 0, 
+            double: 0, triple: 0, quad: 0, plus5: 0,
+            putts3: 0, drops: 0, firHit: 0, firTotal: 0, girHit: 0, girTotal: 0
+        };
+
+        // 4. Run the Math
+        filteredRounds.forEach(round => {
+            round.hole_scores.forEach(hole => {
+                if (!hole.score || !hole.par) return; // Skip incomplete holes
+
+                const diff = hole.score - hole.par;
+                
+                if (hole.score === 1) stats.hio++;
+                else if (diff === -3) stats.albatross++;
+                else if (diff === -2) stats.eagle++;
+                else if (diff === -1) stats.birdie++;
+                else if (diff === 0) stats.par++;
+                else if (diff === 1) stats.bogey++;
+                else if (diff === 2) stats.double++;
+                else if (diff === 3) stats.triple++;
+                else if (diff === 4) stats.quad++;
+                else if (diff >= 5) stats.plus5++;
+
+                if (hole.putts >= 3) stats.putts3++;
+                if (hole.score > hole.par + 2) stats.drops++; // Approximation for drops/penalties if not explicitly tracked yet
+
+                if (hole.fir === 'hit' || hole.fir === 'miss') {
+                    stats.firTotal++;
+                    if (hole.fir === 'hit') stats.firHit++;
+                }
+                if (hole.gir === 'hit' || hole.gir === 'miss') {
+                    stats.girTotal++;
+                    if (hole.gir === 'hit') stats.girHit++;
+                }
+            });
+        });
+
+        // 5. Build the Table UI
+        const table = document.getElementById('analytics-data-table');
+        if (roundCount === 0) {
+            table.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr></thead>
+                               <tbody><tr><td colspan="4" style="text-align:center;">No rounds match these filters.</td></tr></tbody>`;
+            return;
+        }
+
+        // Helper for safely calculating Avg per Round (Assuming 18 holes)
+        const calcAvg = (total) => (total / roundCount).toFixed(1);
+        
+        // Helper for safely calculating standard % based on 18 holes * roundCount
+        const calcPct = (total) => ((total / (roundCount * 18)) * 100).toFixed(1) + '%';
+        
+        // Custom helpers for FIR/GIR which use their own total logged opportunities
+        const firPct = stats.firTotal > 0 ? ((stats.firHit / stats.firTotal) * 100).toFixed(1) + '%' : '0.0%';
+        const girPct = stats.girTotal > 0 ? ((stats.girHit / stats.girTotal) * 100).toFixed(1) + '%' : '0.0%';
+
+        table.innerHTML = `
+            <thead>
+                <tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Hole in One</td><td>${stats.hio}</td><td>${calcAvg(stats.hio)}</td><td>${calcPct(stats.hio)}</td></tr>
+                <tr><td>Albatross</td><td>${stats.albatross}</td><td>${calcAvg(stats.albatross)}</td><td>${calcPct(stats.albatross)}</td></tr>
+                <tr><td>Eagle</td><td>${stats.eagle}</td><td>${calcAvg(stats.eagle)}</td><td>${calcPct(stats.eagle)}</td></tr>
+                <tr><td>Birdie</td><td>${stats.birdie}</td><td>${calcAvg(stats.birdie)}</td><td>${calcPct(stats.birdie)}</td></tr>
+                <tr><td>Par</td><td>${stats.par}</td><td>${calcAvg(stats.par)}</td><td>${calcPct(stats.par)}</td></tr>
+                <tr><td>Bogey</td><td>${stats.bogey}</td><td>${calcAvg(stats.bogey)}</td><td>${calcPct(stats.bogey)}</td></tr>
+                <tr><td>Double</td><td>${stats.double}</td><td>${calcAvg(stats.double)}</td><td>${calcPct(stats.double)}</td></tr>
+                <tr><td>Triple</td><td>${stats.triple}</td><td>${calcAvg(stats.triple)}</td><td>${calcPct(stats.triple)}</td></tr>
+                <tr><td>Quad</td><td>${stats.quad}</td><td>${calcAvg(stats.quad)}</td><td>${calcPct(stats.quad)}</td></tr>
+                <tr><td>+5</td><td>${stats.plus5}</td><td>${calcAvg(stats.plus5)}</td><td>${calcPct(stats.plus5)}</td></tr>
+                <tr><td>3+Putt</td><td>${stats.putts3}</td><td>${calcAvg(stats.putts3)}</td><td>${calcPct(stats.putts3)}</td></tr>
+                <tr><td>Drops (Est.)</td><td>${stats.drops}</td><td>${calcAvg(stats.drops)}</td><td>${calcPct(stats.drops)}</td></tr>
+                <tr><td>FIR</td><td>${stats.firHit} / ${stats.firTotal}</td><td>${stats.firTotal > 0 ? (stats.firHit / (stats.firTotal / 14)).toFixed(1) : '0.0'}</td><td>${firPct}</td></tr>
+                <tr><td>GIR</td><td>${stats.girHit} / ${stats.girTotal}</td><td>${stats.girTotal > 0 ? (stats.girHit / (stats.girTotal / 18)).toFixed(1) : '0.0'}</td><td>${girPct}</td></tr>
+            </tbody>
+        `;
+    }
 
     document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
     document.addEventListener('DOMContentLoaded', buildGrid);
