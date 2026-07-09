@@ -387,9 +387,8 @@
 
 <script>
     // --- SUPABASE INITIALIZATION ---
-    // PASTE YOUR PUBLIC ANON KEY HERE (From Supabase Dashboard -> Settings -> API)
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // --- VIEW ROUTING LOGIC ---
@@ -460,7 +459,6 @@
         
         searchTimeout = setTimeout(async () => {
             try {
-                // Search your own Supabase database using ILIKE for smooth matching
                 const { data, error } = await supabaseClient
                     .from('course_directory')
                     .select('course_name')
