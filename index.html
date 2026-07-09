@@ -717,11 +717,13 @@
     document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.getElementById('course-checkbox-list').style.display = 'none'; } });
 
     // --- ROUTING ---
-    function switchView(viewId, btnElement) {
+  function switchView(viewId, btnElement) {
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(viewId).classList.add('active'); btnElement.classList.add('active');
+        
         if (viewId === 'view-history') fetchHistory();
+        if (viewId === 'view-analytics') loadAnalyticsData();
     }
 
     // --- DYNAMIC ANALYTICS ENGINE ---
