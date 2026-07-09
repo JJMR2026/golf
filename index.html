@@ -6,6 +6,8 @@
     <title>Golf Tracker</title>
     <!-- Include Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Supabase for Backend Sync -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* --- GLOBAL & LAYOUT --- */
         :root {
@@ -47,14 +49,14 @@
 
         /* --- VIEW ROUTING --- */
         .view-container {
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             gap: 20px;
             animation: fadeIn 0.3s ease;
         }
 
         .view-container.active {
-            display: flex; /* Only active view shows */
+            display: flex;
         }
 
         @keyframes fadeIn {
@@ -90,10 +92,12 @@
         }
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
 
+        /* --- SEARCH & AUTOCOMPLETE --- */
         .search-row {
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            position: relative; 
         }
 
         input[type="text"] {
@@ -104,6 +108,46 @@
             padding: 12px 16px;
             border-radius: 8px;
             font-size: 16px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 90px; 
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 4px 0 0 0;
+            padding: 0;
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-list li {
+            padding: 14px 16px; 
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .dropdown-list li:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-list li:hover {
+            background-color: #1f1f1f;
+            color: var(--accent-green);
         }
 
         /* --- SCORECARD MATRIX --- */
@@ -246,8 +290,9 @@
                 🔍 Select or Fetch Golf Course
             </div>
             <div class="search-row">
-                <input type="text" id="course-search-input" placeholder="e.g., Blue Devil">
+                <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
                 <button class="primary" id="course-search-btn" style="flex: 0 0 auto;">Fetch</button>
+                <ul id="search-dropdown" class="dropdown-list"></ul>
             </div>
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
@@ -321,7 +366,6 @@
             <div class="scorecard-header">
                 <h3>PERFORMANCE ANALYTICS</h3>
             </div>
-            <!-- Chart.js Canvas -->
             <div style="position: relative; height: 400px; width: 100%;">
                 <canvas id="scoringChart"></canvas>
             </div>
@@ -342,37 +386,36 @@
 </div>
 
 <script>
+    // --- SUPABASE INITIALIZATION ---
+    // PASTE YOUR PUBLIC ANON KEY HERE (From Supabase Dashboard -> Settings -> API)
+    const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     // --- VIEW ROUTING LOGIC ---
     let chartInstance = null;
 
     function switchView(viewId, btnElement) {
-        // Hide all views
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
-        // Remove active class from all nav buttons
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         
-        // Show target view & set active button
         document.getElementById(viewId).classList.add('active');
         btnElement.classList.add('active');
 
-        // Initialize chart only when Analytics view is opened
         if (viewId === 'view-analytics' && !chartInstance) {
             initChart();
         }
     }
 
-    // --- CHART.JS INITIALIZATION (Analytics Placeholder) ---
     function initChart() {
         const ctx = document.getElementById('scoringChart').getContext('2d');
-        
-        // Ensure chart styling matches the dark theme
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
 
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['May 1', 'May 15', 'Jun 2', 'Jun 10', 'Jun 18', 'Jun 26', 'Jul 4'],
+                labels: ['May 15', 'Jun 2', 'Jun 10', 'Jun 18', 'Jun 26', 'Jul 3', 'Jul 9'],
                 datasets: [{
                     label: 'Gross Score',
                     data: [94, 91, 89, 92, 85, 88, 82], 
@@ -389,74 +432,104 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        grid: { color: '#2a2a2a' },
-                        suggestedMin: 70,
-                        suggestedMax: 100
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
+                    y: { grid: { color: '#2a2a2a' }, suggestedMin: 70, suggestedMax: 100 },
+                    x: { grid: { display: false } }
                 }
             }
         });
     }
 
-    // --- STATE MANAGEMENT ---
-    const globalCourseDatabase = {
-        "blue devil": [4,4,4,5,3,4,3,4,5,4,4,3,4,4,5,3,5,4],
-        "banff springs": [4,3,5,4,4,4,4,3,5,4,4,4,3,4,5,4,3,4],
-        "glenabbey": [4,4,3,4,5,4,3,4,4,4,4,3,5,4,4,4,3,5]
-    };
+    // --- GLOBAL STATE ---
+    let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
 
-    let currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; // Default Par 72
+    // --- LIVE SEARCH / AUTOCOMPLETE LOGIC (Pings your Supabase table) ---
+    let searchTimeout = null;
 
-    // --- COURSE FETCH LOGIC (Canadian API Targeted) ---
-    async function fetchCourseDetails() {
-        const query = document.getElementById('course-search-input').value.toLowerCase().trim();
-        const statusText = document.getElementById('api-status');
-        const displayTitle = document.getElementById('current-course-display');
+    document.getElementById('course-search-input').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        const dropdown = document.getElementById('search-dropdown');
         
-        if(!query) return;
-        statusText.innerText = "⏳ Querying Canadian course databases...";
-
-        // 1. Offline Local Cache check
-        let foundKey = Object.keys(globalCourseDatabase).find(key => query.includes(key) || key.includes(query));
-        if(foundKey) {
-            currentCoursePars = [...globalCourseDatabase[foundKey]];
-            displayTitle.innerText = foundKey.toUpperCase();
-            statusText.innerText = `✅ Loaded ${foundKey.toUpperCase()} from local cache.`;
-            buildGrid();
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            dropdown.classList.remove('active');
             return;
         }
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                // Search your own Supabase database using ILIKE for smooth matching
+                const { data, error } = await supabaseClient
+                    .from('course_directory')
+                    .select('course_name')
+                    .ilike('course_name', `%${query}%`)
+                    .limit(10);
 
-        // 2. Network Endpoint (Configured for Canadian Database)
-        try {
-            const res = await fetch(`https://api.golfdata.ca/v1/courses/search?q=${encodeURIComponent(query)}`);
-            if (res.ok) {
-                const data = await res.json();
-                if(data && data.courses && data.courses.length > 0) {
-                    const course = data.courses[0];
-                    displayTitle.innerText = course.name.toUpperCase();
-                    statusText.innerText = `✅ Found ${course.name} via network!`;
-                    if(course.pars && course.pars.length === 18) {
-                        currentCoursePars = [...course.pars];
-                    }
-                    buildGrid();
-                    return;
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    dropdown.innerHTML = data.map(course => {
+                        const safeName = course.course_name.replace(/'/g, "\\'"); 
+                        return `<li onclick="selectCourseFromDropdown('${safeName}')">${course.course_name.toUpperCase()} ⚡</li>`;
+                    }).join('');
+                    dropdown.classList.add('active');
+                } else {
+                    dropdown.classList.remove('active');
                 }
+            } catch(err) {
+                console.log("Supabase Autocomplete Error:", err);
+            }
+        }, 250); 
+    });
+
+    function selectCourseFromDropdown(courseName) {
+        document.getElementById('course-search-input').value = courseName.toUpperCase();
+        document.getElementById('search-dropdown').classList.remove('active');
+        fetchCourseDetails(); 
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-row')) {
+            document.getElementById('search-dropdown').classList.remove('active');
+        }
+    });
+
+    // --- FULL COURSE FETCH LOGIC (Queries Supabase Table) ---
+    async function fetchCourseDetails() {
+        const query = document.getElementById('course-search-input').value.trim();
+        const statusText = document.getElementById('api-status');
+        const displayTitle = document.getElementById('current-course-display');
+        const dropdown = document.getElementById('search-dropdown');
+        
+        if(!query) return;
+        dropdown.classList.remove('active'); 
+        statusText.innerText = "⏳ Loading course from database...";
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('course_directory')
+                .select('course_name, pars')
+                .ilike('course_name', query)
+                .maybeSingle();
+
+            if (error) throw error;
+
+            if (data) {
+                currentCoursePars = [...data.pars];
+                displayTitle.innerText = data.course_name.toUpperCase();
+                statusText.innerText = `✅ Loaded ${data.course_name.toUpperCase()} directly from database.`;
+                buildGrid();
+                return;
             }
         } catch(e) {
-            console.log("Canadian API offline or error", e);
+            console.log("Supabase fetch error:", e);
         }
 
-        // 3. Fallback
+        // Fallback if no exact entry found
         displayTitle.innerText = query.toUpperCase();
-        statusText.innerText = "⚠️ Course not found. Default Par 72 loaded.";
+        statusText.innerText = "⚠️ Course not found in database. Default Par 72 loaded.";
         currentCoursePars = [4,4,3,4,4,4,5,3,4,4,4,3,5,4,4,3,4,5]; 
         buildGrid();
     }
@@ -491,7 +564,6 @@
                 } 
                 else if (row.type === 'par') {
                     cell.className = 'cell';
-                    // Par is now a visible, editable number input box
                     cell.innerHTML = `<input type="number" id="par-input-${i}" value="${currentCoursePars[i]}" min="3" max="5" onchange="updatePar(${i}, this.value)">`;
                 }
                 else if (row.type === 'input') {
@@ -515,15 +587,13 @@
         updateDriveDistances();
     }
 
-    // Handlers for the Par textbox change
     function updatePar(index, val) {
         let newPar = parseInt(val);
-        // Constrain the numbers so mobile users can't type Par 99
         if (isNaN(newPar) || newPar < 3) newPar = 3;
         if (newPar > 5) newPar = 5;
         
         currentCoursePars[index] = newPar;
-        document.getElementById(`par-input-${index}`).value = newPar; // Snap UI back if out of bounds
+        document.getElementById(`par-input-${index}`).value = newPar; 
         
         updateDriveDistances();
     }
