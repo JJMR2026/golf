@@ -41,7 +41,7 @@
         
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 14px; letter-spacing: 1px; }
-        .badge { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11px; }
+        .badge { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
         
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
@@ -81,16 +81,25 @@
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; flex-direction: column; }
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
-        .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+        .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; }
 
         /* --- ANALYTICS FILTERS & TABLE --- */
-        .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: stretch;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 150px; }
         
+        /* Custom Checkbox Dropdown */
+        .multi-select-container { position: relative; flex: 1; min-width: 200px; }
+        .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
+        .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .multi-select-dropdown label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .stats-table td { padding: 12px 15px; border: 1px solid var(--border-color); font-size: 14px; }
-        .stats-table td:first-child { font-weight: 600; color: var(--text-muted); width: 70%; }
-        .stats-table td:last-child { font-weight: bold; text-align: center; color: var(--text-main); }
+        .stats-table th { padding: 12px 15px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-transform: uppercase; text-align: right; }
+        .stats-table th:first-child { text-align: left; width: 50%; }
+        .stats-table td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-size: 14px; text-align: right; font-weight: bold;}
+        .stats-table td:first-child { font-weight: 600; color: var(--text-muted); text-align: left; }
+        .stats-table td:last-child { color: var(--accent-green); font-weight: normal; }
+        .stats-table tr:last-child td { border-bottom: none; }
         .stats-table tr:hover { background-color: #1a1a1a; }
     </style>
 </head>
@@ -106,7 +115,6 @@
 
     <!-- NEW ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
-        
         <div class="card" id="search-card">
             <div class="search-header">
                 SEARCH GOLF COURSES
@@ -127,22 +135,19 @@
                 <h3 id="current-course-display">STANDARD LAYOUT</h3>
                 <div class="badge">18 HOLES</div>
             </div>
-
             <div class="view-toggle-row">
                 <button class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
                 <button class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button>
             </div>
-
             <div id="grid-mode-container" class="matrix-wrapper">
                 <div class="matrix-grid" id="scorecard-grid"></div>
             </div>
-
+            
             <div id="play-mode-container">
                 <div class="play-header">
                     <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
                     <span id="play-par-title" style="color: var(--text-muted); font-size: 16px;">PAR 4</span>
                 </div>
-                
                 <div class="play-row">
                     <div class="play-label">SCORE</div>
                     <div class="play-input"><input type="number" id="play-score" inputmode="numeric" pattern="[0-9]*" placeholder="-" onchange="syncPlayToState('score', this.value)"></div>
@@ -188,7 +193,6 @@
                     <div class="play-label">DRIVE (YDS)</div>
                     <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" pattern="[0-9]*" placeholder="yds" onchange="syncPlayToState('drive', this.value)"></div>
                 </div>
-
                 <div class="play-nav">
                     <button onclick="changePlayHole(-1)" id="play-prev-btn" style="background: #1a1a1a;">← PREV</button>
                     <button onclick="changePlayHole(1)" class="primary" id="play-next-btn">NEXT HOLE →</button>
@@ -209,7 +213,6 @@
                 <div class="badge" style="background: #2563eb; color: white; border: none;">SUPABASE SYNCED</div>
             </div>
             <div id="history-list">
-                <!-- Mocked Item: Clicking opens full screen scorecard modal -->
                 <div class="history-item" onclick="openHistoryModal('BLUE DEVIL GOLF CLUB', 'July 4, 2026', 82)">
                     <div>
                         <strong>Blue Devil Golf Club</strong><br>
@@ -217,10 +220,9 @@
                     </div>
                     <div style="text-align: right;">
                         <strong style="color: var(--accent-green); font-size: 18px;">82</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">Tap to view</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">Tap to edit</span>
                     </div>
                 </div>
-                
                 <div class="history-item" onclick="openHistoryModal('MCKENZIE MEADOWS', 'July 1, 2026', 85)">
                     <div>
                         <strong>McKenzie Meadows</strong><br>
@@ -228,7 +230,7 @@
                     </div>
                     <div style="text-align: right;">
                         <strong style="color: var(--accent-green); font-size: 18px;">85</strong><br>
-                        <span style="font-size: 12px; color: var(--text-muted);">Tap to view</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">Tap to edit</span>
                     </div>
                 </div>
             </div>
@@ -242,42 +244,57 @@
                 <h3>PERFORMANCE STATS</h3>
             </div>
             
-            <!-- Dynamic Filters -->
             <div class="filter-row">
                 <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
-                    <option value="full">Full Season</option>
+                    <option value="last1">Last Round</option>
+                    <option value="last2">Last 2 Rounds</option>
                     <option value="last3">Last 3 Rounds</option>
+                    <option value="last4">Last 4 Rounds</option>
                     <option value="last5">Last 5 Rounds</option>
+                    <option value="full" selected>Full Season</option>
                 </select>
-                <select class="filter-select" id="filter-course" onchange="updateAnalytics()">
-                    <option value="all">All Courses</option>
-                    <option value="exclude_lil_devil">Excluding Lil Devil</option>
-                    <option value="blue_devil_only">Only Blue Devil</option>
-                </select>
+                
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleCourseFilter()">
+                        <span>Filter Courses...</span>
+                        <span style="font-size: 10px;">▼</span>
+                    </div>
+                    <div class="multi-select-dropdown" id="course-checkbox-list">
+                        <label><input type="checkbox" id="cb-all-courses" checked onchange="toggleAllCourses(this)"> <strong>All Courses</strong></label>
+                        <hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label><input type="checkbox" class="course-cb" checked onchange="checkCourseToggles()"> Blue Devil Golf Club</label>
+                        <label><input type="checkbox" class="course-cb" checked onchange="checkCourseToggles()"> McKenzie Meadows</label>
+                        <label><input type="checkbox" class="course-cb" checked onchange="checkCourseToggles()"> Lil Devil</label>
+                    </div>
+                </div>
             </div>
 
             <table class="stats-table">
-                <tr><td>Hole in One</td><td>0</td></tr>
-                <tr><td>Albatross</td><td>0</td></tr>
-                <tr><td>Eagle</td><td>1</td></tr>
-                <tr><td>Birdie</td><td>14</td></tr>
-                <tr><td>Par</td><td>82</td></tr>
-                <tr><td>Bogey</td><td>45</td></tr>
-                <tr><td>Double</td><td>12</td></tr>
-                <tr><td>Triple</td><td>3</td></tr>
-                <tr><td>Quad</td><td>0</td></tr>
-                <tr><td>+5</td><td>0</td></tr>
-                <tr><td>3+Putt</td><td>8</td></tr>
-                <tr><td>Drops</td><td>4</td></tr>
-                <tr><td>FIR</td><td>48%</td></tr>
-                <tr><td>GIR</td><td>42%</td></tr>
+                <thead>
+                    <tr><th>Metric</th><th>Total</th><th>Avg / %</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Hole in One</td><td>0</td><td>0.0 / rd</td></tr>
+                    <tr><td>Albatross</td><td>0</td><td>0.0 / rd</td></tr>
+                    <tr><td>Eagle</td><td>1</td><td>0.1 / rd</td></tr>
+                    <tr><td>Birdie</td><td>14</td><td>1.2 / rd</td></tr>
+                    <tr><td>Par</td><td>82</td><td>6.8 / rd</td></tr>
+                    <tr><td>Bogey</td><td>45</td><td>3.8 / rd</td></tr>
+                    <tr><td>Double</td><td>12</td><td>1.0 / rd</td></tr>
+                    <tr><td>Triple</td><td>3</td><td>0.3 / rd</td></tr>
+                    <tr><td>Quad</td><td>0</td><td>0.0 / rd</td></tr>
+                    <tr><td>+5</td><td>0</td><td>0.0 / rd</td></tr>
+                    <tr><td>3+Putt</td><td>8</td><td>0.7 / rd</td></tr>
+                    <tr><td>Drops</td><td>4</td><td>0.3 / rd</td></tr>
+                    <tr><td>FIR</td><td>48%</td><td>6.7 / 14</td></tr>
+                    <tr><td>GIR</td><td>42%</td><td>7.6 / 18</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
-
 </div>
 
-<!-- FULL SCREEN HISTORY MODAL -->
+<!-- FULL SCREEN HISTORY MODAL (NOW EDITABLE) -->
 <div id="history-modal" class="modal-overlay">
     <div class="modal-content card" style="margin-top: 40px;">
         <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
@@ -291,14 +308,13 @@
 
         <div class="matrix-wrapper">
             <div class="matrix-grid" id="modal-scorecard-grid">
-                <!-- Modal Grid injected via JS -->
+                <!-- Editable Modal Grid injected via JS -->
             </div>
         </div>
 
-        <div style="margin-top: 30px; display: flex; justify-content: flex-end;">
-            <button class="danger-btn" style="flex: 0 0 auto; padding: 12px 24px;" onclick="deleteActiveRound()">
-                🗑️ Delete Round Data
-            </button>
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
+            <button class="danger-btn" style="flex: 1;" onclick="deleteActiveRound()">🗑️ Delete Round</button>
+            <button class="primary" style="flex: 2;" onclick="saveModalChanges()">💾 Save Changes</button>
         </div>
     </div>
 </div>
@@ -312,6 +328,10 @@
     let currentCoursePars = Array(18).fill(""); 
     let currentPlayHole = 0; 
     let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: "", gir: "", girAdv: "", drive: "" }));
+    
+    // Independent state for the History Modal
+    let modalCoursePars = Array(18).fill(4); // Mock default for historical par
+    let modalRoundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", gir: "", drive: "" }));
 
     // --- SEARCH LOGIC ---
     let searchTimeout = null;
@@ -360,22 +380,17 @@
                 document.getElementById('current-course-display').innerText = data[0].course_name.toUpperCase();
                 
                 roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: "", gir: "", girAdv: "", drive: "" }));
-                toggleSearchBody();
-                buildGrid();
-                updatePlayModeUI();
+                toggleSearchBody(); buildGrid(); updatePlayModeUI();
                 return;
             }
         } catch(e) {}
-        
         document.getElementById('current-course-display').innerText = query.toUpperCase();
-        currentCoursePars = Array(18).fill(""); 
-        buildGrid(); updatePlayModeUI();
+        currentCoursePars = Array(18).fill(""); buildGrid(); updatePlayModeUI();
     }
 
-    // --- GRID GENERATOR & SYNC ---
+    // --- NEW ROUND GRID ---
     function buildGrid() {
-        const grid = document.getElementById('scorecard-grid');
-        grid.innerHTML = ''; 
+        const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; 
         const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE (YDS)', type: 'drive' }];
 
         rows.forEach(row => {
@@ -384,17 +399,14 @@
                 const cell = document.createElement('div');
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; } 
                 else if (row.type === 'par') {
-                    cell.className = 'cell';
-                    cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`;
+                    cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`;
                 } 
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') {
-                    cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell';
-                    cell.id = row.type === 'drive' ? `drive-container-${i}` : '';
+                    cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : '';
                     cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" placeholder="${row.type === 'drive' ? 'yds' : '-'}" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
                 } 
                 else if (row.type === 'fir' || row.type === 'gir') {
-                    cell.className = 'cell';
-                    cell.innerHTML = `<button class="toggle-btn ${roundData[i][row.type] === 'hit' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${roundData[i][row.type] === 'hit' ? 'HIT' : 'MISS'}</button>`;
+                    cell.className = 'cell'; cell.innerHTML = `<button class="toggle-btn ${roundData[i][row.type] === 'hit' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${roundData[i][row.type] === 'hit' ? 'HIT' : 'MISS'}</button>`;
                 }
                 grid.appendChild(cell);
             }
@@ -402,11 +414,7 @@
         updateDriveDistances();
     }
 
-    function syncGridToState(index, field, val) {
-        roundData[index][field] = val;
-        if(currentPlayHole === index) updatePlayModeUI();
-    }
-
+    function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); }
     function toggleGridHit(index, type) {
         const btn = document.getElementById(`grid-${type}-${index}`);
         const newState = btn.innerText === "MISS" ? "hit" : "miss";
@@ -417,7 +425,7 @@
         if(currentPlayHole === index) updatePlayModeUI();
     }
 
-    // --- PLAY MODE UI & SYNC ---
+    // --- PLAY MODE UI ---
     function togglePlayMode(isPlayMode) {
         document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn';
         document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn';
@@ -427,30 +435,20 @@
     }
 
     function updatePlayModeUI() {
-        const par = currentCoursePars[currentPlayHole];
-        const state = roundData[currentPlayHole];
-        
+        const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole];
         document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`;
         document.getElementById('play-par-title').innerText = par ? `PAR ${par}` : `PAR N/A`;
-        
         document.getElementById('play-score').value = state.score;
         document.getElementById('play-putts').value = state.putts;
         document.getElementById('play-drive').value = state.drive;
         
         ['fir', 'gir'].forEach(type => {
-            document.getElementById(`${type}-hit-btn`).classList.remove('active');
-            document.getElementById(`${type}-miss-btn`).classList.remove('active');
-            document.getElementById(`adv-${type}-options`).style.display = 'none';
-            document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
-
+            document.getElementById(`${type}-hit-btn`).classList.remove('active'); document.getElementById(`${type}-miss-btn`).classList.remove('active');
+            document.getElementById(`adv-${type}-options`).style.display = 'none'; document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
             if(state[type] === 'hit') document.getElementById(`${type}-hit-btn`).classList.add('active');
             else if(state[type] === 'miss') {
-                document.getElementById(`${type}-miss-btn`).classList.add('active');
-                document.getElementById(`adv-${type}-options`).style.display = 'flex';
-                if(state[type + 'Adv']) {
-                    const btns = document.querySelectorAll(`#adv-${type}-options .adv-btn`);
-                    btns.forEach(b => { if(b.innerText === state[type + 'Adv']) b.classList.add('active'); });
-                }
+                document.getElementById(`${type}-miss-btn`).classList.add('active'); document.getElementById(`adv-${type}-options`).style.display = 'flex';
+                if(state[type + 'Adv']) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(b.innerText === state[type + 'Adv']) b.classList.add('active'); });
             }
         });
         
@@ -461,45 +459,23 @@
         document.getElementById('play-next-btn').innerText = currentPlayHole === 17 ? 'FINISH' : 'NEXT HOLE →';
     }
 
-    function syncPlayToState(field, val) {
-        roundData[currentPlayHole][field] = val;
-        const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`);
-        if(gridInput) gridInput.value = val;
-    }
-
-    function changePlayHole(dir) {
-        currentPlayHole = Math.max(0, Math.min(17, currentPlayHole + dir));
-        updatePlayModeUI();
-    }
-
+    function syncPlayToState(field, val) { roundData[currentPlayHole][field] = val; const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); if(gridInput) gridInput.value = val; }
+    function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min(17, currentPlayHole + dir)); updatePlayModeUI(); }
     function setPlayToggle(type, status) {
-        roundData[currentPlayHole][type] = status;
-        if(status === 'hit') roundData[currentPlayHole][type + 'Adv'] = "";
+        roundData[currentPlayHole][type] = status; if(status === 'hit') roundData[currentPlayHole][type + 'Adv'] = "";
         const gridBtn = document.getElementById(`grid-${type}-${currentPlayHole}`);
-        if(gridBtn) {
-            gridBtn.innerText = status.toUpperCase();
-            if(status === 'hit') gridBtn.classList.add('hit'); else gridBtn.classList.remove('hit');
-        }
+        if(gridBtn) { gridBtn.innerText = status.toUpperCase(); if(status === 'hit') gridBtn.classList.add('hit'); else gridBtn.classList.remove('hit'); }
         updatePlayModeUI();
     }
-
-    function setAdvToggle(type, value) {
-        roundData[currentPlayHole][type + 'Adv'] = value;
-        updatePlayModeUI();
-    }
-
+    function setAdvToggle(type, value) { roundData[currentPlayHole][type + 'Adv'] = value; updatePlayModeUI(); }
     function updatePar(index, val) {
-        let newPar = parseInt(val);
-        currentCoursePars[index] = isNaN(newPar) ? "" : Math.max(3, Math.min(5, newPar));
+        let newPar = parseInt(val); currentCoursePars[index] = isNaN(newPar) ? "" : Math.max(3, Math.min(5, newPar));
         document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; 
-        updateDriveDistances();
-        if(currentPlayHole === index) updatePlayModeUI();
+        updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI();
     }
-
     function updateDriveDistances() {
         for (let i = 0; i < 18; i++) {
-            const input = document.getElementById(`grid-drive-${i}`);
-            const container = document.getElementById(`drive-container-${i}`);
+            const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`);
             if(input && container) {
                 if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } 
                 else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); }
@@ -507,63 +483,89 @@
         }
     }
 
-    // --- MODAL & HISTORY LOGIC ---
+    // --- EDITABLE HISTORY MODAL ---
     function openHistoryModal(courseName, dateStr, totalScore) {
         document.getElementById('modal-course-title').innerText = courseName.toUpperCase();
         document.getElementById('modal-course-date').innerText = dateStr;
         document.getElementById('modal-total-score').innerText = totalScore;
         
-        // Build Read-Only Grid
-        const grid = document.getElementById('modal-scorecard-grid');
-        grid.innerHTML = ''; 
-        const rows = [{ label: 'HOLE' }, { label: 'PAR' }, { label: 'SCORE' }, { label: 'PUTTS' }, { label: 'FIR' }, { label: 'GIR' }];
+        // Setup mock data for editing
+        modalRoundData = Array.from({length: 18}, () => ({ score: "4", putts: "2", fir: "hit", gir: "miss", drive: "250" }));
+        
+        const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; 
+        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }];
 
         rows.forEach(row => {
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
             for (let i = 0; i < 18; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                if (row.label === 'HOLE') { cell.className = 'cell hole-header'; cell.innerText = i + 1; }
-                else {
-                    // Mock data visualization for the modal
-                    cell.style.color = 'var(--text-muted)';
-                    cell.innerText = '-'; 
+                const cell = document.createElement('div'); cell.className = 'cell';
+                
+                if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; }
+                else if (row.type === 'par') {
+                    cell.innerHTML = `<input type="number" inputmode="numeric" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
+                }
+                else if (row.type === 'score' || row.type === 'putts') {
+                    cell.innerHTML = `<input type="number" inputmode="numeric" value="${modalRoundData[i][row.type]}" onchange="modalRoundData[${i}]['${row.type}'] = this.value">`;
+                }
+                else if (row.type === 'fir' || row.type === 'gir') {
+                    const isHit = modalRoundData[i][row.type] === 'hit';
+                    cell.innerHTML = `<button class="toggle-btn ${isHit ? 'hit' : ''}" onclick="toggleModalHit(this, ${i}, '${row.type}')">${isHit ? 'HIT' : 'MISS'}</button>`;
                 }
                 grid.appendChild(cell);
             }
         });
-
         document.getElementById('history-modal').classList.add('active');
     }
 
-    function closeHistoryModal() {
-        document.getElementById('history-modal').classList.remove('active');
+    function toggleModalHit(btn, index, type) {
+        const newState = btn.innerText === "MISS" ? "hit" : "miss";
+        btn.innerText = newState.toUpperCase();
+        if(newState === 'hit') btn.classList.add('hit'); else btn.classList.remove('hit');
+        modalRoundData[index][type] = newState;
     }
 
-    function deleteActiveRound() {
-        if(confirm("Are you sure you want to delete this round? This cannot be undone.")) {
-            alert("Round deleted successfully. (Mock action)");
-            closeHistoryModal();
-        }
+    function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); }
+    function saveModalChanges() {
+        console.log("Saving Edited Round Data:", modalRoundData);
+        alert("Historical round changes saved successfully!");
+        closeHistoryModal();
     }
+    function deleteActiveRound() {
+        if(confirm("Are you sure you want to delete this round? This cannot be undone.")) { alert("Round deleted."); closeHistoryModal(); }
+    }
+
+    // --- ANALYTICS MULTI-SELECT ---
+    function toggleCourseFilter() {
+        const el = document.getElementById('course-checkbox-list');
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+    }
+    function toggleAllCourses(checkbox) {
+        const boxes = document.querySelectorAll('.course-cb');
+        boxes.forEach(b => b.checked = checkbox.checked);
+        updateAnalytics();
+    }
+    function checkCourseToggles() {
+        const allBox = document.getElementById('cb-all-courses');
+        const boxes = document.querySelectorAll('.course-cb');
+        allBox.checked = Array.from(boxes).every(b => b.checked);
+        updateAnalytics();
+    }
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.multi-select-container')) {
+            document.getElementById('course-checkbox-list').style.display = 'none';
+        }
+    });
 
     // --- ROUTING & ACTIONS ---
     function switchView(viewId, btnElement) {
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(viewId).classList.add('active');
-        btnElement.classList.add('active');
+        document.getElementById(viewId).classList.add('active'); btnElement.classList.add('active');
     }
 
-    function updateAnalytics() {
-        // Triggered when dropdown filters change
-        console.log("Filters Updated:", document.getElementById('filter-timeframe').value, document.getElementById('filter-course').value);
-    }
-
-    function submitRound() {
-        console.log("Submitting Round Data:", roundData);
-        alert("Scorecard State successfully logged in console!");
-    }
+    function updateAnalytics() { console.log("Updating Stats with new filters..."); }
+    function submitRound() { console.log("Submitting:", roundData); alert("Scorecard logged!"); }
 
     document.getElementById('course-search-btn').addEventListener('click', fetchCourseDetails);
     document.addEventListener('DOMContentLoaded', buildGrid);
