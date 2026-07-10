@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
     
+    <!-- PWA App Mode Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
@@ -24,6 +25,7 @@
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* KILL DESKTOP NUMBER SPINNERS */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
@@ -504,11 +506,11 @@
         const password = document.getElementById('auth-password').value; 
         const errDiv = document.getElementById('auth-error');
         
-        const cleanInput = inputRaw.trim().replace(/\s+/g, '').toLowerCase();
+        const cleanInput = inputRaw.trim().replace(/\s+/g, ''); // Removed the forced toLowerCase()
         if (!cleanInput || !password) return errDiv.innerText = "Please enter a login and password.";
         
-        // If they typed a real email (contains @), use it. Otherwise, append the fake routing tag.
-        const email = cleanInput.includes('@') ? cleanInput : cleanInput + "@golf.local"; 
+        // If they typed a real email (contains @), use it exactly as typed. Otherwise, append the fake routing tag.
+        const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
         
         errDiv.innerText = "⏳ Processing...";
         try { 
@@ -1092,7 +1094,7 @@
                 <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
                 <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
                 
-                <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">PERFORMANCE INSIGHTS</td></tr>
+                <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
                 <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
                 <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
                 <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
@@ -1118,6 +1120,7 @@
         if (viewId === 'view-history') fetchHistory(); if (viewId === 'view-analytics') loadAnalyticsData();
     }
     
+    // --- PWA SERVICE WORKER REGISTRATION ---
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e)); }); }
 </script>
 </body>
