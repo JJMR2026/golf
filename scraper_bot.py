@@ -3,7 +3,6 @@ import requests
 from supabase import create_client, Client
 
 # --- 1. SUPABASE CONNECTION ---
-# Pulling securely from your GitHub Secrets
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
@@ -24,14 +23,12 @@ def fetch_calgary_courses():
     
     try:
         response = requests.get(API_URL, headers=headers, params=querystring)
-        response.raise_for_status() # Will flag an error if the key is rejected
+        response.raise_for_status() 
         data = response.json()
         
-        print(f"Successfully fetched {len(data)} courses. Ready to parse and inject to Supabase.")
-        print(data) # Printing to the GitHub Action logs so we can see the exact formatting
-        
-        # NOTE: Once we verify the payload shape in the GitHub Action logs, 
-        # we will activate the supabase.table("course_directory").insert() function here.
+        # API returns a list of courses. This counts as ONE API pull.
+        print(f"Successfully fetched API data. Checking payload...")
+        print(data) 
         
     except Exception as e:
         print(f"Error fetching data from API: {e}")
