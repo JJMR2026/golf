@@ -327,6 +327,7 @@
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null };
 
+    // --- INIT AUTH & PERSISTENCE ---
     async function initializeApp() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
@@ -370,13 +371,13 @@
             const payload = [];
             for (let i = 1; i < rows.length; i++) {
                 if(!rows[i].trim()) continue; const cols = rows[i].split(',').map(c => c.trim().replace(/\r/g, ''));
-                payload.push({ user_id: currentUser.id, date_played: cols[headers.indexOf('date_played')], course_name: cols[headers.indexOf('course_name')], total_score: parseInt(cols[headers.indexOf('total_score')]), total_putts: parseInt(cols[headers.indexOf('total_putts')]) || 0, tee_name: cols[headers.indexOf('tee_name')] || 'Default' });
+                payload.push({ user_id: currentUser.id, date_played: cols[headers.indexOf('date_played')], course_name: cols[headers.indexOf('course_name')].trim(), total_score: parseInt(cols[headers.indexOf('total_score')]), total_putts: parseInt(cols[headers.indexOf('total_putts')]) || 0, tee_name: cols[headers.indexOf('tee_name')].trim() || 'Default' });
             }
             try { const { error } = await supabaseClient.from('logged_rounds').insert(payload); if (error) throw error; alert("✅ Bulk Import Processed."); fetchHistory(); loadAnalyticsData(); } catch(err) { alert("❌ Error saving import: " + err.message); }
         }; reader.readAsText(file);
     }
 
-    function saveLocalState() { const el = document.getElementById('current-course-display'); if (!el) return; localStorage.setItem('golf_round_state', JSON.stringify({ courseName: el.innerText, holeCount: currentHoleCount, pars: currentCoursePars, yardages: currentYardages, roundData: roundData, weather: roundWeather })); }
+    function saveLocalState() { const el = document.getElementById('current-course-display'); if (!el) return; localStorage.setItem('golf_round_state', JSON.stringify({ courseName: el.innerText.trim(), holeCount: currentHoleCount, pars: currentCoursePars, yardages: currentYardages, roundData: roundData, weather: roundWeather })); }
     function loadLocalState() { const saved = localStorage.getItem('golf_round_state'); if(saved) { try { const s=JSON.parse(saved); document.getElementById('current-course-display').innerText = s.courseName; document.getElementById('current-course-display').style.color = 'var(--accent-green)'; currentHoleCount = s.holeCount||18; currentCoursePars = s.pars||Array(18).fill(""); currentYardages = s.yardages||Array(18).fill(""); roundData = s.roundData||Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" })); roundWeather = s.weather || roundWeather; if(roundWeather.temp) document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; document.getElementById('btn-18-holes').classList.toggle('active', currentHoleCount === 18); document.getElementById('btn-9-holes').classList.toggle('active', currentHoleCount === 9); } catch(e) {} } }
     
     async function processOfflineQueue() {
@@ -421,17 +422,10 @@
         
         searchTimeout = setTimeout(async () => { 
             try { 
-                // Only search the TEES table directly to mathematically guarantee we never pull a course without tees
                 const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${query}%`).limit(100); 
                 if(error) throw error;
-                const uniqueCourses = [...new Set(data.map(item => item.course_name))].slice(0, 10);
-                
-                if (uniqueCourses.length > 0) { 
-                    dropdown.innerHTML = uniqueCourses.map(c => `<li onclick="selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
-                    dropdown.classList.add('active'); 
-                } else { 
-                    dropdown.classList.remove('active'); 
-                }
+                const uniqueCourses = [...new Set(data.map(item => item.course_name.trim()))].slice(0, 10);
+                if (uniqueCourses.length > 0) { dropdown.innerHTML = uniqueCourses.map(c => `<li onclick="selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
             } catch(err) { console.error(err); } 
         }, 250); 
     });
@@ -442,11 +436,10 @@
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
         document.getElementById('api-status').innerText = "⏳ Loading..."; fetchWeather();
         try {
-            // Case-insensitive direct query on the Tees table
             let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', query);
             
             if (teeData && teeData.length > 0) {
-                const fetchedCourseName = teeData[0].course_name;
+                const fetchedCourseName = teeData[0].course_name.trim();
                 availableTees = teeData;
                 
                 let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
@@ -463,7 +456,7 @@
 
     function populateTeeDropdown() {
         const select = document.getElementById('tee-select'); document.getElementById('course-setup-container').style.display = 'block';
-        select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
+        select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
         document.getElementById('setup-tee').value = ""; handleTeeChange();
     }
 
@@ -535,10 +528,10 @@
 
     async function submitRound() {
         if (!currentUser) { if (confirm("Guest Round Complete!\n\nSince you are not logged in, this scorecard cannot be saved to the permanent History dashboard.\n\nClear your local scorecard to start a new round?")) { localStorage.removeItem('golf_round_state'); location.reload(); } return; }
-        const courseName = document.getElementById('current-course-display').innerText;
+        const courseName = document.getElementById('current-course-display').innerText.trim();
         if (!courseName || courseName === 'NO COURSE SELECTED' || courseName === '') return alert("⚠️ Please fetch a valid course.");
         const teeVal = document.getElementById('tee-select').value; let teeName = null;
-        if (teeVal === 'new') { teeName = document.getElementById('setup-tee').value.trim(); if (teeName) { try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); } catch(e) {} } } else if (selectedTee) { teeName = selectedTee.tee_name; }
+        if (teeVal === 'new') { teeName = document.getElementById('setup-tee').value.trim(); if (teeName) { try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); } catch(e) {} } } else if (selectedTee) { teeName = selectedTee.tee_name.trim(); }
 
         let totalScore = 0; let totalPutts = 0; const holesPayload = [];
         for (let i = 0; i < currentHoleCount; i++) {
@@ -549,7 +542,7 @@
             }
         }
         if(holesPayload.length === 0) return alert("⚠️ No scores entered.");
-        const submitBtn = document.querySelector('.log-btn-container button'); submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true;
+        const submitBtn = document.querySelector('.log-btn-container button'); if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
 
         try {
             const { data: roundHeader, error: headerError } = await supabaseClient.from('logged_rounds').insert([{ user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }]).select('id').single();
@@ -563,7 +556,7 @@
             localStorage.setItem('golf_offline_queue', JSON.stringify(queue));
             alert("📶 Network Offline.\n\nRound saved to your local device. It will automatically upload to the cloud the next time you open the app online.");
             localStorage.removeItem('golf_round_state'); location.reload();
-        } finally { submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false; }
+        } finally { if(submitBtn){ submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false;} }
     }
 
     async function fetchHistory() {
@@ -578,7 +571,7 @@
             rounds.forEach(r => {
                 const holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score && h.score > 0).length : 0;
                 let w = (r.weather_temp && r.weather_wind) ? `<br><span style="font-size:10px;color:var(--text-muted)">⛅ ${r.weather_temp} | 💨 ${r.weather_wind}</span>` : '';
-                html += `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${holesPlayed})"><div><strong>${r.course_name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name}` : ''}</span>${w}</div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">${holesPlayed === 0 ? 'Bulk Import' : holesPlayed + ' Holes'}</span></div></div>`;
+                html += `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${holesPlayed})"><div><strong>${r.course_name.trim()}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name.trim()}` : ''}</span>${w}</div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">${holesPlayed === 0 ? 'Bulk Import' : holesPlayed + ' Holes'}</span></div></div>`;
             });
             html += `</div></details>`;
         });
@@ -586,7 +579,7 @@
     }
 
     async function openHistoryModal(id, name, date, score, holesPlayed) {
-        document.getElementById('modal-course-title').innerText = name; document.getElementById('modal-total-score').innerText = score; activeModalRoundId = id; document.getElementById('history-modal').classList.add('active'); document.getElementById('modal-scorecard-grid').innerHTML = '⏳ Loading...';
+        document.getElementById('modal-course-title').innerText = name.trim(); document.getElementById('modal-total-score').innerText = score; activeModalRoundId = id; document.getElementById('history-modal').classList.add('active'); document.getElementById('modal-scorecard-grid').innerHTML = '⏳ Loading...';
         if (holesPlayed === 0) { document.getElementById('modal-scorecard-grid').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Bulk imported rounds do not contain hole-by-hole data.</div>'; return; }
         let viewHoles = holesPlayed > 9 ? 18 : 9; modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
         const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
@@ -640,15 +633,12 @@
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
-            if(error) throw error; masterAnalyticsData = data || []; 
-            populateFilters(); 
-            forceSyncFilters(); 
-            updateAnalytics(); 
+            if(error) throw error; masterAnalyticsData = data || []; forceSyncFilters(); populateFilters(); updateAnalytics(); 
         } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
 
     function populateFilters() {
-        const uC = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
+        const uC = [...new Set(masterAnalyticsData.map(r => r.course_name.trim()))].sort();
         document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" autocomplete="off" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" autocomplete="off" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
         const uY = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b)=>b-a);
         document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
@@ -757,14 +747,14 @@
         puttChart = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['0-Putt (Chip in)', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } } });
 
         let p4Drives = [], p5Drives = [];
-        chartData.forEach((r, idx) => { let targetHoles = r.hole_scores || []; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { if (h.drive_distance && h.drive_distance > 0) { if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` }); if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` }); }})});
+        chartData.forEach((r, idx) => { let targetHoles = r.hole_scores || []; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { if (h.drive_distance && h.drive_distance > 0) { if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name.trim()} (Hole ${h.hole_number})` }); if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name.trim()} (Hole ${h.hole_number})` }); }})});
         driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
     }
 
     function updateAnalytics() {
         const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
         let fRounds = masterAnalyticsData.filter(r => { 
-            if (!actCrs.includes(r.course_name)) return false; 
+            if (!actCrs.includes(r.course_name.trim())) return false; 
             const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
             
             if (only18) { 
