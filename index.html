@@ -142,6 +142,9 @@
         @media(min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
         .chart-container { position: relative; height: 250px; width: 100%; background: #1a1a1a; border-radius: 8px; padding: 15px; box-sizing: border-box; }
 
+        .insights-card { background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .insights-card h4 { margin: 0 0 15px 0; color: #3b82f6; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
+
         /* =========================================
            CSS: AUTH & MISC
            ========================================= */
@@ -150,9 +153,6 @@
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
         .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
         .checkbox-container input { width: auto; margin: 0; }
-        
-        .insights-card { background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 20px; }
-        .insights-card h4 { margin: 0 0 15px 0; color: #3b82f6; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -210,7 +210,6 @@
             </div>
         </div>
 
-        <!-- SCORECARD FORM WRAPPER (Enables Apple "Next" Keyboard Button) -->
         <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
             <div class="card">
                 <div class="scorecard-header">
@@ -366,9 +365,9 @@
                 <div class="chart-container"><canvas id="driveChart"></canvas></div>
             </div>
             
-            <!-- AI INSIGHTS CARD -->
+            <!-- PERFORMANCE INSIGHTS CARD -->
             <div class="insights-card">
-                <h4>AI Performance Insights</h4>
+                <h4>Performance Insights</h4>
                 <div id="ai-insights-box" style="font-size: 14px; color: var(--text-main);">⏳ Analyzing game data...</div>
             </div>
 
@@ -426,18 +425,31 @@
     
     let trendChart = null; let puttChart = null; let driveChart = null;
 
-    // --- GLOBAL ENTER KEY PROGRESSION ---
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([disabled])'));
-            const index = inputs.indexOf(e.target);
-            if (index > -1 && index < inputs.length - 1) inputs[index + 1].focus();
+    // --- FRICTIONLESS GRID MODE AUTO-ADVANCE ---
+    document.addEventListener('input', function(e) {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
+            let val = e.target.value;
+            let idParts = e.target.id.split('-'); 
+            if (idParts.length !== 3) return;
+            let type = idParts[1];
+            let idx = parseInt(idParts[2]);
+
+            // If entering score (assumes max length 2), drop immediately to Putts for that hole
+            if (type === 'score' && (val.length === 2 || (val.length === 1 && parseInt(val) >= 2))) {
+                let next = document.getElementById(`grid-putts-${idx}`);
+                if (next) setTimeout(() => next.focus(), 150);
+            } 
+            // If entering putts (max length 1), jump forward to the next hole's score
+            else if (type === 'putts' && val.length === 1) {
+                let next = document.getElementById(`grid-score-${idx + 1}`);
+                if (next) setTimeout(() => next.focus(), 150);
+            }
         }
     });
-// --- FRICTIONLESS PLAY MODE AUTO-ADVANCE AUTOMATION ---
+
+    // --- FRICTIONLESS PLAY MODE AUTO-ADVANCE AUTOMATION ---
     document.getElementById('play-score').addEventListener('input', function(e) {
         let val = e.target.value;
-        // If score is 2 or greater, it's a single digit score. If 1, wait for potential 10, 11, 12.
         if (val.length === 2 || (val.length === 1 && parseInt(val) >= 2)) {
             setTimeout(() => { document.getElementById('play-putts').focus(); }, 150);
         }
@@ -448,24 +460,19 @@
         if (val.length >= 1) {
             let par = currentCoursePars[currentPlayHole];
             setTimeout(() => {
-                if (par === 3) {
-                    // On Par 3s, skip FIR and jump straight to the Drops button or Sand Save tracking
-                    document.getElementById('play-drops-btn').focus();
-                } else {
-                    // On Par 4s/5s, jump straight down to Drive yardage input
-                    document.getElementById('play-drive').focus();
-                }
+                if (par === 3) document.getElementById('play-drops-btn').focus();
+                else document.getElementById('play-drive').focus();
             }, 150);
         }
     });
 
     document.getElementById('play-drive').addEventListener('input', function(e) {
         let val = e.target.value;
-        // Once a standard 3-digit drive yardage is entered, auto-focus penalty drops
         if (val.length === 3) {
             setTimeout(() => { document.getElementById('play-drops-btn').focus(); }, 150);
         }
     });
+
     // --- AUTHENTICATION ENGINE (Nickname Based) ---
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session) { currentUser = session.user; document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); } 
@@ -480,7 +487,7 @@
         const nick = nickRaw.trim().replace(/\s+/g, '').toLowerCase();
         if (!nick || !password) return errDiv.innerText = "Please enter a nickname and password.";
         
-        const email = nick + "@golf.local"; // Invisible fake email routing
+        const email = nick + "@golf.local"; 
         errDiv.innerText = "⏳ Processing...";
         try { 
             let res = type === 'signup' ? await supabaseClient.auth.signUp({ email, password }) : await supabaseClient.auth.signInWithPassword({ email, password });
@@ -802,81 +809,106 @@
     
     function generateInsights(fRounds) {
         let insights = [];
-        let p3Strokes = 0, p3Count = 0, p4Strokes = 0, p4Count = 0, p5Strokes = 0, p5Count = 0;
-        let totalPutts = 0, holesPutted = 0, threePutts = 0, penaltyDrops = 0;
-        let firMisses = 0, firMissLeft = 0, firMissRight = 0, totalFirHoles = 0;
-        let girMisses = 0, girMissShort = 0, totalGirHoles = 0;
+        let p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0;
+        let putts=0, holesPutted=0, threePutts=0, drops=0;
+        let firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0;
+        let girMisses=0, girMissShort=0, totalGir=0, girHit=0;
 
         fRounds.forEach(r => {
             r.hole_scores.forEach(h => {
-                if (h.score && h.par) {
-                    let relativeScore = h.score - h.par;
-                    if (h.par === 3) { p3Strokes += relativeScore; p3Count++; }
-                    if (h.par === 4) { p4Strokes += relativeScore; p4Count++; }
-                    if (h.par === 5) { p5Strokes += relativeScore; p5Count++; }
+                if(h.score && h.par) {
+                    let diff = h.score - h.par;
+                    if(h.par===3){p3+=diff; p3c++;}
+                    if(h.par===4){p4+=diff; p4c++;}
+                    if(h.par===5){p5+=diff; p5c++;}
                 }
-                if (h.putts !== null && h.putts !== "") { 
-                    totalPutts += h.putts; holesPutted++; 
-                    if (h.putts >= 3) threePutts++; 
-                }
-                if (h.drops) penaltyDrops += h.drops;
+                if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
+                if(h.drops) drops += h.drops;
                 
-                // Track directional bias from active tracking data arrays
-                if (h.fir === 'miss') {
-                    firMisses++;
-                    if (Array.isArray(h.firAdv) && h.firAdv.includes('LEFT')) firMissLeft++;
-                    if (Array.isArray(h.firAdv) && h.firAdv.includes('RIGHT')) firMissRight++;
+                if(h.fir === 'hit' || h.fir === 'miss') {
+                    totalFir++;
+                    if(h.fir === 'hit') firHit++;
+                    else {
+                        firMisses++;
+                        if(Array.isArray(h.firAdv) && h.firAdv.includes('LEFT')) firMissLeft++;
+                        if(Array.isArray(h.firAdv) && h.firAdv.includes('RIGHT')) firMissRight++;
+                    }
                 }
-                if (h.fir === 'hit' || h.fir === 'miss') totalFirHoles++;
-                
-                if (h.gir === 'miss') {
-                    girMisses++;
-                    if (Array.isArray(h.girAdv) && h.girAdv.includes('SHORT')) girMissShort++;
+                if(h.gir === 'hit' || h.gir === 'miss') {
+                    totalGir++;
+                    if(h.gir === 'hit') girHit++;
+                    else {
+                        girMisses++;
+                        if(Array.isArray(h.girAdv) && h.girAdv.includes('SHORT')) girMissShort++;
+                    }
                 }
-                if (h.gir === 'hit' || h.gir === 'miss') totalGirHoles++;
             });
         });
 
-        // 1. Scoring Efficiency Mapping
-        let p3Avg = p3Count > 0 ? p3Strokes / p3Count : -99;
-        let p4Avg = p4Count > 0 ? p4Strokes / p4Count : -99;
-        let p5Avg = p5Count > 0 ? p5Strokes / p5Count : -99;
-        let worstPar = Math.max(p3Avg, p4Avg, p5Avg);
+        // Par Scoring
+        let p3Avg = p3c > 0 ? p3/p3c : null;
+        let p4Avg = p4c > 0 ? p4/p4c : null;
+        let p5Avg = p5c > 0 ? p5/p5c : null;
         
-        if (worstPar !== -99 && fRounds.length > 0) {
-            const timeframeText = document.getElementById('filter-timeframe').value === 'full' ? 'all-time' : 'recent';
-            if (worstPar === p3Avg) insights.push(`📊 Based on your <b>${timeframeText} filters</b>, Par 3s are your primary scoring leak. You are averaging +${p3Avg.toFixed(1)} over par on these holes. Work on tee-shot club selection consistency.`);
-            else if (worstPar === p4Avg) insights.push(`📊 Based on your <b>${timeframeText} filters</b>, Par 4s are costing you the most strokes (+${p4Avg.toFixed(1)} over par). Focus on maximizing Fairways in Regulation.`);
-            else if (worstPar === p5Avg) insights.push(`📊 Based on your <b>${timeframeText} filters</b>, Par 5s are leaking efficiency (+${p5Avg.toFixed(1)} over par). Avoid trying to clear hazards in two; prioritize a clean wedge approach distance.`);
+        let averages = [];
+        if (p3Avg !== null) averages.push({type: 'Par 3s', val: p3Avg});
+        if (p4Avg !== null) averages.push({type: 'Par 4s', val: p4Avg});
+        if (p5Avg !== null) averages.push({type: 'Par 5s', val: p5Avg});
+        
+        if (averages.length > 0) {
+            averages.sort((a,b) => b.val - a.val); // Highest is worst
+            let worst = averages[0];
+            let best = averages[averages.length - 1];
+            
+            insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par. Focus your practice here.`);
+            if (averages.length > 1 && best.val < worst.val) {
+                insights.push(`🟢 <b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.`);
+            }
         }
 
-        // 2. Short Game Analytics
-        let threePuttRate = holesPutted > 0 ? (threePutts / holesPutted) * 100 : 0;
-        if (threePuttRate > 15) {
-            insights.push(`⛳ <b>Short Game Leak:</b> Your 3-putt frequency is currently at ${threePuttRate.toFixed(0)}%. Strokes are bleeding on the greens. Dedicate your next practice completely to lag putting from 30+ feet.`);
-        } else if (holesPutted > 0) {
-            insights.push(`⛳ <b>Short Game Strength:</b> Exceptional speed control. Your 3-putt rate is low (${threePuttRate.toFixed(0)}%), which is keeping your scorecard safe.`);
+        // Putting
+        if (holesPutted > 0) {
+            let avgPutts = putts / holesPutted;
+            let threePuttRate = (threePutts / holesPutted) * 100;
+            if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. A great goal is getting this under 2.0.`);
+            else insights.push(`🟢 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. Excellent speed control on the greens!`);
+            
+            if (threePuttRate > 15) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt. Focus heavily on lag putting from 30+ feet.`);
         }
 
-        // 3. Tee Shot Directional Bias
-        if (firMisses > 0) {
-            let leftPct = (firMissLeft / firMisses) * 100;
-            let rightPct = (firMissRight / firMisses) * 100;
-            if (leftPct > 55) insights.push(`🏌️‍♂️ <b>Tee Shot Directional Bias:</b> When you miss the fairway, ${leftPct.toFixed(0)}% of the time you are missing <b>LEFT</b>. Your swing path is over-indexing over the top or flipping early.`);
-            else if (rightPct > 55) insights.push(`🏌️‍♂️ <b>Tee Shot Directional Bias:</b> When you miss the fairway, ${rightPct.toFixed(0)}% of the time you are missing <b>RIGHT</b>. You are leaving the clubface open or sliding your hips.`);
+        // Driving
+        if (totalFir > 0) {
+            let firPct = (firHit / totalFir) * 100;
+            if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways makes approaches very difficult. Consider clubbing down off the tee.`);
+            else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways is giving you great looks at the green.`);
+            
+            if (firMisses > 0) {
+                let leftPct = (firMissLeft / firMisses) * 100;
+                let rightPct = (firMissRight / firMisses) * 100;
+                if (leftPct > 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`);
+                if (rightPct > 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`);
+            }
         }
 
-        // 4. Approach Assessment
-        if (girMisses > 0 && girMissShort > 0) {
-            let shortPct = (girMissShort / girMisses) * 100;
-            if (shortPct > 60) insights.push(`🎯 <b>Approach Vulnerability:</b> ${shortPct.toFixed(0)}% of your missed greens are landing <b>SHORT</b>. You are consistently under-clubbing or failing to account for wind and mishits. Take one extra club on your next round.`);
+        // Approach
+        if (totalGir > 0) {
+            let girPct = (girHit / totalGir) * 100;
+            if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation. Dial in your iron yardages.`);
+            else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation. Brilliant ball striking!`);
+            
+            if (girMisses > 0 && girMissShort > 0) {
+                let shortPct = (girMissShort / girMisses) * 100;
+                if (shortPct > 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>. Try taking one extra club on approaches.`);
+            }
         }
 
-        if (penaltyDrops > (fRounds.length * 1.5)) {
-            insights.push(`⚠️ <b>Course Management Hazard:</b> You are averaging ${(penaltyDrops / fRounds.length).toFixed(1)} penalty strokes per round. Your strategy is too aggressive on tight layout tracking.`);
+        // Penalties
+        if (drops > 0) {
+            let dropsPerRound = drops / fRounds.length;
+            if (dropsPerRound >= 2) insights.push(`⚠️ <b>Course Management:</b> You are averaging ${dropsPerRound.toFixed(1)} penalty drops per round. Play more conservatively around hazards.`);
         }
 
-        if (insights.length === 0) return "Gathering more round data to populate diagnostic insights...";
+        if (insights.length === 0) return "Gathering more round data to generate your performance insights...";
         return `<ul style="margin:0; padding-left: 20px; line-height: 1.8;"><li>${insights.join('</li><li>')}</li></ul>`;
     }
 
