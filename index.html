@@ -477,12 +477,14 @@
 
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', e => {
-        const query = e.target.value.trim(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
+        const query = e.target.value.trim().toLowerCase(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
         if (query.length < 2) { dropdown.classList.remove('active'); return; }
         searchTimeout = setTimeout(async () => { 
             try { 
-                const { data } = await supabaseClient.from('course_directory').select('course_name').ilike('course_name', `%${query}%`).limit(10); 
-                if (data && data.length > 0) { dropdown.innerHTML = data.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
+                const { data } = await supabaseClient.from('course_directory').select('course_name').limit(50); 
+                // Strict substring filter
+                const filtered = data.filter(c => c.course_name.toLowerCase().includes(query)).slice(0, 10);
+                if (filtered.length > 0) { dropdown.innerHTML = filtered.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
             } catch(err) {} 
         }, 250); 
     });
@@ -674,7 +676,7 @@
 
     function populateFilters() {
         const uC = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
-        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
+        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
         const uY = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b)=>b-a);
         document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
     }
@@ -698,7 +700,7 @@
         fRounds.forEach(r => { 
             if(!r.hole_scores || r.hole_scores.length === 0) {
                 if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; }
-                return; // Can't generate detailed par insights for bulk imports
+                return;
             }
             r.hole_scores.forEach(h => {
                 if(h.score && h.par) { let diff = h.score - h.par; if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} }
@@ -748,7 +750,7 @@
             let m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
             let b = (sumY - m * sumX) / n;
             let trendData = baseScores.map((_, i) => m * i + b);
-            trendDatasets.push({ label: 'Trendline', data: trendData, borderColor: 'rgba(255, 255, 255, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, yAxisID: 'y', pointHoverRadius: 0 });
+            trendDatasets.push({ label: 'Trendline', data: trendData, borderColor: 'rgba(255, 255, 255, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, yAxisID: 'y', pointHoverRadius: 0, hoverBorderColor: 'transparent' });
             
             let strokeShift = (m * (n - 1)).toFixed(1);
             if(strokeShift < 0) { badge.innerHTML = `<span style="color: var(--accent-green);">📈 Trending Better (${strokeShift} Strokes)</span>`; badge.style.display = 'block'; }
@@ -775,7 +777,8 @@
             });
             trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1' });
         });
-        trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: activeOverlays.length > 0 || baseScores.length > 1, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } });
+        
+        trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlays.length > 0 || baseScores.length > 1, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } });
 
         let p0=0, p1=0, p2=0, p3=0;
         chartData.forEach(r => { let targetHoles = r.hole_scores || []; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }); });
@@ -787,7 +790,7 @@
     }
 
     function updateAnalytics() {
-        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
         let fRounds = masterAnalyticsData.filter(r => { 
             if (!actCrs.includes(r.course_name)) return false; 
             const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
@@ -819,9 +822,16 @@
             if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
             
             targetHoles.forEach(h => { 
-                if (!h.score || !h.par) return; totalStrokes += h.score; totalHolesCount++; const d = h.score - h.par; 
-                if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
-                if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
+                if (!h.score) return; 
+                totalStrokes += h.score; 
+                totalHolesCount++; 
+                
+                if (h.par) {
+                    const d = h.score - h.par; 
+                    if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
+                    if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
+                }
+                
                 if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
             }) 
         });
