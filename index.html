@@ -547,7 +547,6 @@
         const sortedYears = Object.keys(grouped).sort((a,b) => b-a);
         sortedYears.forEach((year, index) => {
             const rounds = grouped[year];
-            // Only keep the most recent year folder open by default
             html += `<details class="year-folder" ${index === 0 ? 'open' : ''}>
                         <summary>${year} Season <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">${rounds.length} Rounds</span></summary>
                         <div class="folder-content">`;
@@ -568,7 +567,6 @@
         activeModalRoundId = id; document.getElementById('history-modal').classList.add('active');
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = '⏳ Loading...';
         
-        // Dynamically build the grid based on how many holes were played
         let viewHoles = holesPlayed > 9 ? 18 : 9;
         modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
         
