@@ -7,31 +7,40 @@ url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
-# --- 2. GOLF API CONFIGURATION ---
+# --- 2. GOLF COURSE API CONFIGURATION ---
 API_KEY = "SBNYQO6CROSCJ4IZ5PQEHESHGI"
-API_HOST = "golf-course-api.p.rapidapi.com"
-API_URL = "https://golf-course-api.p.rapidapi.com/search"
 
-def fetch_calgary_courses():
-    print("Fetching Calgary courses from external API...")
+def fetch_courses():
+    print("Fetching courses directly from golfcourseapi.com...")
     
-    querystring = {"location": "Calgary, AB"}
+    # Standard authorization header for direct API access
     headers = {
-        "X-RapidAPI-Key": API_KEY,
-        "X-RapidAPI-Host": API_HOST
+        "Authorization": f"Bearer {API_KEY}",
+        "Accept": "application/json"
     }
     
+    # Target endpoint for course searches
+    api_url = "https://api.golfcourseapi.com/v1/courses"
+    params = {"city": "Calgary"}
+    
     try:
-        response = requests.get(API_URL, headers=headers, params=querystring)
-        response.raise_for_status() 
-        data = response.json()
+        response = requests.get(api_url, headers=headers, params=params)
         
-        # API returns a list of courses. This counts as ONE API pull.
-        print(f"Successfully fetched API data. Checking payload...")
-        print(data) 
+        print(f"Status Code: {response.status_code}")
+        
+        # If it fails, print the exact error message the API returns
+        if response.status_code != 200:
+            print("Error Details:", response.text)
+            return
+            
+        data = response.json()
+        print(f"Successfully connected! Printing payload structure...")
+        
+        # Printing the first 1000 characters so we can see the exact JSON map 
+        print(str(data)[:1000])
         
     except Exception as e:
-        print(f"Error fetching data from API: {e}")
+        print(f"Critical Script Error: {e}")
 
 if __name__ == "__main__":
-    fetch_calgary_courses()
+    fetch_courses()
