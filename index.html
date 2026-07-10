@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
     
-    <!-- PWA App Mode Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
@@ -25,7 +24,6 @@
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* KILL DESKTOP NUMBER SPINNERS */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
@@ -148,7 +146,7 @@
         /* =========================================
            CSS: AUTH & MISC
            ========================================= */
-        #auth-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; }
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
         .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
@@ -162,7 +160,7 @@
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0;">GOLF TRACKER</h2>
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Login or create an account to secure your data.</p>
-        <p style="color: #ef4444; font-size: 11px; margin-bottom: 30px;">Do not forget your PIN. Because this uses a private nickname instead of an email, passwords cannot be recovered.</p>
+        <p style="color: #ef4444; font-size: 11px; margin-bottom: 30px;">You can login with your original email, or simply create a new Nickname.</p>
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off">
         <input type="password" id="auth-password" placeholder="PIN / Password">
         <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -170,6 +168,23 @@
             <button class="primary" onclick="handleAuth('login')">Log In</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px;"></div>
+    </div>
+</div>
+
+<!-- SETTINGS / ACCOUNT OVERLAY -->
+<div id="settings-overlay" style="display: none;">
+    <div class="auth-card">
+        <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
+        <input type="password" id="new-password" placeholder="Enter New Password">
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button>
+            <button class="primary" onclick="changePassword()">Update Password</button>
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button>
+        </div>
+        <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
     </div>
 </div>
 
@@ -181,7 +196,7 @@
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
         </div>
-        <button class="danger-btn" style="flex: 0 0 auto; padding: 12px 16px; font-size: 12px; margin-left: 10px;" onclick="logOut()">Sign Out</button>
+        <button class="view-toggle-btn" style="flex: 0 0 auto; margin-left: 10px;" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️ Account</button>
     </div>
 
     <!-- =========================================================================
@@ -502,7 +517,26 @@
         } catch (error) { errDiv.innerText = error.message; }
     }
     
-    async function logOut() { await supabaseClient.auth.signOut(); }
+    async function changePassword() {
+        const newPassword = document.getElementById('new-password').value;
+        const msgDiv = document.getElementById('settings-msg');
+        if (!newPassword || newPassword.length < 6) return msgDiv.innerText = "Password must be at least 6 characters.";
+        
+        msgDiv.innerText = "⏳ Updating...";
+        msgDiv.style.color = "var(--text-muted)";
+        
+        const { data, error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (error) {
+            msgDiv.innerText = "❌ " + error.message;
+            msgDiv.style.color = "#ef4444";
+        } else {
+            msgDiv.innerText = "✅ Password updated successfully.";
+            msgDiv.style.color = "var(--accent-green)";
+            document.getElementById('new-password').value = "";
+        }
+    }
+    
+    async function logOut() { await supabaseClient.auth.signOut(); document.getElementById('settings-overlay').style.display='none'; }
 
     // --- SEARCH LOGIC (LOCAL DB) ---
     let searchTimeout = null;
@@ -867,7 +901,7 @@
             let worst = averages[0];
             let best = averages[averages.length - 1];
             
-            insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par. Focus your practice here.`);
+            insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.`);
             if (averages.length > 1 && best.val < worst.val) {
                 insights.push(`🟢 <b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.`);
             }
@@ -878,16 +912,16 @@
             let avgPutts = putts / holesPutted;
             let threePuttRate = (threePutts / holesPutted) * 100;
             if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. A great goal is getting this under 2.0.`);
-            else insights.push(`🟢 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. Excellent speed control on the greens!`);
+            else insights.push(`🟢 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. Excellent speed control!`);
             
-            if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt. Focus heavily on lag putting from 30+ feet.`);
+            if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.`);
         }
 
         // Driving
         if (totalFir > 0) {
             let firPct = (firHit / totalFir) * 100;
-            if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways makes approaches very difficult. Consider clubbing down off the tee.`);
-            else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways is giving you great looks at the green.`);
+            if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways. Consider clubbing down off the tee.`);
+            else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.`);
             
             if (firMisses > 0) {
                 let leftPct = (firMissLeft / firMisses) * 100;
@@ -900,19 +934,19 @@
         // Approach
         if (totalGir > 0) {
             let girPct = (girHit / totalGir) * 100;
-            if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation. Dial in your iron yardages.`);
-            else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation. Brilliant ball striking!`);
+            if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`);
+            else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`);
             
             if (girMisses > 0 && girMissShort > 0) {
                 let shortPct = (girMissShort / girMisses) * 100;
-                if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>. Try taking one extra club on approaches.`);
+                if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.`);
             }
         }
 
         // Penalties
         if (drops > 0) {
             let dropsPerRound = drops / fRounds.length;
-            if (dropsPerRound >= 2) insights.push(`⚠️ <b>Course Management:</b> You are averaging ${dropsPerRound.toFixed(1)} penalty drops per round. Play more conservatively around hazards.`);
+            if (dropsPerRound >= 2) insights.push(`⚠️ <b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.`);
         }
 
         if (insights.length === 0) return "Gathering more round data to generate your performance insights...";
@@ -1084,7 +1118,6 @@
         if (viewId === 'view-history') fetchHistory(); if (viewId === 'view-analytics') loadAnalyticsData();
     }
     
-    // --- PWA SERVICE WORKER REGISTRATION ---
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e)); }); }
 </script>
 </body>
