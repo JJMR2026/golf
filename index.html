@@ -32,14 +32,15 @@
         
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
-        input[type="text"], input[type="number"], input[type="email"], input[type="password"] { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"] { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
         input:focus, select:focus { border-color: var(--accent-green); }
         select { background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
         
-        .dropdown-list { position: absolute; top: 100%; left: 0; right: 90px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 100; display: none; }
+        /* Fixed Dropdown CSS */
+        .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
         .dropdown-list.active { display: block; }
         .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
-        .dropdown-list li:hover { background-color: #1f1f1f; color: var(--accent-green); }
+        .dropdown-list li:hover { background-color: #2a2a2a; color: var(--accent-green); }
         
         .setup-row { display: flex; gap: 10px; margin-top: 15px; }
         .setup-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
@@ -93,9 +94,10 @@
 
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
-        .multi-select-container { position: relative; flex: 1; min-width: 180px; }
+        .multi-select-container { position: relative; flex: 1; min-width: 150px; }
         .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
-        .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
+        
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .stats-table th { padding: 12px 10px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-transform: uppercase; text-align: right; }
         .stats-table th:first-child { text-align: left; width: 40%; }
@@ -153,7 +155,7 @@
             <div class="search-header">SEARCH GOLF COURSES <span class="search-toggle" style="cursor: pointer; color: var(--accent-green);" onclick="document.getElementById('search-body').style.display = document.getElementById('search-body').style.display === 'none' ? 'block' : 'none'">HIDE</span></div>
             <div id="search-body">
                 <div class="search-row">
-                    <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
+                    <input type="text" id="course-search-input" placeholder="e.g., Blue Devil" autocomplete="off">
                     <button class="primary" id="course-search-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
                     <ul id="search-dropdown" class="dropdown-list"></ul>
                 </div>
@@ -245,26 +247,35 @@
                 <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
                     <option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option>
                 </select>
-                <select class="filter-select" id="filter-year" onchange="updateAnalytics()"><option value="all">All Years</option></select>
-                <select class="filter-select" id="filter-month" onchange="updateAnalytics()">
-                    <option value="all">All Months</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
-                </select>
+                
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span style="font-size: 10px;">▼</span></div>
+                    <div class="multi-select-dropdown" id="year-checkbox-list"></div>
+                </div>
+
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span style="font-size: 10px;">▼</span></div>
+                    <div class="multi-select-dropdown" id="course-checkbox-list"></div>
+                </div>
+
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span style="font-size: 10px;">▼</span></div>
+                    <div class="multi-select-dropdown" id="par-checkbox-list">
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Pars')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 3s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 4s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 5s</label>
+                    </div>
+                </div>
+
                 <select class="filter-select" id="filter-hole-select" onchange="updateAnalytics()">
                     <option value="all">All Holes</option>
                     <option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option>
                     <option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option>
                     <option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option>
                 </select>
-                
-                <div class="multi-select-container">
-                    <div class="multi-select-btn" onclick="toggleCourseFilter()"><span>Filter Courses...</span><span style="font-size: 10px;">▼</span></div>
-                    <div class="multi-select-dropdown" id="course-checkbox-list"></div>
-                </div>
 
-                <label class="checkbox-container">
-                    <input type="checkbox" id="filter-18-only" onchange="updateAnalytics()" checked> 18-Holes Only
-                </label>
-                
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" onchange="updateAnalytics()" checked> 18-Holes Only</label>
                 <button class="primary" style="flex: 0 0 auto; background-color: #3b82f6; color: white;" onclick="exportToCSV()">📥 CSV</button>
             </div>
             
@@ -541,7 +552,6 @@
         const { data } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
         if(!data || data.length === 0) { document.getElementById('history-list').innerHTML = '<div class="empty-state">No rounds found.</div>'; return; }
         
-        // Group by Year
         const grouped = data.reduce((acc, round) => {
             const year = new Date(round.date_played).getUTCFullYear();
             if(!acc[year]) acc[year] = []; acc[year].push(round); return acc;
@@ -576,7 +586,6 @@
         
         const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
         if(data) data.forEach(h => { const i = h.hole_number - 1; if(i>=0 && i<viewHoles){ modalCoursePars[i]=h.par||""; modalRoundData[i]={id:h.id,score:h.score||"",putts:h.putts!==null?h.putts:"",fir:h.fir||"",gir:h.gir||"",drive:h.drive_distance||"",drops:h.drops||0,sandSave:h.sand_save||""}; }});
-        
         buildModalGrid(viewHoles);
     }
 
@@ -646,10 +655,16 @@
 
     function populateFilters() {
         const uC = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
-        document.getElementById('course-checkbox-list').innerHTML = `<label><input type="checkbox" id="cb-all-courses" checked onchange="toggleAllCourses(this)"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label><input type="checkbox" class="course-cb" value="${c}" checked onchange="checkCourseToggles()"> ${c}</label>`).join('');
-        const ys = document.getElementById('filter-year'); const uY = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b)=>b-a);
-        ys.innerHTML = `<option value="all">All Years</option>` + uY.map(y => `<option value="${y}">${y}</option>`).join('');
+        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Courses')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Courses')"> ${c}</label>`).join('');
+        
+        const uY = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b)=>b-a);
+        document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Years')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Years')"> ${y}</label>`).join('');
     }
+
+    function toggleFilterDropdown(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+    function toggleGroupToggles(mainCb, childClass, btnTextId, defaultText) { const cbs = document.querySelectorAll(childClass); cbs.forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}` : `0 ${defaultText}`; updateAnalytics(); }
+    function checkGroupToggles(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}` : `${checkedCount} ${defaultText}`; updateAnalytics(); }
+    document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
 
     function calculateHandicap(allRounds) {
         const hcpRounds = allRounds.filter(r => r.course_rating && r.slope_rating).slice(0, 20);
@@ -661,25 +676,25 @@
         return Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
     }
 
-    function renderCharts(filteredRounds, specificHole) {
+    function renderCharts(filteredRounds, specificHole, actPars) {
         const tCtx = document.getElementById('scoringTrendChart'); const pCtx = document.getElementById('puttChart'); const dCtx = document.getElementById('driveChart');
         if (trendChart) trendChart.destroy(); if (puttChart) puttChart.destroy(); if (driveChart) driveChart.destroy();
         if (filteredRounds.length === 0) { tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; return; }
         tCtx.parentElement.style.display = 'block'; pCtx.parentElement.style.display = 'block'; dCtx.parentElement.style.display = 'block';
         
         const chartData = [...filteredRounds].reverse();
-        
-        // 1. Multi-Overlay Scoring Trend
         const activeOverlays = Array.from(document.querySelectorAll('#chart-overlays input:checked')).map(cb => cb.value);
+        
+        // 1. Scoring Trend
         let baseScores = [];
-        if (specificHole !== 'all') {
-            chartData.forEach(r => { const hs = r.hole_scores.find(h => h.hole_number == specificHole); baseScores.push(hs ? hs.score || 0 : 0); });
-        } else {
-            baseScores = chartData.map(r => r.total_score);
-        }
+        chartData.forEach(r => {
+            let targetHoles = r.hole_scores;
+            if (specificHole !== 'all') targetHoles = targetHoles.filter(h => h.hole_number == specificHole);
+            if (actPars.length < 3) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
+            baseScores.push(targetHoles.reduce((sum, h) => sum + (h.score || 0), 0));
+        });
         
-        let trendDatasets = [{ label: specificHole !== 'all' ? `Hole ${specificHole} Score` : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
-        
+        let trendDatasets = [{ label: 'Strokes', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
         const oColors = { putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', drops: '#ef4444' };
         const oLabels = { putts: 'Putts', fir: 'FIR %', gir: 'GIR %', drops: 'Drops' };
 
@@ -687,83 +702,90 @@
             let oData = [];
             chartData.forEach(r => {
                 let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
-                let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
+                let targetHoles = r.hole_scores;
+                if (specificHole !== 'all') targetHoles = targetHoles.filter(h => h.hole_number == specificHole);
+                if (actPars.length < 3) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
+                
                 targetHoles.forEach(h => {
                     if (h.putts) p += h.putts; if (h.drops) dr += h.drops;
                     if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
                     if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
                 });
-                if (overlay === 'putts') oData.push(p);
-                if (overlay === 'drops') oData.push(dr);
+                
+                if (overlay === 'putts') oData.push(p); if (overlay === 'drops') oData.push(dr);
                 if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0);
                 if (overlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0);
             });
             trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1' });
         });
 
-        trendChart = new Chart(tCtx.getContext('2d'), {
-            type: 'line',
-            data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: activeOverlays.length > 0, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } }
-        });
+        trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: activeOverlays.length > 0, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } });
 
         // 2. Putting Breakdown
         let p0=0, p1=0, p2=0, p3=0;
         chartData.forEach(r => {
-            let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
+            let targetHoles = r.hole_scores;
+            if (specificHole !== 'all') targetHoles = targetHoles.filter(h => h.hole_number == specificHole);
+            if (actPars.length < 3) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
             targetHoles.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; });
         });
-        puttChart = new Chart(pCtx.getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: ['0-Putt (Chip in)', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } }
-        });
+        puttChart = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['0-Putt (Chip in)', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } } });
 
         // 3. Drive Distances
         let p4Drives = [], p5Drives = [];
         chartData.forEach((r, idx) => { 
-            let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
+            let targetHoles = r.hole_scores;
+            if (specificHole !== 'all') targetHoles = targetHoles.filter(h => h.hole_number == specificHole);
+            if (actPars.length < 3) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
             targetHoles.forEach(h => { if (h.drive_distance && h.drive_distance > 0) {
             if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
             if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
         }})});
-        driveChart = new Chart(dCtx.getContext('2d'), {
-            type: 'scatter',
-            data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } }
-        });
+        driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
     }
 
     function updateAnalytics() {
-        const timeframe = document.getElementById('filter-timeframe').value; const yFilter = document.getElementById('filter-year').value; const mFilter = document.getElementById('filter-month').value;
-        const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value);
-        const only18 = document.getElementById('filter-18-only').checked;
+        const timeframe = document.getElementById('filter-timeframe').value; const mFilter = document.getElementById('filter-month').value;
         const specHole = document.getElementById('filter-hole-select').value;
+        const only18 = document.getElementById('filter-18-only').checked;
+        const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value);
+        const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value);
+        const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value);
 
         let fRounds = masterAnalyticsData.filter(r => {
             if (!actCrs.includes(r.course_name)) return false;
             const d = new Date(r.date_played);
-            if (yFilter !== 'all' && d.getUTCFullYear().toString() !== yFilter) return false;
+            if (!actYrs.includes(d.getUTCFullYear().toString())) return false;
             if (mFilter !== 'all' && (d.getUTCMonth() + 1).toString() !== mFilter) return false;
             if (only18) { const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; if (playedHoles < 18) return false; }
             if (specHole !== 'all') { const hasHole = r.hole_scores.some(h => h.hole_number == specHole && h.score && h.score > 0); if(!hasHole) return false; }
+            if (actPars.length < 3) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; }
             return true;
         });
         
         if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
         document.getElementById('hcp-display').innerText = calculateHandicap(fRounds);
-        renderCharts(fRounds, specHole);
+        renderCharts(fRounds, specHole, actPars);
 
-        const rCnt = fRounds.length;
-        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, p5:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 };
-        let totalStrokes = 0;
+        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 };
+        let totalStrokes = 0; let totalHolesCount = 0;
+        let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
 
         fRounds.forEach(r => {
-            let targetHoles = specHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specHole) : r.hole_scores;
+            let targetHoles = r.hole_scores;
+            if (specHole !== 'all') targetHoles = targetHoles.filter(h => h.hole_number == specHole);
+            if (actPars.length < 3) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
+            
             targetHoles.forEach(h => {
-                if (!h.score || !h.par) return; const d = h.score - h.par;
-                totalStrokes += h.score;
-                if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d===4) s.qd++; else if(d>=5) s.p5++;
+                if (!h.score || !h.par) return; 
+                totalStrokes += h.score; totalHolesCount++;
+                const d = h.score - h.par;
+                
+                if (h.par === 3) { p3Tot += h.score; p3Cnt++; }
+                if (h.par === 4) { p4Tot += h.score; p4Cnt++; }
+                if (h.par === 5) { p5Tot += h.score; p5Cnt++; }
+
+                if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++;
                 if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; }
                 if(h.drops) s.drp+=h.drops;
                 if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; }
@@ -773,29 +795,42 @@
         });
 
         const t = document.getElementById('analytics-data-table');
-        if(rCnt===0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">No data matches these filters.</td></tr></tbody>`;
-        const cA = (tot) => (tot / rCnt).toFixed(1); const cP = (tot) => ((tot / (specHole !== 'all' ? rCnt : rCnt * 18)) * 100).toFixed(1) + '%';
+        if(fRounds.length===0 || totalHolesCount===0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">No data matches these filters.</td></tr></tbody>`;
         
-        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr></thead>
+        const cA = (tot) => (tot / fRounds.length).toFixed(1); 
+        const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
+        
+        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead>
             <tbody>
-                <tr><td>${specHole !== 'all' ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
+                <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
+                <tr><td>Total Strokes</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
                 <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
                 <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
                 <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
                 <tr><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
                 <tr><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
+                <tr><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
+                <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
+                <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
+                
+                <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">ADVANCED STATS</td></tr>
+                <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+                <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+                <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+                
+                <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
                 <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
-                <tr><td>Drops</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
-                <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (specHole !== 'all' ? rCnt : (s.fT / 14))).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-                <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (specHole !== 'all' ? rCnt : (s.gT / 18))).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-                <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / rCnt).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+                <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+                <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+                <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / fRounds.length).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+                <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
             </tbody>`;
     }
 
-    function toggleCourseFilter() { const el = document.getElementById('course-checkbox-list'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
-    function toggleAllCourses(cb) { document.querySelectorAll('.course-cb').forEach(b => b.checked = cb.checked); updateAnalytics(); }
-    function checkCourseToggles() { document.getElementById('cb-all-courses').checked = Array.from(document.querySelectorAll('.course-cb')).every(b => b.checked); updateAnalytics(); }
-    document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.getElementById('course-checkbox-list').style.display = 'none'; } });
+    function toggleFilterDropdown(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+    function toggleGroupToggles(mainCb, childClass, btnTextId, defaultText) { const cbs = document.querySelectorAll(childClass); cbs.forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}` : `0 ${defaultText}`; updateAnalytics(); }
+    function checkGroupToggles(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}` : `${checkedCount} ${defaultText}`; updateAnalytics(); }
+    document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
 
     function switchView(viewId, btnElement) {
         document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -803,7 +838,6 @@
         if (viewId === 'view-history') fetchHistory(); if (viewId === 'view-analytics') loadAnalyticsData();
     }
     
-    // --- PWA SERVICE WORKER REGISTRATION ---
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e)); }); }
 </script>
 </body>
