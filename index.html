@@ -133,29 +133,13 @@
 <div id="auth-overlay">
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
-        
-        <div class="login-option">
-            <h4>1. Real Email (Recommended)</h4>
-            <p>Full tracking, insights, and secure password recovery. Emails are strictly used for recovery and never shared.</p>
-        </div>
-        
-        <div class="login-option">
-            <h4 style="color: #3b82f6;">2. Nickname</h4>
-            <p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p>
-        </div>
-
+        <div class="login-option"><h4>1. Real Email (Recommended)</h4><p>Full tracking, insights, and secure password recovery. Emails are strictly used for recovery and never shared.</p></div>
+        <div class="login-option"><h4 style="color: #3b82f6;">2. Nickname</h4><p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p></div>
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px;">
         <input type="password" id="auth-password" placeholder="PIN / Password">
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button>
-            <button class="primary" onclick="handleAuth('login')">Log In</button>
-        </div>
-        
+        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button><button class="primary" onclick="handleAuth('login')">Log In</button></div>
         <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color);">
-            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);">
-                <h4 style="color: #ef4444;">3. Guest Mode</h4>
-                <p>Track a single round. No data is saved permanently and no analytics are generated.</p>
-            </div>
+            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">3. Guest Mode</h4><p>Track a single round. No data is saved permanently and no analytics are generated.</p></div>
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px;"></div>
@@ -168,10 +152,7 @@
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
         <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off">
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button>
-            <button class="primary" onclick="changePassword()">Update Password</button>
-        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button><button class="primary" onclick="changePassword()">Update Password</button></div>
         <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
         
         <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left;">
@@ -180,10 +161,7 @@
             <button class="view-toggle-btn" id="feedback-btn" style="width: 100%;" onclick="submitFeedback()">Send Feedback</button>
             <div id="feedback-msg" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
         </div>
-
-        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-            <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button>
-        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;"><button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button></div>
     </div>
 </div>
 
@@ -279,19 +257,19 @@
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="month-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" checked onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jan</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Feb</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Mar</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Apr</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> May</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jun</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jul</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Aug</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Sep</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Oct</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Nov</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Dec</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jan</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Feb</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Mar</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Apr</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> May</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jun</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jul</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Aug</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Sep</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Oct</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Nov</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Dec</label>
                     </div>
                 </div>
 
@@ -303,19 +281,19 @@
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="par-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
                     </div>
                 </div>
 
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="hole-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" checked onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
 
@@ -509,7 +487,8 @@
                 currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
                 document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                 roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
-                const { data: teeData } = await supabaseClient.from('course_tees').select('*').eq('course_name', fetchedCourseName);
+                const { data: teeData, error: teeError } = await supabaseClient.from('course_tees').select('*').eq('course_name', fetchedCourseName);
+                if(teeError) console.error("Tee Fetch Error:", teeError);
                 availableTees = teeData || []; populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
             }
         } catch(e) {}
@@ -545,7 +524,7 @@
                 else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI(); saveLocalState();">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`; }
                 else if (row.type === 'drops') { cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0; cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-                else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'YES' : (cVal === 'no' ? 'NO' : '-')) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
+                else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'YES' : (cVal === 'no' ? 'NO' : '-')) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
                 grid.appendChild(cell);
             }
         });
@@ -673,18 +652,25 @@
     async function deleteActiveRound(id) { if(id && confirm("Delete round?")) { await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); fetchHistory(); closeHistoryModal(); loadAnalyticsData(); } }
 
     function forceSyncFilters() {
-        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-        document.getElementById('filter-18-only').checked = false;
-        document.querySelectorAll('.multi-select-btn span:first-child').forEach(span => { span.innerText = span.innerText.replace(/^[0-9]+ /, 'All '); });
+        document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+        const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = true;
+        document.getElementById('month-btn-text').innerText = 'All Months';
+        document.getElementById('year-btn-text').innerText = 'All Years';
+        document.getElementById('course-btn-text').innerText = 'All Courses';
+        document.getElementById('par-btn-text').innerText = 'All Pars';
+        document.getElementById('hole-btn-text').innerText = 'All Holes';
     }
 
     async function loadAnalyticsData() {
-        if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center;">Please log in to view Analytics.</td></tr></tbody>'; return; }
-        const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center;">⏳ Crunching...</td></tr></tbody>';
+        if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
+        const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
-            if(error) throw error; masterAnalyticsData = data || []; forceSyncFilters(); populateFilters(); updateAnalytics(); 
-        } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
+            if(error) throw error; masterAnalyticsData = data || []; 
+            populateFilters(); 
+            forceSyncFilters(); 
+            updateAnalytics(); 
+        } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
 
     function populateFilters() {
@@ -822,6 +808,9 @@
             return true; 
         });
         
+        const t = document.getElementById('analytics-data-table');
+        if(fRounds.length === 0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`;
+
         if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
         document.getElementById('hcp-display').innerText = calculateHandicap(fRounds); renderCharts(fRounds, actHoles, actPars); document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
         
@@ -848,7 +837,7 @@
             }) 
         });
         
-        const t = document.getElementById('analytics-data-table'); if(fRounds.length===0 || totalHolesCount===0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">No data matches these filters.</td></tr></tbody>`;
+        if(totalHolesCount === 0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`;
         const cA = (tot) => (tot / fRounds.length).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead><tbody>
             <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
