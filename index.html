@@ -271,7 +271,7 @@
                         <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
-                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" onchange="updateAnalytics()"> 18-Holes Only</label>
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" checked onchange="updateAnalytics()"> 18-Holes Only</label>
             </div>
             
             <div class="charts-grid">
@@ -327,7 +327,6 @@
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null };
 
-    // --- INIT AUTH & PERSISTENCE ---
     async function initializeApp() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
@@ -436,18 +435,25 @@
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
         document.getElementById('api-status').innerText = "⏳ Loading..."; fetchWeather();
         try {
-            let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', query);
+            let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`);
             
             if (teeData && teeData.length > 0) {
-                const fetchedCourseName = teeData[0].course_name.trim();
-                availableTees = teeData;
+                // Try exact match first
+                let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase() === query.toUpperCase());
+                // Fallback to first partial match if exact match fails
+                if (!matchedCourse) { matchedCourse = teeData[0]; }
                 
-                let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
-                currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
-                document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
-                roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
-                
-                populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
+                if (matchedCourse) {
+                    const fetchedCourseName = matchedCourse.course_name.trim();
+                    availableTees = teeData.filter(t => t.course_name.trim() === fetchedCourseName);
+                    
+                    let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
+                    currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
+                    document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
+                    roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
+                    
+                    populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
+                }
             }
         } catch(e) { console.error(e); }
         document.getElementById('current-course-display').innerText = query.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)'; document.getElementById('api-status').innerText = "ℹ️ Course not found in database. Please enter manually.";
@@ -456,7 +462,7 @@
 
     function populateTeeDropdown() {
         const select = document.getElementById('tee-select'); document.getElementById('course-setup-container').style.display = 'block';
-        select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
+        select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.tee_name.trim()}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
         document.getElementById('setup-tee').value = ""; handleTeeChange();
     }
 
@@ -466,7 +472,7 @@
         else if (val === "") { manualRow.style.display = 'none'; selectedTee = null; currentYardages = Array(18).fill(""); } 
         else { 
             manualRow.style.display = 'none'; 
-            selectedTee = availableTees.find(t => t.id == val); 
+            selectedTee = availableTees.find(t => t.tee_name.trim() === val); 
             if (selectedTee) { 
                 let p = selectedTee.pars; if(typeof p === 'string') try{p=JSON.parse(p.replace(/{/g,'[').replace(/}/g,']'))}catch(e){}
                 let y = selectedTee.yardages; if(typeof y === 'string') try{y=JSON.parse(y.replace(/{/g,'[').replace(/}/g,']'))}catch(e){}
@@ -620,7 +626,7 @@
 
     function forceSyncFilters() {
         document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
-        const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = false;
+        const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = true;
         document.getElementById('month-btn-text').innerText = 'All Months';
         document.getElementById('year-btn-text').innerText = 'All Years';
         document.getElementById('course-btn-text').innerText = 'All Courses';
@@ -633,7 +639,10 @@
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
-            if(error) throw error; masterAnalyticsData = data || []; forceSyncFilters(); populateFilters(); updateAnalytics(); 
+            if(error) throw error; masterAnalyticsData = data || []; 
+            populateFilters(); 
+            forceSyncFilters(); 
+            updateAnalytics(); 
         } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
 
