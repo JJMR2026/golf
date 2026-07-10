@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Golf Tracker</title>
+    <title>Golf Tracker Pro</title>
     
     <!-- PWA App Mode Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -254,15 +254,14 @@
             
             <div class="charts-grid">
                 <div class="chart-container" style="grid-column: 1 / -1;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
-                        <select id="chart-overlay-select" class="filter-select" style="min-width: 130px; padding: 4px 8px; font-size: 12px; flex: none;" onchange="updateAnalytics()">
-                            <option value="none">No Overlay</option>
-                            <option value="putts">Total Putts</option>
-                            <option value="fir">FIR %</option>
-                            <option value="gir">GIR %</option>
-                            <option value="drops">Drops</option>
-                        </select>
+                        <div id="chart-overlays" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
+                            <label style="cursor: pointer;"><input type="checkbox" value="putts" onchange="updateAnalytics()" style="accent-color: #3b82f6;"> Putts</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="fir" onchange="updateAnalytics()" style="accent-color: #8b5cf6;"> FIR %</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="gir" onchange="updateAnalytics()" style="accent-color: #d946ef;"> GIR %</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="drops" onchange="updateAnalytics()" style="accent-color: #ef4444;"> Drops</label>
+                        </div>
                     </div>
                     <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
                 </div>
@@ -336,7 +335,7 @@
     }
     async function logOut() { await supabaseClient.auth.signOut(); }
 
-    // --- SEARCH LOGIC ---
+    // --- SEARCH LOGIC (LOCAL DB ONLY) ---
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', function(e) {
         const query = e.target.value.trim(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
@@ -641,12 +640,15 @@
         
         const chartData = [...filteredRounds].reverse();
         
-        // Overlay Selection
-        const overlay = document.getElementById('chart-overlay-select').value;
+        // 1. Multi-Overlay Scoring Trend
+        const activeOverlays = Array.from(document.querySelectorAll('#chart-overlays input:checked')).map(cb => cb.value);
         let trendDatasets = [{ label: 'Total Score', data: chartData.map(r => r.total_score), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
         
-        if (overlay !== 'none') {
-            let oData = []; let oLabel = '';
+        const oColors = { putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', drops: '#ef4444' };
+        const oLabels = { putts: 'Total Putts', fir: 'FIR %', gir: 'GIR %', drops: 'Drops' };
+
+        activeOverlays.forEach(overlay => {
+            let oData = [];
             chartData.forEach(r => {
                 let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
                 r.hole_scores.forEach(h => {
@@ -654,29 +656,29 @@
                     if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
                     if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
                 });
-                if (overlay === 'putts') { oData.push(p); oLabel = 'Total Putts'; }
-                if (overlay === 'drops') { oData.push(dr); oLabel = 'Drops'; }
-                if (overlay === 'fir') { oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0); oLabel = 'FIR %'; }
-                if (overlay === 'gir') { oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0); oLabel = 'GIR %'; }
+                if (overlay === 'putts') oData.push(p);
+                if (overlay === 'drops') oData.push(dr);
+                if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0);
+                if (overlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0);
             });
-            trendDatasets.push({ label: oLabel, data: oData, borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: '#3b82f6', yAxisID: 'y1' });
-        }
+            trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1' });
+        });
 
         trendChart = new Chart(tCtx.getContext('2d'), {
             type: 'line',
             data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: overlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, 
+                plugins: { legend: { display: activeOverlays.length > 0, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, 
                 scales: { 
                     x: { display: false }, 
                     y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } },
-                    y1: { type: 'linear', display: overlay !== 'none', position: 'right', grid: { drawOnChartArea: false } }
+                    y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } }
                 } 
             }
         });
 
-        // Putting
+        // 2. Putting Breakdown
         let p0=0, p1=0, p2=0, p3=0;
         chartData.forEach(r => r.hole_scores.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }));
         puttChart = new Chart(pCtx.getContext('2d'), {
@@ -685,7 +687,7 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } }
         });
 
-        // Driving
+        // 3. Drive Distances
         let p4Drives = [], p5Drives = [];
         chartData.forEach((r, idx) => { r.hole_scores.forEach(h => { if (h.drive_distance && h.drive_distance > 0) {
             if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
