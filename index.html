@@ -451,12 +451,10 @@
             let type = idParts[1];
             let idx = parseInt(idParts[2]);
 
-            // If entering score (assumes max length 2), drop immediately to Putts for that hole
             if (type === 'score' && (val.length === 2 || (val.length === 1 && parseInt(val) >= 2))) {
                 let next = document.getElementById(`grid-putts-${idx}`);
                 if (next) setTimeout(() => next.focus(), 150);
             } 
-            // If entering putts (max length 1), jump forward to the next hole's score
             else if (type === 'putts' && val.length === 1) {
                 let par = currentCoursePars[idx];
                 let next = (par === 3) ? document.getElementById(`grid-score-${idx + 1}`) : document.getElementById(`grid-drive-${idx}`);
@@ -506,10 +504,9 @@
         const password = document.getElementById('auth-password').value; 
         const errDiv = document.getElementById('auth-error');
         
-        const cleanInput = inputRaw.trim().replace(/\s+/g, ''); // Removed the forced toLowerCase()
+        const cleanInput = inputRaw.trim().replace(/\s+/g, ''); 
         if (!cleanInput || !password) return errDiv.innerText = "Please enter a login and password.";
         
-        // If they typed a real email (contains @), use it exactly as typed. Otherwise, append the fake routing tag.
         const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
         
         errDiv.innerText = "⏳ Processing...";
@@ -1084,7 +1081,7 @@
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead>
             <tbody>
                 <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
-                <tr><td>${specHole !== 'all' ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
+                <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
                 <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
                 <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
                 <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
@@ -1120,7 +1117,6 @@
         if (viewId === 'view-history') fetchHistory(); if (viewId === 'view-analytics') loadAnalyticsData();
     }
     
-    // --- PWA SERVICE WORKER REGISTRATION ---
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e)); }); }
 </script>
 </body>
