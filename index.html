@@ -163,7 +163,7 @@
         <h2 style="color: var(--accent-green); margin-top: 0;">GOLF TRACKER</h2>
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Login or create an account to secure your data.</p>
         <p style="color: #ef4444; font-size: 11px; margin-bottom: 30px;">Do not forget your PIN. Because this uses a private nickname instead of an email, passwords cannot be recovered.</p>
-        <input type="text" id="auth-nickname" placeholder="Enter a Nickname" autocomplete="off">
+        <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off">
         <input type="password" id="auth-password" placeholder="PIN / Password">
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button>
@@ -441,6 +441,11 @@
             } 
             // If entering putts (max length 1), jump forward to the next hole's score
             else if (type === 'putts' && val.length === 1) {
+                let par = currentCoursePars[idx];
+                let next = (par === 3) ? document.getElementById(`grid-score-${idx + 1}`) : document.getElementById(`grid-drive-${idx}`);
+                if (next) setTimeout(() => next.focus(), 150);
+            }
+            else if (type === 'drive' && val.length === 3) {
                 let next = document.getElementById(`grid-score-${idx + 1}`);
                 if (next) setTimeout(() => next.focus(), 150);
             }
@@ -473,21 +478,23 @@
         }
     });
 
-    // --- AUTHENTICATION ENGINE (Nickname Based) ---
+    // --- AUTHENTICATION ENGINE (Email & Nickname Support) ---
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session) { currentUser = session.user; document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); } 
         else { currentUser = null; document.getElementById('auth-overlay').style.display = 'flex'; }
     });
     
     async function handleAuth(type) {
-        const nickRaw = document.getElementById('auth-nickname').value;
+        const inputRaw = document.getElementById('auth-nickname').value;
         const password = document.getElementById('auth-password').value; 
         const errDiv = document.getElementById('auth-error');
         
-        const nick = nickRaw.trim().replace(/\s+/g, '').toLowerCase();
-        if (!nick || !password) return errDiv.innerText = "Please enter a nickname and password.";
+        const cleanInput = inputRaw.trim().replace(/\s+/g, '').toLowerCase();
+        if (!cleanInput || !password) return errDiv.innerText = "Please enter a login and password.";
         
-        const email = nick + "@golf.local"; 
+        // If they typed a real email (contains @), use it. Otherwise, append the fake routing tag.
+        const email = cleanInput.includes('@') ? cleanInput : cleanInput + "@golf.local"; 
+        
         errDiv.innerText = "⏳ Processing...";
         try { 
             let res = type === 'signup' ? await supabaseClient.auth.signUp({ email, password }) : await supabaseClient.auth.signInWithPassword({ email, password });
@@ -574,7 +581,7 @@
         grid.style.gridTemplateColumns = `80px repeat(${currentHoleCount}, minmax(60px, 1fr))`;
         
         const rows = [
-            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YARDAGE', type: 'yardage' },
+            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YDS', type: 'yardage' },
             { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, 
             { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }
         ];
@@ -584,10 +591,10 @@
                 const cell = document.createElement('div');
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; } 
                 else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; } 
-                else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" placeholder="yds" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI()">`; }
+                else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI()">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') {
-                    cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; let p = row.type === 'drive' ? 'yds' : '-';
-                    cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" placeholder="${p}" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
+                    cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : '';
+                    cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
                 }
                 else if (row.type === 'drops') {
                     cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0;
@@ -856,7 +863,7 @@
         if (p5Avg !== null) averages.push({type: 'Par 5s', val: p5Avg});
         
         if (averages.length > 0) {
-            averages.sort((a,b) => b.val - a.val); // Highest is worst
+            averages.sort((a,b) => b.val - a.val); 
             let worst = averages[0];
             let best = averages[averages.length - 1];
             
@@ -873,7 +880,7 @@
             if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. A great goal is getting this under 2.0.`);
             else insights.push(`🟢 <b>Putting:</b> You are averaging ${avgPutts.toFixed(1)} putts per hole. Excellent speed control on the greens!`);
             
-            if (threePuttRate > 15) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt. Focus heavily on lag putting from 30+ feet.`);
+            if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt. Focus heavily on lag putting from 30+ feet.`);
         }
 
         // Driving
@@ -885,8 +892,8 @@
             if (firMisses > 0) {
                 let leftPct = (firMissLeft / firMisses) * 100;
                 let rightPct = (firMissRight / firMisses) * 100;
-                if (leftPct > 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`);
-                if (rightPct > 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`);
+                if (leftPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`);
+                if (rightPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`);
             }
         }
 
@@ -898,7 +905,7 @@
             
             if (girMisses > 0 && girMissShort > 0) {
                 let shortPct = (girMissShort / girMisses) * 100;
-                if (shortPct > 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>. Try taking one extra club on approaches.`);
+                if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>. Try taking one extra club on approaches.`);
             }
         }
 
@@ -1041,7 +1048,7 @@
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead>
             <tbody>
                 <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
-                <tr><td>Total Strokes</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
+                <tr><td>${specHole !== 'all' ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
                 <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
                 <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
                 <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
@@ -1051,13 +1058,14 @@
                 <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
                 <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
                 
-                <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">ADVANCED STATS</td></tr>
+                <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">PERFORMANCE INSIGHTS</td></tr>
                 <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
                 <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
                 <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
                 
                 <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
                 <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
+                <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
                 <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
                 <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
                 <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / fRounds.length).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
