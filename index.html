@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
     <link rel="manifest" href="manifest.json">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -20,10 +18,8 @@
         .view-container { width: 100%; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; box-sizing: border-box; }
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-
         .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; width: 100%; }
         button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1; text-align: center; }
         button:hover { background-color: #1f1f1f; }
@@ -31,22 +27,18 @@
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
         button.danger-btn { color: #ef4444; border-color: #ef4444; background: transparent; }
         button.danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
-        
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
         input[type="text"], input[type="number"], input[type="email"], input[type="password"] { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
         input:focus, select:focus { border-color: var(--accent-green); }
         select { background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
-        
         .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
         .dropdown-list.active { display: block; }
         .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         .dropdown-list li:hover { background-color: #2a2a2a; color: var(--accent-green); }
-        
         .setup-row { display: flex; gap: 10px; margin-top: 15px; }
         .setup-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         .setup-group label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
-
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
         .hole-toggle-wrapper { display: inline-flex; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; flex: 0 0 auto;}
@@ -54,7 +46,6 @@
         .hole-toggle-btn.active { background: var(--accent-green); color: #000; }
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
-        
         .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
         .matrix-grid { display: grid; gap: 6px; min-width: 1000px; }
         .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
@@ -66,7 +57,6 @@
         .cell.drive-cell.disabled { opacity: 0.5; }
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
-        
         #play-mode-container { display: none; flex-direction: column; gap: 20px; }
         .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
         .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
@@ -78,7 +68,6 @@
         .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
-
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
         .history-item:hover { background-color: #1a1a1a; }
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
@@ -87,18 +76,15 @@
         details.year-folder[open] summary::after { content: '▲'; }
         details.year-folder summary::-webkit-details-marker { display: none; }
         .folder-content { padding: 5px 0 15px 0; }
-
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; flex-direction: column; }
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
         .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; z-index: 2;}
-
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
         .multi-select-container { position: relative; flex: 1; min-width: 150px; }
         .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
         .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
-        
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .stats-table th { padding: 12px 10px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-transform: uppercase; text-align: right; }
         .stats-table th:first-child { text-align: left; width: 40%; }
@@ -107,11 +93,9 @@
         .stats-table td:nth-child(3) { color: var(--text-main); }
         .stats-table td:last-child { color: var(--accent-green); font-weight: normal; }
         .stats-table tr:hover { background-color: #1a1a1a; }
-        
         .hcp-badge { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .hcp-value { font-size: 48px; font-weight: bold; color: var(--accent-green); }
         .hcp-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
-        
         .charts-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         @media(min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
         .chart-container { position: relative; height: 250px; width: 100%; background: #1a1a1a; border-radius: 8px; padding: 15px; box-sizing: border-box; }
@@ -411,9 +395,27 @@
         reader.readAsText(file);
     }
 
-    // --- LOCAL STORAGE CACHE (GUEST MODE) ---
+    // --- LOCAL STORAGE CACHE & REDUNDANCY ---
     function saveLocalState() { const el = document.getElementById('current-course-display'); if (!el) return; localStorage.setItem('golf_round_state', JSON.stringify({ courseName: el.innerText, holeCount: currentHoleCount, pars: currentCoursePars, yardages: currentYardages, roundData: roundData })); }
     function loadLocalState() { const saved = localStorage.getItem('golf_round_state'); if(saved) { try { const s=JSON.parse(saved); document.getElementById('current-course-display').innerText = s.courseName; document.getElementById('current-course-display').style.color = 'var(--accent-green)'; currentHoleCount = s.holeCount||18; currentCoursePars = s.pars||Array(18).fill(""); currentYardages = s.yardages||Array(18).fill(""); roundData = s.roundData||Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" })); document.getElementById('btn-18-holes').classList.toggle('active', currentHoleCount === 18); document.getElementById('btn-9-holes').classList.toggle('active', currentHoleCount === 9); } catch(e) {} } }
+    
+    // OFFLINE QUEUE (Safeguard)
+    async function processOfflineQueue() {
+        const queueStr = localStorage.getItem('golf_offline_queue');
+        if (queueStr && currentUser) {
+            try {
+                const queue = JSON.parse(queueStr);
+                for (const round of queue) {
+                    const { data: roundHeader, error: hErr } = await supabaseClient.from('logged_rounds').insert([round.header]).select('id').single();
+                    if (hErr) throw hErr;
+                    await supabaseClient.from('hole_scores').insert(round.holes.map(h => ({ ...h, round_id: roundHeader.id })));
+                }
+                localStorage.removeItem('golf_offline_queue');
+                fetchHistory(); loadAnalyticsData();
+                console.log("Offline queue synced successfully.");
+            } catch (e) { console.error("Failed to sync offline queue", e); }
+        }
+    }
 
     document.addEventListener('input', e => {
         if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
@@ -429,7 +431,7 @@
     document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drops-btn').focus(), 150); });
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); } 
+        if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
         else { currentUser = null; if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } else document.getElementById('auth-overlay').style.display = 'flex'; }
     });
     
@@ -449,7 +451,21 @@
     document.getElementById('course-search-input').addEventListener('input', e => {
         const query = e.target.value.trim(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
         if (query.length < 2) { dropdown.classList.remove('active'); return; }
-        searchTimeout = setTimeout(async () => { try { const { data } = await supabaseClient.from('course_directory').select('course_name').ilike('course_name', `%${query}%`).limit(10); if (data && data.length > 0) { dropdown.innerHTML = data.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else dropdown.classList.remove('active'); } catch(err) {} }, 250); 
+        
+        searchTimeout = setTimeout(async () => { 
+            try { 
+                // Fuzzy search logic (replaces characters with wildcard to catch misspellings/apostrophes)
+                const fuzzyQuery = '%' + query.split('').join('%') + '%';
+                const { data } = await supabaseClient.from('course_directory').select('course_name').ilike('course_name', fuzzyQuery).limit(10); 
+                
+                if (data && data.length > 0) { 
+                    dropdown.innerHTML = data.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); 
+                    dropdown.classList.add('active'); 
+                } else {
+                    dropdown.classList.remove('active'); 
+                }
+            } catch(err) {} 
+        }, 250); 
     });
 
     function selectCourseFromDropdown(courseName) { document.getElementById('course-search-input').value = courseName.toUpperCase(); document.getElementById('search-dropdown').classList.remove('active'); fetchCourseDetails(); }
@@ -458,7 +474,8 @@
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
         document.getElementById('api-status').innerText = "⏳ Loading...";
         try {
-            const { data, error } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', `%${query}%`).limit(1);
+            const fuzzyQuery = '%' + query.split('').join('%') + '%';
+            const { data, error } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', fuzzyQuery).limit(1);
             if (data && data.length > 0) {
                 const fetchedCourseName = data[0].course_name;
                 let parsedPars = data[0].pars; if (typeof parsedPars === 'string') parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']'));
@@ -559,7 +576,20 @@
             if (headerError) throw headerError;
             await supabaseClient.from('hole_scores').insert(holesPayload.map(h => ({ ...h, round_id: roundHeader.id })));
             alert("✅ Round logged!"); localStorage.removeItem('golf_round_state'); fetchCourseDetails(); 
-        } catch(e) { console.error(e); alert("❌ Error saving round."); } finally { submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false; }
+        } catch(e) { 
+            // OFFLINE QUEUE TRIGGER
+            console.error(e); 
+            const queueStr = localStorage.getItem('golf_offline_queue');
+            let queue = queueStr ? JSON.parse(queueStr) : [];
+            queue.push({
+                header: { user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName },
+                holes: holesPayload
+            });
+            localStorage.setItem('golf_offline_queue', JSON.stringify(queue));
+            alert("📶 Network Offline.\n\nRound saved to your local device. It will automatically upload to the cloud the next time you open the app online.");
+            localStorage.removeItem('golf_round_state');
+            location.reload();
+        } finally { submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false; }
     }
 
     async function fetchHistory() {
@@ -679,6 +709,17 @@
         let baseScores = [];
         chartData.forEach(r => { let targetHoles = r.hole_scores; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); baseScores.push(targetHoles.reduce((sum, h) => sum + (h.score || 0), 0)); });
         let trendDatasets = [{ label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
+        
+        // Linear Regression Trendline Logic
+        if (baseScores.length > 1) {
+            let n = baseScores.length, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            for (let i = 0; i < n; i++) { sumX += i; sumY += baseScores[i]; sumXY += i * baseScores[i]; sumXX += i * i; }
+            let m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            let b = (sumY - m * sumX) / n;
+            let trendData = baseScores.map((_, i) => m * i + b);
+            trendDatasets.push({ label: 'Trendline', data: trendData, borderColor: 'rgba(255, 255, 255, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, yAxisID: 'y' });
+        }
+
         const oColors = { putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', drops: '#ef4444' }, oLabels = { putts: 'Putts', fir: 'FIR %', gir: 'GIR %', drops: 'Drops' };
         activeOverlays.forEach(overlay => {
             let oData = [];
@@ -689,7 +730,7 @@
             });
             trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1' });
         });
-        trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: activeOverlays.length > 0, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } });
+        trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: activeOverlays.length > 0 || baseScores.length > 1, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } });
 
         let p0=0, p1=0, p2=0, p3=0;
         chartData.forEach(r => { let targetHoles = r.hole_scores; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }); });
