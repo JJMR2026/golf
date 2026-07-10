@@ -15,6 +15,7 @@
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Nav & Buttons */
         .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; }
         button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1; }
         button:hover { background-color: #1f1f1f; }
@@ -23,6 +24,7 @@
         button.danger-btn { color: #ef4444; border-color: #ef4444; background: transparent; }
         button.danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
         
+        /* Inputs & Search */
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
         input[type="text"], input[type="number"], input[type="email"], input[type="password"] { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
@@ -34,16 +36,17 @@
         .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         .dropdown-list li:hover { background-color: #1f1f1f; color: var(--accent-green); }
         
+        /* Setup Rows */
         .setup-row { display: flex; gap: 10px; margin-top: 15px; }
         .setup-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         .setup-group label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
 
+        /* Matrix Grid */
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 14px; letter-spacing: 1px; }
         .badge { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11px; text-transform: uppercase; align-content: center; }
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
-        
         .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
         .matrix-grid { display: grid; grid-template-columns: 80px repeat(18, minmax(60px, 1fr)); gap: 6px; min-width: 1000px; }
         .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
@@ -55,6 +58,7 @@
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
         
+        /* Play Mode */
         #play-mode-container { display: none; flex-direction: column; gap: 20px; }
         .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
         .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
@@ -67,6 +71,7 @@
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
+        /* History & Modals */
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; }
         .history-item:hover { background-color: #1a1a1a; }
         .history-item:last-child { border-bottom: none; }
@@ -76,6 +81,7 @@
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
         .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; z-index: 2;}
 
+        /* Analytics */
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: stretch;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
         .multi-select-container { position: relative; flex: 1; min-width: 180px; }
@@ -93,7 +99,9 @@
         .hcp-badge { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .hcp-value { font-size: 48px; font-weight: bold; color: var(--accent-green); }
         .hcp-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; }
 
+        /* Auth Overlay */
         #auth-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; }
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
@@ -227,6 +235,11 @@
                     <div class="multi-select-dropdown" id="course-checkbox-list"></div>
                 </div>
             </div>
+            
+            <div class="chart-container">
+                <canvas id="scoringTrendChart"></canvas>
+            </div>
+            
             <table class="stats-table" id="analytics-data-table"></table>
         </div>
     </div>
@@ -237,7 +250,15 @@
     <div class="modal-content card" style="margin-top: 40px;">
         <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
         <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
-        <div style="font-size: 24px; font-weight: bold; color: var(--accent-green); margin-bottom: 20px;">Score: <span id="modal-total-score">--</span></div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
+            <div style="display: flex; gap: 10px;">
+                <div class="setup-group" style="width: 80px;"><label style="font-size: 10px;">RATING</label><input type="number" step="0.1" id="modal-rating" style="padding: 8px;"></div>
+                <div class="setup-group" style="width: 80px;"><label style="font-size: 10px;">SLOPE</label><input type="number" id="modal-slope" style="padding: 8px;"></div>
+            </div>
+        </div>
+
         <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
         <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
             <button class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
@@ -250,6 +271,10 @@
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Set global chart theme defaults
+    Chart.defaults.color = '#9ca3af';
+    Chart.defaults.borderColor = '#2a2a2a';
 
     let currentUser = null;
     let currentCoursePars = Array(18).fill(""); 
@@ -265,6 +290,7 @@
     let modalCoursePars = Array(18).fill(""); 
     let modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let masterAnalyticsData = [];
+    let trendChart = null; // Holds the Chart.js instance
 
     // --- AUTHENTICATION ENGINE ---
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -511,11 +537,12 @@
     async function fetchHistory() {
         if(!currentUser) return;
         const { data } = await supabaseClient.from('logged_rounds').select('*').eq('user_id', currentUser.id).order('date_played', { ascending: false });
-        document.getElementById('history-list').innerHTML = (data||[]).map(r => `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score})"><div><strong>${r.course_name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name} Tees` : ''}</span></div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">Tap to edit</span></div></div>`).join('');
+        document.getElementById('history-list').innerHTML = (data||[]).map(r => `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${r.course_rating || null}, ${r.slope_rating || null})"><div><strong>${r.course_name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name} Tees` : ''}</span></div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">Tap to edit</span></div></div>`).join('');
     }
 
-    async function openHistoryModal(id, name, date, score) {
+    async function openHistoryModal(id, name, date, score, rating, slope) {
         document.getElementById('modal-course-title').innerText = name; document.getElementById('modal-total-score').innerText = score;
+        document.getElementById('modal-rating').value = rating || ''; document.getElementById('modal-slope').value = slope || '';
         activeModalRoundId = id; document.getElementById('history-modal').classList.add('active');
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = '⏳ Loading...';
         modalCoursePars = Array(18).fill(""); modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
@@ -554,10 +581,15 @@
     
     async function saveModalChanges(id) {
         if(!id) return; let tScore=0; let tPutts=0;
+        const nCr = parseFloat(document.getElementById('modal-rating').value);
+        const nSr = parseInt(document.getElementById('modal-slope').value);
+
         for(let i=0; i<18; i++) { const hd=modalRoundData[i]; const s=parseInt(hd.score); if(!isNaN(s))tScore+=s; if(!isNaN(parseInt(hd.putts)))tPutts+=parseInt(hd.putts);
             if(hd.id) await supabaseClient.from('hole_scores').update({ par:parseInt(modalCoursePars[i])||null, score:s||null, putts:parseInt(hd.putts)||0, fir:hd.fir||null, gir:hd.gir||null, drive_distance:parseInt(hd.drive)||null, drops:parseInt(hd.drops)||0, sand_save:hd.sandSave||null }).eq('id',hd.id);
         }
-        await supabaseClient.from('logged_rounds').update({total_score:tScore, total_putts:tPutts}).eq('id',id);
+        await supabaseClient.from('logged_rounds').update({
+            total_score: tScore, total_putts: tPutts, course_rating: isNaN(nCr) ? null : nCr, slope_rating: isNaN(nSr) ? null : nSr
+        }).eq('id',id);
         alert("✅ Updated."); fetchHistory(); closeHistoryModal(); loadAnalyticsData();
     }
     async function deleteActiveRound(id) { if(id && confirm("Delete round?")) { await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); fetchHistory(); closeHistoryModal(); loadAnalyticsData(); } }
@@ -603,6 +635,69 @@
         return Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
     }
 
+    function renderScoringChart(filteredRounds) {
+        const ctx = document.getElementById('scoringTrendChart');
+        if (!ctx) return;
+        
+        // Destroy existing chart if it exists so we can cleanly redraw it when filters change
+        if (trendChart) trendChart.destroy();
+        
+        // If no data, hide the canvas area
+        if (filteredRounds.length === 0) {
+            ctx.style.display = 'none';
+            return;
+        }
+        
+        ctx.style.display = 'block';
+        
+        // We want the oldest rounds on the left, newest on the right, so we reverse the array
+        const chartData = [...filteredRounds].reverse();
+        
+        const labels = chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+        const scores = chartData.map(r => r.total_score);
+
+        trendChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Score',
+                    data: scores,
+                    borderColor: '#10b981', // Accent green
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#121212',
+                    pointBorderColor: '#10b981',
+                    pointRadius: 4,
+                    tension: 0.3, // Adds a slight curve to the line
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (context) => chartData[context[0].dataIndex].course_name,
+                            label: (context) => `Score: ${context.raw}`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: '#2a2a2a' } },
+                    y: { 
+                        grid: { color: '#2a2a2a' },
+                        beginAtZero: false,
+                        suggestedMin: Math.min(...scores) - 5,
+                        suggestedMax: Math.max(...scores) + 5
+                    }
+                }
+            }
+        });
+    }
+
     function updateAnalytics() {
         const timeframe = document.getElementById('filter-timeframe').value; const yFilter = document.getElementById('filter-year').value; const mFilter = document.getElementById('filter-month').value;
         const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value);
@@ -618,6 +713,9 @@
         if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
         
         document.getElementById('hcp-display').innerText = calculateHandicap(fRounds);
+        
+        // Trigger the new Chart rendering
+        renderScoringChart(fRounds);
 
         const rCnt = fRounds.length;
         let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, p5:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 };
