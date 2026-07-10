@@ -19,9 +19,9 @@
            ========================================= */
         :root { --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a; --accent-green: #10b981; --accent-hover: #059669; --text-main: #f3f4f6; --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333; }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 20px; }
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
-        .view-container { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: 100%; box-sizing: border-box; }
+        .view-container { width: 100%; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; box-sizing: border-box; }
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -57,10 +57,14 @@
         /* =========================================
            CSS: SCORECARD GRID & MATRIX
            ========================================= */
-        .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
-        .badge-btn { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--text-main); cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
-        .badge-btn:hover { background-color: #2a2a2a; color: var(--accent-green); }
+        
+        /* New 9/18 Hole Toggle Switch */
+        .hole-toggle-wrapper { display: inline-flex; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; flex: 0 0 auto;}
+        .hole-toggle-btn { background: transparent; color: var(--text-muted); border: none; padding: 8px 16px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; border-radius: 0; }
+        .hole-toggle-btn.active { background: var(--accent-green); color: #000; }
+        
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
         
@@ -70,6 +74,7 @@
         .cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
         .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
         .cell input, .play-input input { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; font-size: 14px; }
+        .cell input::placeholder { font-size: 10px; font-weight: normal; color: #555; }
         .cell.drive-cell input:disabled { color: #333; cursor: not-allowed; background-color: #141414; }
         .cell.drive-cell.disabled { opacity: 0.5; }
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
@@ -201,10 +206,12 @@
         <!-- SCORECARD FORM WRAPPER (Enables Apple "Next" Keyboard Button) -->
         <form id="golf-entry-form" onsubmit="return false;">
             <div class="card">
-               <div class="scorecard-header">
+                <div class="scorecard-header">
                     <h3 id="current-course-display" style="color: var(--text-muted);">NO COURSE SELECTED</h3>
-                    <button type="button" id="hole-toggle-btn" class="badge-btn" onclick="toggleHoleCount()">⟳ 18 HOLES</button>
-                </div>
+                    <div class="hole-toggle-wrapper">
+                        <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18 HOLES</button>
+                        <button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9 HOLES</button>
+                    </div>
                 </div>
                 <div class="view-toggle-row">
                     <button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
@@ -334,7 +341,6 @@
                 <button class="primary" style="flex: 0 0 auto; background-color: #3b82f6; color: white;" onclick="exportToCSV()">📥 CSV</button>
             </div>
             
-            <!-- MASTER CHART RENDER GRID -->
             <div class="charts-grid">
                 <div class="chart-container" style="grid-column: 1 / -1;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
@@ -494,9 +500,10 @@
     }
 
     // --- HOLE TOGGLE (9 vs 18) ---
-    function toggleHoleCount() {
-        currentHoleCount = currentHoleCount === 18 ? 9 : 18;
-        document.getElementById('hole-toggle-btn').innerText = `${currentHoleCount} HOLES`;
+    function setHoleCount(count) {
+        currentHoleCount = count;
+        document.getElementById('btn-18-holes').classList.toggle('active', count === 18);
+        document.getElementById('btn-9-holes').classList.toggle('active', count === 9);
         if (currentPlayHole >= currentHoleCount) currentPlayHole = 0;
         buildGrid(); updatePlayModeUI();
     }
@@ -516,7 +523,7 @@
             for (let i = 0; i < currentHoleCount; i++) {
                 const cell = document.createElement('div');
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; } 
-                else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="5" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; }
+                else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; } 
                 else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" placeholder="yds" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI()">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') {
                     cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; let p = row.type === 'drive' ? 'yds' : '-';
@@ -569,7 +576,7 @@
     function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min((currentHoleCount - 1), currentPlayHole + dir)); updatePlayModeUI(); }
     function setPlayToggle(type, status) { roundData[currentPlayHole][type] = (roundData[currentPlayHole][type] === status) ? "" : status; if((status === 'hit' || status === 'yes') && type !== 'sandSave') roundData[currentPlayHole][type + 'Adv'] = []; const btn = document.getElementById(`grid-${type}-${currentPlayHole}`); if(btn) { btn.innerText = roundData[currentPlayHole][type] === "" ? "-" : roundData[currentPlayHole][type].toUpperCase(); if(status === 'hit' || status === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); } updatePlayModeUI(); }
     function setAdvToggle(type, value) { let arr = roundData[currentPlayHole][type + 'Adv']; if (!Array.isArray(arr)) arr = []; if (arr.includes(value)) arr = arr.filter(v => v !== value); else arr.push(value); roundData[currentPlayHole][type + 'Adv'] = arr; updatePlayModeUI(); }
-    function updatePar(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(5, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); }
+    function updatePar(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(6, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); }
     function updateDriveDistances() { for (let i = 0; i < currentHoleCount; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } }
 
     // --- SUBMIT ROUND ENGINE ---
@@ -610,7 +617,7 @@
         finally { submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false; }
     }
 
-    // --- HISTORY UI (COLLAPSIBLE FOLDERS) ---
+    // --- HISTORY UI ENGINE ---
     async function fetchHistory() {
         if(!currentUser) return;
         const { data } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
@@ -793,7 +800,7 @@
             if (actPars.length < 3) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
             targetHoles.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; });
         });
-        puttChart = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['0-Putt', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } } });
+        puttChart = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['0-Putt (Chip in)', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } } });
 
         // 3. Drive Distances
         let p4Drives = [], p5Drives = [];
