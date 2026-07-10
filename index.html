@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a; --accent-green: #10b981; --text-main: #f3f4f6; --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333; }
+        :root { --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a; --accent-green: #10b981; --accent-hover: #059669; --text-main: #f3f4f6; --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333; }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: 100%; box-sizing: border-box; }
@@ -26,12 +26,15 @@
         button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1; text-align: center; }
         button:hover { background-color: #1f1f1f; }
         button.primary, button.nav-btn.active { background-color: var(--accent-green); color: #000; border: none; }
+        button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
         button.danger-btn { color: #ef4444; border-color: #ef4444; background: transparent; }
+        button.danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
         
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
-        input[type="text"], input[type="number"], input[type="password"], textarea, select { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
         input:focus, select:focus, textarea:focus { border-color: var(--accent-green); }
+        select { background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
         
         .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
         .dropdown-list.active { display: block; }
@@ -115,6 +118,10 @@
 
         #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto;}
+        .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
+        .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .checkbox-container input { width: auto; margin: 0; }
+        
         .login-option { background: #1a1a1a; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
         .login-option h4 { margin: 0 0 5px 0; color: var(--accent-green); font-size: 14px; }
         .login-option p { margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
@@ -122,61 +129,36 @@
 </head>
 <body>
 
-<!-- AUTH OVERLAY -->
 <div id="auth-overlay">
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
-        
-        <div class="login-option">
-            <h4>1. Real Email (Recommended)</h4>
-            <p>Full tracking, insights, and secure password recovery. Emails are strictly used for recovery and never shared.</p>
-        </div>
-        
-        <div class="login-option">
-            <h4 style="color: #3b82f6;">2. Nickname</h4>
-            <p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p>
-        </div>
-
+        <div class="login-option"><h4>1. Real Email (Recommended)</h4><p>Full tracking, insights, and secure password recovery. Emails are strictly used for recovery and never shared.</p></div>
+        <div class="login-option"><h4 style="color: #3b82f6;">2. Nickname</h4><p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p></div>
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;">
         <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 15px;">
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button>
-            <button class="primary" onclick="handleAuth('login')">Log In</button>
-        </div>
-        
+        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button><button class="primary" onclick="handleAuth('login')">Log In</button></div>
         <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color);">
-            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);">
-                <h4 style="color: #ef4444;">3. Guest Mode</h4>
-                <p>Track a single round. No data is saved permanently and no analytics are generated.</p>
-            </div>
+            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">3. Guest Mode</h4><p>Track a single round. No data is saved permanently and no analytics are generated.</p></div>
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px;"></div>
     </div>
 </div>
 
-<!-- SETTINGS / ACCOUNT OVERLAY -->
 <div id="settings-overlay" style="display: none;">
     <div class="auth-card">
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
         <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 15px;">
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button>
-            <button class="primary" onclick="changePassword()">Update Password</button>
-        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button><button class="primary" onclick="changePassword()">Update Password</button></div>
         <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
-        
         <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
             <textarea id="feedback-text" rows="3" placeholder="Tell us what's broken or what you'd like to see added..." style="width: 100%; margin-bottom: 10px; resize: vertical;"></textarea>
             <button class="view-toggle-btn" id="feedback-btn" style="width: 100%;" onclick="submitFeedback()">Send Feedback</button>
             <div id="feedback-msg" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
         </div>
-
-        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-            <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button>
-        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;"><button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button></div>
     </div>
 </div>
 
@@ -190,7 +172,6 @@
         </div>
     </div>
 
-    <!-- VIEW 1: NEW ROUND -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
             <div class="search-header">SEARCH GOLF COURSES</div>
@@ -214,17 +195,12 @@
                     <h3 id="current-course-display">NO COURSE</h3>
                     <div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div>
                 </div>
-                
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
-
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
-                
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
-                
                 <div id="play-mode-container">
                     <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
                     <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
-                    
                     <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
                     <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
                     <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
@@ -239,7 +215,6 @@
         </form>
     </div>
 
-    <!-- VIEW 2: HISTORY -->
     <div id="view-history" class="view-container">
         <div class="card">
             <div class="scorecard-header">
@@ -254,65 +229,49 @@
         </div>
     </div>
     
-    <!-- VIEW 3: ANALYTICS -->
     <div id="view-analytics" class="view-container">
         <div class="card">
             <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
-            
             <div class="filter-row">
-                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
-                    <option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option>
-                </select>
-                
-                <div class="multi-select-container">
-                    <div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div>
-                    <div class="multi-select-dropdown" id="year-checkbox-list"></div>
-                </div>
-
+                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()"><option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option></select>
+                <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="month-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" checked onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jan</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Feb</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Mar</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Apr</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> May</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jun</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jul</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Aug</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Sep</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Oct</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Nov</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Dec</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jan</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Feb</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Mar</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Apr</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> May</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jun</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jul</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Aug</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Sep</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Oct</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Nov</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Dec</label>
                     </div>
                 </div>
-
-                <div class="multi-select-container">
-                    <div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div>
-                    <div class="multi-select-dropdown" id="course-checkbox-list"></div>
-                </div>
-
+                <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="par-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
                     </div>
                 </div>
-
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="hole-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" checked onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
-
-                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" checked onchange="updateAnalytics()"> 18-Holes Only</label>
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" onchange="updateAnalytics()"> 18-Holes Only</label>
             </div>
             
             <div class="charts-grid">
@@ -343,7 +302,6 @@
     </div>
 </div>
 
-<!-- HISTORY MODAL -->
 <div id="history-modal" class="modal-overlay">
     <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
@@ -363,16 +321,25 @@
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    Chart.defaults.color = '#9ca3af';
-    Chart.defaults.borderColor = '#2a2a2a';
+    Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#2a2a2a';
 
     let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
-    let trendChart = null, puttChart = null, driveChart = null;
-    let roundWeather = { temp: null, wind: null };
+    let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null };
 
-    // --- WEATHER API ---
+    // --- INIT AUTH & PERSISTENCE ---
+    async function initializeApp() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
+        else if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } 
+        else { document.getElementById('auth-overlay').style.display = 'flex'; }
+
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
+            else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
+        });
+    }
+
     function fetchWeather() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async position => {
@@ -380,11 +347,8 @@
                     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&current_weather=true`);
                     const data = await res.json();
                     if(data.current_weather) {
-                        const deg = data.current_weather.winddirection;
-                        const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-                        const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
-                        roundWeather.temp = data.current_weather.temperature + "°C";
-                        roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
+                        const deg = data.current_weather.winddirection; const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]; const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
+                        roundWeather.temp = data.current_weather.temperature + "°C"; roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
                         document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
                     }
                 } catch(e) {}
@@ -393,28 +357,20 @@
     }
 
     async function submitFeedback() {
-        const text = document.getElementById('feedback-text').value.trim();
-        if(!text) return;
+        const text = document.getElementById('feedback-text').value.trim(); if(!text) return;
         const btn = document.getElementById('feedback-btn'); btn.innerText = "Sending...";
-        try {
-            await supabaseClient.from('user_feedback').insert([{ user_id: currentUser ? currentUser.id : null, feedback: text }]);
-            document.getElementById('feedback-text').value = "";
-            document.getElementById('feedback-msg').innerText = "✅ Sent successfully!";
-        } catch(e) { document.getElementById('feedback-msg').innerText = "❌ Error sending."; }
+        try { await supabaseClient.from('user_feedback').insert([{ user_id: currentUser ? currentUser.id : null, feedback: text }]); document.getElementById('feedback-text').value = ""; document.getElementById('feedback-msg').innerText = "✅ Sent successfully!"; } catch(e) { document.getElementById('feedback-msg').innerText = "❌ Error sending."; }
         btn.innerText = "Send Feedback";
     }
 
     async function handleBulkImport(input) {
         const file = input.files[0]; const reader = new FileReader();
         reader.onload = async function(e) {
-            const rows = e.target.result.split('\n');
-            const headers = rows[0].split(',').map(h => h.trim().replace(/\r/g, ''));
-            const required = ['date_played', 'course_name', 'total_score', 'total_putts', 'tee_name'];
+            const rows = e.target.result.split('\n'); const headers = rows[0].split(',').map(h => h.trim().replace(/\r/g, '')); const required = ['date_played', 'course_name', 'total_score', 'total_putts', 'tee_name'];
             if (!required.every(r => headers.includes(r))) return alert("❌ Invalid format. Please match template headers: " + required.join(', '));
             const payload = [];
             for (let i = 1; i < rows.length; i++) {
-                if(!rows[i].trim()) continue;
-                const cols = rows[i].split(',').map(c => c.trim().replace(/\r/g, ''));
+                if(!rows[i].trim()) continue; const cols = rows[i].split(',').map(c => c.trim().replace(/\r/g, ''));
                 payload.push({ user_id: currentUser.id, date_played: cols[headers.indexOf('date_played')], course_name: cols[headers.indexOf('course_name')], total_score: parseInt(cols[headers.indexOf('total_score')]), total_putts: parseInt(cols[headers.indexOf('total_putts')]) || 0, tee_name: cols[headers.indexOf('tee_name')] || 'Default' });
             }
             try { const { error } = await supabaseClient.from('logged_rounds').insert(payload); if (error) throw error; alert("✅ Bulk Import Processed."); fetchHistory(); loadAnalyticsData(); } catch(err) { alert("❌ Error saving import: " + err.message); }
@@ -429,10 +385,7 @@
         if (queueStr && currentUser) {
             try {
                 const queue = JSON.parse(queueStr);
-                for (const round of queue) {
-                    const { data: roundHeader, error: hErr } = await supabaseClient.from('logged_rounds').insert([round.header]).select('id').single();
-                    if (hErr) throw hErr; await supabaseClient.from('hole_scores').insert(round.holes.map(h => ({ ...h, round_id: roundHeader.id })));
-                }
+                for (const round of queue) { const { data: roundHeader, error: hErr } = await supabaseClient.from('logged_rounds').insert([round.header]).select('id').single(); if (hErr) throw hErr; await supabaseClient.from('hole_scores').insert(round.holes.map(h => ({ ...h, round_id: roundHeader.id }))); }
                 localStorage.removeItem('golf_offline_queue'); fetchHistory(); loadAnalyticsData(); console.log("Offline queue synced successfully.");
             } catch (e) { console.error("Failed to sync offline queue", e); }
         }
@@ -451,47 +404,29 @@
     document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { if (currentCoursePars[currentPlayHole] === 3) document.getElementById('play-drops-btn').focus(); else document.getElementById('play-drive').focus(); }, 150); });
     document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drops-btn').focus(), 150); });
 
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
-        else { currentUser = null; if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } else document.getElementById('auth-overlay').style.display = 'flex'; }
-    });
-    
     function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
 
     async function handleAuth(type) {
-        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, '');
-        const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
+        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
         try { let res = type === 'signup' ? await supabaseClient.auth.signUp({ email, password: document.getElementById('auth-password').value }) : await supabaseClient.auth.signInWithPassword({ email, password: document.getElementById('auth-password').value }); if(res.error) throw res.error; } catch (e) { document.getElementById('auth-error').innerText = e.message; }
     }
     async function changePassword() { const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; }
     async function logOut() { localStorage.removeItem('golf_guest_mode'); localStorage.removeItem('golf_round_state'); await supabaseClient.auth.signOut(); location.reload(); }
 
-    function switchView(viewId, btn) { 
-        document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); 
-        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); 
-        document.getElementById(viewId).classList.add('active'); 
-        btn.classList.add('active'); 
-        if(viewId==='view-history') fetchHistory(); 
-        if(viewId==='view-analytics') loadAnalyticsData(); 
-        if(viewId==='view-new-round') fetchWeather(); 
-    }
+    function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); if(viewId==='view-new-round') fetchWeather(); }
 
+    // --- FIX: SEARCH ENGINE NOW EXCLUSIVELY SEARCHES TEES, IGNORING DIRECTORY DUPLICATES ---
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', e => {
         const query = e.target.value.trim().toLowerCase(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
         if (query.length < 2) { dropdown.classList.remove('active'); return; }
         searchTimeout = setTimeout(async () => { 
             try { 
-                const { data } = await supabaseClient.from('course_directory').select('course_name').limit(200); 
-                const uniqueCourses = [];
-                const filtered = data.filter(c => {
-                    const cleanName = c.course_name.toLowerCase();
-                    if(uniqueCourses.includes(cleanName)) return false;
-                    uniqueCourses.push(cleanName);
-                    return cleanName.includes(query);
-                }).slice(0, 10);
-                if (filtered.length > 0) { dropdown.innerHTML = filtered.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
-            } catch(err) {} 
+                const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${query}%`).limit(100); 
+                if(error) throw error;
+                const uniqueCourses = [...new Set(data.map(item => item.course_name))].slice(0, 10);
+                if (uniqueCourses.length > 0) { dropdown.innerHTML = uniqueCourses.map(c => `<li onclick="selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
+            } catch(err) { console.error(err); } 
         }, 250); 
     });
 
@@ -501,22 +436,19 @@
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
         document.getElementById('api-status').innerText = "⏳ Loading..."; fetchWeather();
         try {
-            const { data, error } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', query).limit(1);
-            if (data && data.length > 0) {
-                const fetchedCourseName = data[0].course_name;
-                let parsedPars = data[0].pars; if (typeof parsedPars === 'string') parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']'));
+            let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').eq('course_name', query.toUpperCase());
+            if (!teeData || teeData.length === 0) { const res = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`); teeData = res.data; }
+            if (teeData && teeData.length > 0) {
+                const fetchedCourseName = teeData[0].course_name;
+                availableTees = teeData.filter(t => t.course_name === fetchedCourseName);
+                let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
                 currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
                 document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                 roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
-                
-                const { data: teeData, error: teeError } = await supabaseClient.from('course_tees').select('*').ilike('course_name', fetchedCourseName);
-                if(teeError) console.error("Tee Fetch Error:", teeError);
-                availableTees = teeData || []; populateTeeDropdown(); 
-                document.getElementById('api-status').innerText = availableTees.length === 0 ? "⚠️ No tees found in database. Please enter manually." : ""; 
-                buildGrid(); updatePlayModeUI(); saveLocalState(); return;
+                populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
             }
-        } catch(e) {}
-        document.getElementById('current-course-display').innerText = query.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)'; document.getElementById('api-status').innerText = "ℹ️ Course not found. Please enter manually.";
+        } catch(e) { console.error(e); }
+        document.getElementById('current-course-display').innerText = query.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)'; document.getElementById('api-status').innerText = "ℹ️ Course not found in database. Please enter manually.";
         currentCoursePars = Array(18).fill(""); currentYardages = Array(18).fill(""); availableTees = []; populateTeeDropdown(); buildGrid(); updatePlayModeUI(); saveLocalState();
     }
 
@@ -530,7 +462,16 @@
         const val = document.getElementById('tee-select').value; const manualRow = document.getElementById('manual-tee-row');
         if (val === 'new') { manualRow.style.display = 'flex'; selectedTee = null; currentYardages = Array(18).fill(""); } 
         else if (val === "") { manualRow.style.display = 'none'; selectedTee = null; currentYardages = Array(18).fill(""); } 
-        else { manualRow.style.display = 'none'; selectedTee = availableTees.find(t => t.id === val); if (selectedTee) { currentCoursePars = Array.isArray(selectedTee.pars) && selectedTee.pars.length > 0 ? [...selectedTee.pars] : currentCoursePars; currentYardages = Array.isArray(selectedTee.yardages) && selectedTee.yardages.length > 0 ? [...selectedTee.yardages] : Array(18).fill(""); } }
+        else { 
+            manualRow.style.display = 'none'; 
+            selectedTee = availableTees.find(t => t.id == val); 
+            if (selectedTee) { 
+                let p = selectedTee.pars; if(typeof p === 'string') try{p=JSON.parse(p.replace(/{/g,'[').replace(/}/g,']'))}catch(e){}
+                let y = selectedTee.yardages; if(typeof y === 'string') try{y=JSON.parse(y.replace(/{/g,'[').replace(/}/g,']'))}catch(e){}
+                currentCoursePars = Array.isArray(p) && p.length > 0 ? [...p] : currentCoursePars; 
+                currentYardages = Array.isArray(y) && y.length > 0 ? [...y] : Array(18).fill(""); 
+            } 
+        }
         buildGrid(); updatePlayModeUI(); saveLocalState();
     }
 
@@ -887,6 +828,8 @@
             <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
         </tbody>`;
     }
+
+    initializeApp();
 </script>
 </body>
 </html>
