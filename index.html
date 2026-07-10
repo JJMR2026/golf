@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
     
+    <!-- PWA App Mode Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
@@ -168,56 +169,59 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="scorecard-header">
-                <h3 id="current-course-display" style="color: var(--text-muted);">NO COURSE SELECTED</h3>
-                <button id="hole-toggle-btn" class="badge-btn" onclick="toggleHoleCount()">18 HOLES</button>
-            </div>
-            <div class="view-toggle-row">
-                <button class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
-                <button class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button>
-            </div>
-            
-            <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
-            
-            <div id="play-mode-container">
-                <div class="play-header" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
-                    </div>
-                    <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
+        <!-- FORM WRAPPER FOR APPLE KEYBOARD NAVIGATION -->
+        <form id="golf-entry-form" onsubmit="return false;">
+            <div class="card">
+                <div class="scorecard-header">
+                    <h3 id="current-course-display" style="color: var(--text-muted);">NO COURSE SELECTED</h3>
+                    <button type="button" id="hole-toggle-btn" class="badge-btn" onclick="toggleHoleCount()">18 HOLES</button>
+                </div>
+                <div class="view-toggle-row">
+                    <button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
+                    <button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button>
                 </div>
                 
-                <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" inputmode="numeric" onchange="syncPlayToState('score', this.value)"></div></div>
-                <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" inputmode="numeric" onchange="syncPlayToState('putts', this.value)"></div></div>
+                <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 
-                <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;" id="play-fir-block">
-                    <div style="display: flex; justify-content: space-between; align-items: center;"><div class="play-label">FIR</div>
-                        <div style="display: flex; gap: 10px; width: 120px;"><button class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div>
+                <div id="play-mode-container">
+                    <div class="play-header" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
+                        </div>
+                        <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
                     </div>
-                    <div class="advanced-tracking" id="adv-fir-options"><button class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button><button class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button><button class="adv-btn" onclick="setAdvToggle('fir', 'BUNKER')">BUNKER</button><button class="adv-btn" onclick="setAdvToggle('fir', 'HAZARD')">HAZARD</button></div>
-                </div>
+                    
+                    <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" inputmode="numeric" onchange="syncPlayToState('score', this.value)"></div></div>
+                    <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" inputmode="numeric" onchange="syncPlayToState('putts', this.value)"></div></div>
+                    
+                    <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;" id="play-fir-block">
+                        <div style="display: flex; justify-content: space-between; align-items: center;"><div class="play-label">FIR</div>
+                            <div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div>
+                        </div>
+                        <div class="advanced-tracking" id="adv-fir-options"><button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button><button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button><button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'BUNKER')">BUNKER</button><button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'HAZARD')">HAZARD</button></div>
+                    </div>
 
-                <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;"><div class="play-label">GIR</div>
-                        <div style="display: flex; gap: 10px; width: 120px;"><button class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
+                    <div style="border-bottom: 1px solid var(--border-color); padding: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;"><div class="play-label">GIR</div>
+                            <div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
+                        </div>
+                        <div class="advanced-tracking" id="adv-gir-options"><button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LEFT')">LEFT</button><button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'RIGHT')">RIGHT</button><button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button><button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button><button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button><button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'HAZARD')">HAZARD</button></div>
                     </div>
-                    <div class="advanced-tracking" id="adv-gir-options"><button class="adv-btn" onclick="setAdvToggle('gir', 'LEFT')">LEFT</button><button class="adv-btn" onclick="setAdvToggle('gir', 'RIGHT')">RIGHT</button><button class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button><button class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button><button class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button><button class="adv-btn" onclick="setAdvToggle('gir', 'HAZARD')">HAZARD</button></div>
-                </div>
 
-                <div class="play-row" id="play-drive-block"><div class="play-label">DRIVE (YDS)</div><div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div></div>
-                <div class="play-row"><div class="play-label">DROPS (PENALTY)</div>
-                    <div class="play-input" style="background:transparent; border:none;">
-                        <button id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:var(--cell-bg); border:1px solid var(--cell-border); border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button>
+                    <div class="play-row" id="play-drive-block"><div class="play-label">DRIVE (YDS)</div><div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div></div>
+                    <div class="play-row"><div class="play-label">DROPS (PENALTY)</div>
+                        <div class="play-input" style="background:transparent; border:none;">
+                            <button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:var(--cell-bg); border:1px solid var(--cell-border); border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button>
+                        </div>
                     </div>
+                    <div class="play-row">
+                        <div class="play-label">SAND SAVE</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button><button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button></div>
+                    </div>
+                    <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn" style="background: #1a1a1a;">← PREV</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">NEXT HOLE →</button></div>
                 </div>
-                <div class="play-row">
-                    <div class="play-label">SAND SAVE</div><div style="display: flex; gap: 10px; width: 120px;"><button class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button><button class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button></div>
-                </div>
-                <div class="play-nav"><button onclick="changePlayHole(-1)" id="play-prev-btn" style="background: #1a1a1a;">← PREV</button><button onclick="changePlayHole(1)" class="primary" id="play-next-btn">NEXT HOLE →</button></div>
+                <div class="log-btn-container" style="margin-top: 20px;"><button type="button" class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="submitRound()">COMPLETE & LOG SCORECARD →</button></div>
             </div>
-            <div class="log-btn-container" style="margin-top: 20px;"><button class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="submitRound()">COMPLETE & LOG SCORECARD →</button></div>
-        </div>
+        </form>
     </div>
 
     <!-- ==================== HISTORY VIEW ==================== -->
@@ -288,8 +292,8 @@
 
 <!-- ==================== HISTORY MODAL ==================== -->
 <div id="history-modal" class="modal-overlay">
-    <div class="modal-content card" style="margin-top: 40px;">
-        <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
+    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
+        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
         <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
         
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
@@ -298,10 +302,10 @@
 
         <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
         <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
-            <button class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
-            <button class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
+            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
+            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
         </div>
-    </div>
+    </form>
 </div>
 
 <script>
@@ -445,12 +449,12 @@
                 }
                 else if (row.type === 'drops') {
                     cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0;
-                    cell.innerHTML = `<button class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`;
+                    cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`;
                 }
                 else if (row.type === 'fir' || row.type === 'gir' || row.type === 'sandSave') {
                     cell.className = 'cell'; let cVal = roundData[i][row.type];
                     let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'YES' : (cVal === 'no' ? 'NO' : '-')) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-'));
-                    cell.innerHTML = `<button class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`;
+                    cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`;
                 }
                 grid.appendChild(cell);
             }
@@ -547,7 +551,6 @@
         const sortedYears = Object.keys(grouped).sort((a,b) => b-a);
         sortedYears.forEach((year, index) => {
             const rounds = grouped[year];
-            // Only keep the most recent year folder open by default
             html += `<details class="year-folder" ${index === 0 ? 'open' : ''}>
                         <summary>${year} Season <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">${rounds.length} Rounds</span></summary>
                         <div class="folder-content">`;
@@ -568,7 +571,6 @@
         activeModalRoundId = id; document.getElementById('history-modal').classList.add('active');
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = '⏳ Loading...';
         
-        // Dynamically build the grid based on how many holes were played
         let viewHoles = holesPlayed > 9 ? 18 : 9;
         modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
         
@@ -591,9 +593,9 @@
                 else if(['score','putts','drive'].includes(r.type)) c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
                 else if(r.type === 'drops') {
                     let cVal = parseInt(modalRoundData[i].drops) || 0;
-                    c.innerHTML = `<button class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`;
+                    c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`;
                 }
-                else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'YES':(v==='no'?'NO':'-')):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
+                else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'YES':(v==='no'?'NO':'-')):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
                 grid.appendChild(c);
             }
         });
@@ -617,7 +619,7 @@
     // --- CSV EXPORT ENGINE ---
     function exportToCSV() {
         if (masterAnalyticsData.length === 0) return alert("No rounds to export.");
-        let csv = "Date,Course,Tee,Rating,Slope,Total Score,Total Putts,FIR Hit,FIR Possible,GIR Hit,GIR Possible,Total Drops\n";
+        let csv = "Date,Course,Tee,Total Score,Total Putts,FIR Hit,FIR Possible,GIR Hit,GIR Possible,Total Drops\n";
         masterAnalyticsData.forEach(r => {
             let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
             r.hole_scores.forEach(h => {
@@ -625,7 +627,7 @@
                 if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
                 if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
             });
-            csv += `${r.date_played},"${r.course_name}",${r.tee_name||'N/A'},${r.course_rating||''},${r.slope_rating||''},${r.total_score},${p},${fH},${fT},${gH},${gT},${dr}\n`;
+            csv += `${r.date_played},"${r.course_name}",${r.tee_name||'N/A'},${r.total_score},${p},${fH},${fT},${gH},${gT},${dr}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = `golf_tracker_export_${new Date().toISOString().split('T')[0]}.csv`;
@@ -686,13 +688,11 @@
             chartData.forEach(r => {
                 let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
                 let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
-                
                 targetHoles.forEach(h => {
                     if (h.putts) p += h.putts; if (h.drops) dr += h.drops;
                     if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
                     if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
                 });
-                
                 if (overlay === 'putts') oData.push(p);
                 if (overlay === 'drops') oData.push(dr);
                 if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0);
