@@ -9,38 +9,45 @@ supabase: Client = create_client(url, key)
 
 # --- 2. GOLF COURSE API CONFIGURATION ---
 API_KEY = "SBNYQO6CROSCJ4IZ5PQEHESHGI"
+api_url = "https://api.golfcourseapi.com/v1/courses"
+params = {"city": "Calgary"}
 
-def fetch_courses():
-    print("Fetching courses directly from golfcourseapi.com...")
+def test_api_auth():
+    print("Testing multiple Authorization headers against golfcourseapi.com...")
     
-    # Standard authorization header for direct API access
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Accept": "application/json"
-    }
+    # The 4 standard ways APIs accept keys
+    auth_methods = [
+        {"name": "Bearer Token", "headers": {"Authorization": f"Bearer {API_KEY}", "Accept": "application/json"}},
+        {"name": "X-API-Key", "headers": {"x-api-key": API_KEY, "Accept": "application/json"}},
+        {"name": "Direct Auth", "headers": {"Authorization": API_KEY, "Accept": "application/json"}},
+        {"name": "APIKey Header", "headers": {"apikey": API_KEY, "Accept": "application/json"}}
+    ]
     
-    # Target endpoint for course searches
-    api_url = "https://api.golfcourseapi.com/v1/courses"
-    params = {"city": "Calgary"}
+    success = False
     
-    try:
-        response = requests.get(api_url, headers=headers, params=params)
-        
-        print(f"Status Code: {response.status_code}")
-        
-        # If it fails, print the exact error message the API returns
-        if response.status_code != 200:
-            print("Error Details:", response.text)
-            return
+    for method in auth_methods:
+        print(f"\n--- Trying {method['name']} ---")
+        try:
+            response = requests.get(api_url, headers=method["headers"], params=params)
+            print(f"Status Code: {response.status_code}")
             
-        data = response.json()
-        print(f"Successfully connected! Printing payload structure...")
-        
-        # Printing the first 1000 characters so we can see the exact JSON map 
-        print(str(data)[:1000])
-        
-    except Exception as e:
-        print(f"Critical Script Error: {e}")
+            if response.status_code == 200:
+                print(f"✅ SUCCESS! The '{method['name']}' format was accepted.")
+                print("Printing payload structure...")
+                # Print first 1500 chars to review the JSON schema for mapping
+                print(str(response.json())[:1500])
+                success = True
+                break
+            else:
+                print(f"❌ Failed: {response.text}")
+                
+        except Exception as e:
+            print(f"Request Error: {e}")
+            
+    if not success:
+        print("\n🚨 ALL AUTH METHODS FAILED. 🚨")
+        print("The key 'SBNYQO6CROSCJ4IZ5PQEHESHGI' is fundamentally being rejected.")
+        print("Please log into your API dashboard to verify the key is active.")
 
 if __name__ == "__main__":
-    fetch_courses()
+    test_api_auth()
