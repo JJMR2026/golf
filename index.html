@@ -216,7 +216,7 @@
                 
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
 
-                <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
+                <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
                 
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 
@@ -371,7 +371,7 @@
     let trendChart = null, puttChart = null, driveChart = null;
     let roundWeather = { temp: null, wind: null };
 
-    // --- WEATHER API (OPEN-METEO) ---
+    // --- WEATHER API ---
     function fetchWeather() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async position => {
@@ -459,10 +459,8 @@
     document.getElementById('course-search-input').addEventListener('input', e => {
         const query = e.target.value.trim(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
         if (query.length < 2) { dropdown.classList.remove('active'); return; }
-        
         searchTimeout = setTimeout(async () => { 
             try { 
-                // Reverted to strict substring matching to fix "Boulder Creek" issue
                 const { data } = await supabaseClient.from('course_directory').select('course_name').ilike('course_name', `%${query}%`).limit(10); 
                 if (data && data.length > 0) { dropdown.innerHTML = data.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
             } catch(err) {} 
@@ -655,7 +653,7 @@
 
     function populateFilters() {
         const uC = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
-        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
+        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
         const uY = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b)=>b-a);
         document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
     }
@@ -743,8 +741,15 @@
     }
 
     function updateAnalytics() {
-        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
-        let fRounds = masterAnalyticsData.filter(r => { if (!actCrs.includes(r.course_name)) return false; const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; if (only18) { const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; if (playedHoles < 18) return false; } if (actHoles.length < 18) { const hasHole = r.hole_scores.some(h => actHoles.includes(h.hole_number.toString()) && h.score && h.score > 0); if(!hasHole) return false; } if (actPars.length < 4) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; } return true; });
+        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        let fRounds = masterAnalyticsData.filter(r => { 
+            if (!actCrs.includes(r.course_name)) return false; 
+            const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
+            if (only18) { const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; if (playedHoles < 18) return false; } 
+            if (actHoles.length < 18) { const hasHole = r.hole_scores.some(h => actHoles.includes(h.hole_number.toString()) && h.score && h.score > 0); if(!hasHole) return false; } 
+            if (actPars.length < 4) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; } 
+            return true; 
+        });
         if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
         document.getElementById('hcp-display').innerText = calculateHandicap(fRounds); renderCharts(fRounds, actHoles, actPars); document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
         let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; let totalStrokes = 0; let totalHolesCount = 0; let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
