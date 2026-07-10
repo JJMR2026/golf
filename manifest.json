@@ -1,0 +1,20 @@
+{
+  "name": "Golf Tracker Pro",
+  "short_name": "Golf Tracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Golf_ball_icon.svg/192px-Golf_ball_icon.svg.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Golf_ball_icon.svg/512px-Golf_ball_icon.svg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
