@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
     <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -18,8 +20,10 @@
         .view-container { width: 100%; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; box-sizing: border-box; }
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+
         .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; width: 100%; }
         button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1; text-align: center; }
         button:hover { background-color: #1f1f1f; }
@@ -27,18 +31,22 @@
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
         button.danger-btn { color: #ef4444; border-color: #ef4444; background: transparent; }
         button.danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); }
+        
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
         input[type="text"], input[type="number"], input[type="email"], input[type="password"] { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
         input:focus, select:focus { border-color: var(--accent-green); }
         select { background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
+        
         .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
         .dropdown-list.active { display: block; }
         .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         .dropdown-list li:hover { background-color: #2a2a2a; color: var(--accent-green); }
+        
         .setup-row { display: flex; gap: 10px; margin-top: 15px; }
         .setup-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         .setup-group label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
         .hole-toggle-wrapper { display: inline-flex; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; flex: 0 0 auto;}
@@ -46,6 +54,7 @@
         .hole-toggle-btn.active { background: var(--accent-green); color: #000; }
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
+        
         .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
         .matrix-grid { display: grid; gap: 6px; min-width: 1000px; }
         .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
@@ -57,6 +66,7 @@
         .cell.drive-cell.disabled { opacity: 0.5; }
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
+        
         #play-mode-container { display: none; flex-direction: column; gap: 20px; }
         .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
         .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
@@ -68,6 +78,7 @@
         .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
+
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
         .history-item:hover { background-color: #1a1a1a; }
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
@@ -76,15 +87,18 @@
         details.year-folder[open] summary::after { content: '▲'; }
         details.year-folder summary::-webkit-details-marker { display: none; }
         .folder-content { padding: 5px 0 15px 0; }
+
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; flex-direction: column; }
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
         .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; z-index: 2;}
+
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
         .multi-select-container { position: relative; flex: 1; min-width: 150px; }
         .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
         .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
+        
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .stats-table th { padding: 12px 10px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-transform: uppercase; text-align: right; }
         .stats-table th:first-child { text-align: left; width: 40%; }
@@ -93,64 +107,88 @@
         .stats-table td:nth-child(3) { color: var(--text-main); }
         .stats-table td:last-child { color: var(--accent-green); font-weight: normal; }
         .stats-table tr:hover { background-color: #1a1a1a; }
+        
         .hcp-badge { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .hcp-value { font-size: 48px; font-weight: bold; color: var(--accent-green); }
         .hcp-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+        
         .charts-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         @media(min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
         .chart-container { position: relative; height: 250px; width: 100%; background: #1a1a1a; border-radius: 8px; padding: 15px; box-sizing: border-box; }
         .insights-card { background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 20px; }
         .insights-card h4 { margin: 0 0 15px 0; color: #3b82f6; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
-        #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; }
+
+        #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
+        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto;}
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
         .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
         .checkbox-container input { width: auto; margin: 0; }
+        
+        .login-option { background: #1a1a1a; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
+        .login-option h4 { margin: 0 0 5px 0; color: var(--accent-green); font-size: 14px; }
+        .login-option p { margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
     </style>
 </head>
 <body>
 
+<!-- AUTH OVERLAY -->
 <div id="auth-overlay">
     <div class="auth-card">
-        <h2 style="color: var(--accent-green); margin-top: 0;">GOLF TRACKER</h2>
-        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Login to save rounds and view analytics.</p>
+        <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
         
-        <div style="background-color: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; padding: 10px; text-align: left; margin-bottom: 20px;">
-            <span style="font-size: 11px; color: var(--text-muted); display: block;">🔒 PRIVACY NOTICE</span>
-            <span style="font-size: 12px; color: var(--text-main); display: block; margin-top: 4px;">Emails are heavily encrypted and strictly used for password recovery. They are never sold, shared, or visible to others. You may use a fake Nickname (e.g., "Brad123"), but password recovery will be permanently disabled.</span>
+        <div class="login-option">
+            <h4>1. Real Email (Recommended)</h4>
+            <p>Full tracking, insights, and secure password recovery. Emails are strictly used for recovery and never shared.</p>
+        </div>
+        
+        <div class="login-option">
+            <h4 style="color: #3b82f6;">2. Nickname</h4>
+            <p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p>
         </div>
 
-        <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off">
+        <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px;">
         <input type="password" id="auth-password" placeholder="PIN / Password">
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button>
             <button class="primary" onclick="handleAuth('login')">Log In</button>
         </div>
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+        
+        <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color);">
+            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);">
+                <h4 style="color: #ef4444;">3. Guest Mode</h4>
+                <p>Track a single round. No data is saved permanently and no analytics are generated.</p>
+            </div>
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
-            <p style="color: #ef4444; font-size: 11px; margin-top: 10px;">Guest Mode stats will not be saved permanently.</p>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px;"></div>
     </div>
 </div>
 
+<!-- SETTINGS / ACCOUNT OVERLAY -->
 <div id="settings-overlay" style="display: none;">
     <div class="auth-card">
-        <h2>ACCOUNT SETTINGS</h2>
+        <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
         <input type="password" id="new-password" placeholder="Enter New Password">
-        <button class="primary" style="width:100%; margin-bottom:10px;" onclick="changePassword()">Update Password</button>
-        <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out</button>
-        <div id="settings-msg" style="margin-top:15px;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button>
+            <button class="primary" onclick="changePassword()">Update Password</button>
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button>
+        </div>
+        <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
     </div>
 </div>
 
 <div class="container">
+    <!-- APP NAVIGATION -->
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div class="nav-buttons" style="margin:0; flex:1;">
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
-            <button class="view-toggle-btn" style="flex: 0 0 auto; margin-left: 0; padding: 12px 10px;" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️</button>
+            <button class="view-toggle-btn" style="flex: 0 0 auto; margin-left: 0; padding: 12px 10px;" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️ Account</button>
         </div>
     </div>
 
@@ -158,18 +196,34 @@
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
             <div class="search-header">SEARCH GOLF COURSES</div>
-            <div class="search-row"><input type="text" id="course-search-input" placeholder="Search..." autocomplete="off"><button class="primary" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button></div>
-            <ul id="search-dropdown" class="dropdown-list"></ul>
-            <div id="course-setup-container" style="display: none; margin-top: 20px;"><select id="tee-select" onchange="handleTeeChange()"></select></div>
-            <div id="api-status"></div>
+            <div class="search-row">
+                <input type="text" id="course-search-input" placeholder="Search..." autocomplete="off">
+                <button class="primary" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
+                <ul id="search-dropdown" class="dropdown-list"></ul>
+            </div>
+            <div id="course-setup-container" style="display: none; margin-top: 20px;">
+                <select id="tee-select" onchange="handleTeeChange()"></select>
+                <div class="setup-row" id="manual-tee-row" style="display: none;">
+                    <div class="setup-group"><label>Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue"></div>
+                </div>
+            </div>
+            <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
+
         <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
             <div class="card">
-                <div class="scorecard-header"><h3 id="current-course-display">NO COURSE</h3><div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div></div>
+                <div class="scorecard-header">
+                    <h3 id="current-course-display">NO COURSE</h3>
+                    <div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div>
+                </div>
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
+                
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
+                
                 <div id="play-mode-container">
                     <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
+                    <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
+                    
                     <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
                     <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
                     <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
@@ -184,13 +238,13 @@
         </form>
     </div>
 
-    <!-- VIEW 2: HISTORY (With Bulk Import) -->
+    <!-- VIEW 2: HISTORY -->
     <div id="view-history" class="view-container">
         <div class="card">
             <div class="scorecard-header">
                 <h3>ROUND HISTORY</h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="file" id="csv-upload" style="display:none" onchange="handleBulkImport(this)">
+                    <input type="file" id="csv-upload" style="display:none" accept=".csv" onchange="handleBulkImport(this)">
                     <button class="view-toggle-btn" style="padding: 6px 12px; font-size: 11px;" onclick="document.getElementById('csv-upload').click()">📥 Import CSV</button>
                     <div class="badge" style="background: #10b981; color: #000; border: none; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: bold;">CLOUD SYNCED</div>
                 </div>
@@ -203,17 +257,85 @@
     <div id="view-analytics" class="view-container">
         <div class="card">
             <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
+            
             <div class="filter-row">
-                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()"><option value="last1">Last Round</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option></select>
-                <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
+                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                    <option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option>
+                </select>
+                
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div>
+                    <div class="multi-select-dropdown" id="year-checkbox-list"></div>
+                </div>
+
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
+                    <div class="multi-select-dropdown" id="month-checkbox-list">
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" checked onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Months')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Jan</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Feb</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Mar</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Apr</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> May</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Jun</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Jul</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Aug</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Sep</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Oct</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Nov</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Dec</label>
+                    </div>
+                </div>
+
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div>
+                    <div class="multi-select-dropdown" id="course-checkbox-list"></div>
+                </div>
+
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
+                    <div class="multi-select-dropdown" id="par-checkbox-list">
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Pars')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 3s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 4s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 5s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 6s</label>
+                    </div>
+                </div>
+
+                <div class="multi-select-container">
+                    <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
+                    <div class="multi-select-dropdown" id="hole-checkbox-list">
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" checked onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Holes')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 18</label>
+                    </div>
+                </div>
+
                 <label class="checkbox-container"><input type="checkbox" id="filter-18-only" onchange="updateAnalytics()" checked> 18-Holes Only</label>
             </div>
+            
             <div class="charts-grid">
-                <div class="chart-container" style="grid-column: 1 / -1;"><canvas id="scoringTrendChart"></canvas></div>
+                <div class="chart-container" style="grid-column: 1 / -1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
+                        <div id="chart-overlays" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
+                            <label style="cursor: pointer;"><input type="checkbox" value="putts" onchange="updateAnalytics()" style="accent-color: #3b82f6;"> Putts</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="fir" onchange="updateAnalytics()" style="accent-color: #8b5cf6;"> FIR %</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="gir" onchange="updateAnalytics()" style="accent-color: #d946ef;"> GIR %</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="drops" onchange="updateAnalytics()" style="accent-color: #ef4444;"> Drops</label>
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
+                </div>
                 <div class="chart-container"><canvas id="puttChart"></canvas></div>
                 <div class="chart-container"><canvas id="driveChart"></canvas></div>
             </div>
-            <div class="insights-card"><h4>Performance Insights</h4><div id="ai-insights-box">⏳ Analyzing data...</div></div>
+            
+            <div class="insights-card">
+                <h4>Performance Insights</h4>
+                <div id="ai-insights-box">⏳ Analyzing data...</div>
+            </div>
+
             <table class="stats-table" id="analytics-data-table"></table>
         </div>
     </div>
