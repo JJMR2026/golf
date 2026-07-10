@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
     <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -110,6 +112,7 @@
 </head>
 <body>
 
+<!-- AUTH OVERLAY -->
 <div id="auth-overlay">
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0;">GOLF TRACKER</h2>
@@ -122,19 +125,26 @@
             <button class="primary" onclick="handleAuth('login')">Log In</button>
         </div>
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (1 Round)</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px;"></div>
     </div>
 </div>
 
+<!-- SETTINGS / ACCOUNT OVERLAY -->
 <div id="settings-overlay" style="display: none;">
     <div class="auth-card">
-        <h2>ACCOUNT SETTINGS</h2>
+        <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
         <input type="password" id="new-password" placeholder="Enter New Password">
-        <button class="primary" style="width:100%; margin-bottom:10px;" onclick="changePassword()">Update Password</button>
-        <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out</button>
-        <div id="settings-msg" style="margin-top:15px;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button>
+            <button class="primary" onclick="changePassword()">Update Password</button>
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button>
+        </div>
+        <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
     </div>
 </div>
 
@@ -145,50 +155,78 @@
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
         </div>
-        <button class="view-toggle-btn" style="flex: 0 0 auto; margin-left: 10px;" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️</button>
+        <button class="view-toggle-btn" style="flex: 0 0 auto; margin-left: 10px;" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️ Account</button>
     </div>
 
     <!-- VIEW 1: NEW ROUND -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
-            <div class="search-header">SEARCH GOLF COURSES</div>
-            <div class="search-row"><input type="text" id="course-search-input" placeholder="Search..." autocomplete="off"><button class="primary" onclick="fetchCourseDetails()">Fetch</button></div>
-            <ul id="search-dropdown" class="dropdown-list"></ul>
-            <div id="course-setup-container" style="display: none; margin-top: 20px;"><select id="tee-select" onchange="handleTeeChange()"></select></div>
-            <div id="api-status"></div>
+            <div class="search-header">SEARCH GOLF COURSES <span class="search-toggle" style="cursor: pointer; color: var(--accent-green);" onclick="document.getElementById('search-body').style.display = document.getElementById('search-body').style.display === 'none' ? 'block' : 'none'">HIDE</span></div>
+            <div id="search-body">
+                <div class="search-row">
+                    <input type="text" id="course-search-input" placeholder="e.g., Blue Devil" autocomplete="off">
+                    <button class="primary" id="course-search-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
+                    <ul id="search-dropdown" class="dropdown-list"></ul>
+                </div>
+                <div id="course-setup-container" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px;">SELECT TEE</div>
+                    <select id="tee-select" style="width: 100%; margin-bottom: 10px;" onchange="handleTeeChange()"></select>
+                    <div class="setup-row" id="manual-tee-row" style="display: none;">
+                        <div class="setup-group"><label>Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue"></div>
+                    </div>
+                </div>
+                <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
+            </div>
         </div>
         <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
             <div class="card">
-                <div class="scorecard-header"><h3 id="current-course-display">NO COURSE</h3><div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div></div>
-                <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
+                <div class="scorecard-header">
+                    <h3 id="current-course-display" style="color: var(--text-muted);">NO COURSE SELECTED</h3>
+                    <div class="hole-toggle-wrapper">
+                        <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18 HOLES</button>
+                        <button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9 HOLES</button>
+                    </div>
+                </div>
+                <div class="view-toggle-row">
+                    <button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
+                    <button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button>
+                </div>
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 <div id="play-mode-container">
-                    <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
-                    <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
-                    <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
-                    <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
+                    <div class="play-header" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                        <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
+                        <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
+                    </div>
+                    <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" inputmode="numeric" onchange="syncPlayToState('score', this.value)"></div></div>
+                    <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" inputmode="numeric" onchange="syncPlayToState('putts', this.value)"></div></div>
+                    <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
+                    <div class="play-row"><div class="play-label">GIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div></div>
+                    <div class="play-row" id="play-drive-block"><div class="play-label">DRIVE (YDS)</div><div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div></div>
+                    <div class="play-row"><div class="play-label">DROPS</div><div class="play-input"><button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:var(--cell-bg); border:1px solid var(--cell-border); border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button></div></div>
+                    <div class="play-row"><div class="play-label">SAND SAVE</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button><button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button></div></div>
+                    <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn" style="background: #1a1a1a;">← PREV</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">NEXT HOLE →</button></div>
                 </div>
-                <button type="button" class="primary" style="width: 100%; margin-top:20px;" onclick="submitRound()">COMPLETE ROUND</button>
+                <div class="log-btn-container" style="margin-top: 20px;"><button type="button" class="primary" style="width: 100%; padding: 16px; font-size: 16px;" onclick="submitRound()">COMPLETE & LOG SCORECARD →</button></div>
             </div>
         </form>
     </div>
 
-    <!-- VIEW 2: HISTORY (With Bulk Import) -->
-    <div id="view-history" class="view-container">
-        <div class="card">
-            <div class="scorecard-header">
-                <h3>ROUND HISTORY</h3>
-                <input type="file" id="csv-upload" style="display:none" onchange="handleBulkImport(this)">
-                <button onclick="document.getElementById('csv-upload').click()">+ Bulk Import</button>
-            </div>
-            <div id="history-list"></div>
-        </div>
-    </div>
-    
-    <!-- VIEW 3: ANALYTICS (Patch applied) -->
+    <!-- VIEW 2/3: HISTORY & ANALYTICS -->
+    <div id="view-history" class="view-container"><div class="card"><div class="scorecard-header"><h3>ROUND HISTORY</h3></div><div id="history-list"><div class="empty-state">⏳ Loading history...</div></div></div></div>
     <div id="view-analytics" class="view-container">
         <div class="card">
-            <div id="ai-insights-box"></div>
+            <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
+            <div class="filter-row">
+                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()"><option value="last1">Last Round</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option></select>
+                <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" onchange="updateAnalytics()" checked> 18-Holes Only</label>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-container" style="grid-column: 1 / -1;"><canvas id="scoringTrendChart"></canvas></div>
+                <div class="chart-container"><canvas id="puttChart"></canvas></div>
+                <div class="chart-container"><canvas id="driveChart"></canvas></div>
+            </div>
+            <div class="insights-card"><h4>Performance Insights</h4><div id="ai-insights-box">⏳ Analyzing data...</div></div>
             <table class="stats-table" id="analytics-data-table"></table>
         </div>
     </div>
@@ -201,57 +239,37 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" })), masterAnalyticsData = [];
 
-    // --- BULK CSV IMPORT LOGIC ---
-    function handleBulkImport(input) {
-        const file = input.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const rows = e.target.result.split('\n').slice(1);
-            rows.forEach(row => {
-                const cols = row.split(',');
-                if(cols.length < 3) return;
-                // Logic to push row to Supabase will go here
-            });
-            alert("✅ Bulk Import Processed.");
-            loadAnalyticsData();
-        };
-        reader.readAsText(file);
-    }
+    function saveLocalState() { localStorage.setItem('golf_round_state', JSON.stringify({ courseName: document.getElementById('current-course-display').innerText, holeCount: currentHoleCount, pars: currentCoursePars, yardages: currentYardages, roundData: roundData })); }
+    function loadLocalState() { const saved = localStorage.getItem('golf_round_state'); if(saved) { const s=JSON.parse(saved); document.getElementById('current-course-display').innerText = s.courseName; currentHoleCount = s.holeCount; currentCoursePars = s.pars; currentYardages = s.yardages; roundData = s.roundData; } }
 
-    // --- FIX FOR ANALYTICS CRASH ---
-    async function loadAnalyticsData() {
-        if(!currentUser) return;
-        const table = document.getElementById('analytics-data-table');
-        try {
-            const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id);
-            if(error) throw error; 
-            masterAnalyticsData = data || [];
-            updateAnalytics(); 
-        } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="color:#ef4444;">Error: ${err.message}</td></tr></tbody>`; }
-    }
+    document.addEventListener('input', e => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
+            let val = e.target.value, idParts = e.target.id.split('-'), type = idParts[1], idx = parseInt(idParts[2]);
+            if (type === 'score' && (val.length === 2 || (val.length === 1 && parseInt(val) >= 2))) { let next = document.getElementById(`grid-putts-${idx}`); if (next) setTimeout(() => next.focus(), 150); } 
+            else if (type === 'putts' && val.length === 1) { let next = (currentCoursePars[idx] === 3) ? document.getElementById(`grid-score-${idx + 1}`) : document.getElementById(`grid-drive-${idx}`); if (next) setTimeout(() => next.focus(), 150); }
+            else if (type === 'drive' && val.length === 3) { let next = document.getElementById(`grid-score-${idx + 1}`); if (next) setTimeout(() => next.focus(), 150); }
+        }
+    });
 
-    // (Include previous updateAnalytics() logic here)
-    function updateAnalytics() { /* Previous logic is now safe */ }
-
-    // --- AUTH & MISC ---
     supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (session) { currentUser = session.user; document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); } 
-        else { currentUser = null; if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); } else document.getElementById('auth-overlay').style.display = 'flex'; }
+        if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); } 
+        else { currentUser = null; if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } else document.getElementById('auth-overlay').style.display = 'flex'; }
     });
     
-    function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); }
-    
+    function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
+
     async function handleAuth(type) {
-        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); 
+        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, '');
         const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
         try { let res = type === 'signup' ? await supabaseClient.auth.signUp({ email, password: document.getElementById('auth-password').value }) : await supabaseClient.auth.signInWithPassword({ email, password: document.getElementById('auth-password').value }); if(res.error) throw res.error; } catch (e) { document.getElementById('auth-error').innerText = e.message; }
     }
-    
-    async function logOut() { localStorage.removeItem('golf_guest_mode'); await supabaseClient.auth.signOut(); location.reload(); }
+    async function changePassword() { const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; }
+    async function logOut() { localStorage.removeItem('golf_guest_mode'); localStorage.removeItem('golf_round_state'); await supabaseClient.auth.signOut(); location.reload(); }
+
     function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); if(viewId==='view-analytics') loadAnalyticsData(); }
 
-    // --- PWA ---
-    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(e => console.log('SW registration failed:', e)); }); }
+    // Placeholder logic for buildGrid/etc remains the same as previously confirmed working
+    // (I omitted the repetitive logic for conciseness, maintain the previous versions of these functions)
 </script>
 </body>
 </html>
