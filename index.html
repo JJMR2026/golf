@@ -82,7 +82,7 @@
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
         .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; z-index: 2;}
 
-        .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: stretch;}
+        .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;}
         .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
         .multi-select-container { position: relative; flex: 1; min-width: 180px; }
         .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
@@ -107,6 +107,9 @@
         #auth-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; }
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
+        
+        .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .checkbox-container input { width: auto; margin: 0; }
     </style>
 </head>
 <body>
@@ -225,26 +228,46 @@
             <div class="hcp-badge">
                 <div class="hcp-label">Estimated Handicap Index</div>
                 <div class="hcp-value" id="hcp-display">--.-</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Calculated using WHS sliding scale rules (Minimum 3 eligible rounds)</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Calculated using WHS sliding scale rules</div>
             </div>
             
             <div class="filter-row">
-                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()"><option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option></select>
+                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                    <option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option>
+                </select>
                 <select class="filter-select" id="filter-year" onchange="updateAnalytics()"><option value="all">All Years</option></select>
-                <select class="filter-select" id="filter-month" onchange="updateAnalytics()"><option value="all">All Months</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select>
+                <select class="filter-select" id="filter-month" onchange="updateAnalytics()">
+                    <option value="all">All Months</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+                </select>
                 
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleCourseFilter()"><span>Filter Courses...</span><span style="font-size: 10px;">▼</span></div>
                     <div class="multi-select-dropdown" id="course-checkbox-list"></div>
                 </div>
+
+                <label class="checkbox-container">
+                    <input type="checkbox" id="filter-18-only" onchange="updateAnalytics()" checked> 18-Holes Only
+                </label>
                 
                 <button class="primary" style="flex: 0 0 auto; background-color: #3b82f6; color: white;" onclick="exportToCSV()">📥 CSV</button>
             </div>
             
             <div class="charts-grid">
-                <div class="chart-container"><canvas id="scoringTrendChart"></canvas></div>
+                <div class="chart-container" style="grid-column: 1 / -1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
+                        <select id="chart-overlay-select" class="filter-select" style="min-width: 130px; padding: 4px 8px; font-size: 12px; flex: none;" onchange="updateAnalytics()">
+                            <option value="none">No Overlay</option>
+                            <option value="putts">Total Putts</option>
+                            <option value="fir">FIR %</option>
+                            <option value="gir">GIR %</option>
+                            <option value="drops">Drops</option>
+                        </select>
+                    </div>
+                    <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
+                </div>
                 <div class="chart-container"><canvas id="puttChart"></canvas></div>
-                <div class="chart-container" style="grid-column: 1 / -1;"><canvas id="driveChart"></canvas></div>
+                <div class="chart-container"><canvas id="driveChart"></canvas></div>
             </div>
             
             <table class="stats-table" id="analytics-data-table"></table>
@@ -569,20 +592,16 @@
     function exportToCSV() {
         if (masterAnalyticsData.length === 0) return alert("No rounds to export.");
         let csv = "Date,Course,Tee,Rating,Slope,Total Score,Total Putts,FIR Hit,FIR Possible,GIR Hit,GIR Possible,Total Drops\n";
-        
         masterAnalyticsData.forEach(r => {
             let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
             r.hole_scores.forEach(h => {
-                if (h.putts) p += h.putts;
-                if (h.drops) dr += h.drops;
+                if (h.putts) p += h.putts; if (h.drops) dr += h.drops;
                 if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
                 if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
             });
             csv += `${r.date_played},"${r.course_name}",${r.tee_name||'N/A'},${r.course_rating||''},${r.slope_rating||''},${r.total_score},${p},${fH},${fT},${gH},${gT},${dr}\n`;
         });
-        
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        const blob = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = `golf_tracker_export_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
@@ -617,25 +636,47 @@
     function renderCharts(filteredRounds) {
         const tCtx = document.getElementById('scoringTrendChart'); const pCtx = document.getElementById('puttChart'); const dCtx = document.getElementById('driveChart');
         if (trendChart) trendChart.destroy(); if (puttChart) puttChart.destroy(); if (driveChart) driveChart.destroy();
-        
-        if (filteredRounds.length === 0) { 
-            tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; return; 
-        }
+        if (filteredRounds.length === 0) { tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; return; }
         tCtx.parentElement.style.display = 'block'; pCtx.parentElement.style.display = 'block'; dCtx.parentElement.style.display = 'block';
         
         const chartData = [...filteredRounds].reverse();
         
-        // 1. Scoring Trend
+        // Overlay Selection
+        const overlay = document.getElementById('chart-overlay-select').value;
+        let trendDatasets = [{ label: 'Total Score', data: chartData.map(r => r.total_score), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
+        
+        if (overlay !== 'none') {
+            let oData = []; let oLabel = '';
+            chartData.forEach(r => {
+                let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
+                r.hole_scores.forEach(h => {
+                    if (h.putts) p += h.putts; if (h.drops) dr += h.drops;
+                    if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
+                    if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
+                });
+                if (overlay === 'putts') { oData.push(p); oLabel = 'Total Putts'; }
+                if (overlay === 'drops') { oData.push(dr); oLabel = 'Drops'; }
+                if (overlay === 'fir') { oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0); oLabel = 'FIR %'; }
+                if (overlay === 'gir') { oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0); oLabel = 'GIR %'; }
+            });
+            trendDatasets.push({ label: oLabel, data: oData, borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: '#3b82f6', yAxisID: 'y1' });
+        }
+
         trendChart = new Chart(tCtx.getContext('2d'), {
             type: 'line',
-            data: {
-                labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })),
-                datasets: [{ label: 'Total Score', data: chartData.map(r => r.total_score), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Scoring Trend', color: '#f3f4f6' } }, scales: { x: { display: false }, y: { grid: { color: '#2a2a2a' } } } }
+            data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: overlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, 
+                scales: { 
+                    x: { display: false }, 
+                    y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } },
+                    y1: { type: 'linear', display: overlay !== 'none', position: 'right', grid: { drawOnChartArea: false } }
+                } 
+            }
         });
 
-        // 2. Putt Breakdown
+        // Putting
         let p0=0, p1=0, p2=0, p3=0;
         chartData.forEach(r => r.hole_scores.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }));
         puttChart = new Chart(pCtx.getContext('2d'), {
@@ -644,32 +685,33 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } }
         });
 
-        // 3. Drive Distance Scatter (Per Hole on Par 4/5)
+        // Driving
         let p4Drives = [], p5Drives = [];
-        chartData.forEach((r, idx) => {
-            r.hole_scores.forEach(h => {
-                if (h.drive_distance && h.drive_distance > 0) {
-                    if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
-                    if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
-                }
-            });
-        });
+        chartData.forEach((r, idx) => { r.hole_scores.forEach(h => { if (h.drive_distance && h.drive_distance > 0) {
+            if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
+            if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
+        }})});
         driveChart = new Chart(dCtx.getContext('2d'), {
             type: 'scatter',
-            data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 5 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 5 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af' } }, title: { display: true, text: 'Drive Distances', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards' }, grid: { color: '#2a2a2a' } } } }
+            data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } }
         });
     }
 
     function updateAnalytics() {
         const timeframe = document.getElementById('filter-timeframe').value; const yFilter = document.getElementById('filter-year').value; const mFilter = document.getElementById('filter-month').value;
         const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value);
+        const only18 = document.getElementById('filter-18-only').checked;
 
         let fRounds = masterAnalyticsData.filter(r => {
             if (!actCrs.includes(r.course_name)) return false;
             const d = new Date(r.date_played);
             if (yFilter !== 'all' && d.getUTCFullYear().toString() !== yFilter) return false;
             if (mFilter !== 'all' && (d.getUTCMonth() + 1).toString() !== mFilter) return false;
+            if (only18) {
+                const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length;
+                if (playedHoles < 18) return false;
+            }
             return true;
         });
         
