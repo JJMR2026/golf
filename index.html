@@ -214,7 +214,6 @@
                     <div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div>
                 </div>
                 
-                <!-- NEW WEATHER BADGE -->
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
 
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
@@ -272,19 +271,19 @@
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="month-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" checked onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Months')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Jan</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Feb</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Mar</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Apr</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> May</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Jun</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Jul</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Aug</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Sep</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Oct</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Nov</label>
-                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Months')"> Dec</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-months" checked onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="1" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jan</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="2" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Feb</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="3" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Mar</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="4" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Apr</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="5" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> May</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="6" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jun</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="7" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Jul</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="8" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Aug</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="9" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Sep</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="10" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Oct</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="11" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Nov</label>
+                        <label class="checkbox-container"><input type="checkbox" class="month-cb" value="12" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> Dec</label>
                     </div>
                 </div>
 
@@ -296,32 +295,30 @@
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="par-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Pars')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 3s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 4s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 5s</label>
-                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Pars')"> Par 6s</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
+                        <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
                     </div>
                 </div>
 
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="hole-checkbox-list">
-                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" checked onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Holes')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Holes')"> Hole 18</label>
+                        <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" checked onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
 
-                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" onchange="updateAnalytics()" checked> 18-Holes Only</label>
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" onchange="updateAnalytics()"> 18-Holes Only</label>
             </div>
             
             <div class="charts-grid">
                 <div class="chart-container" style="grid-column: 1 / -1;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
-                        <!-- NEW TREND BADGE -->
-                        <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: #1f1f1f; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color);"></div>
-                        
+                        <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: #1f1f1f; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
                         <div id="chart-overlays" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
                             <label style="cursor: pointer;"><input type="checkbox" value="putts" onchange="updateAnalytics()" style="accent-color: #3b82f6;"> Putts</label>
                             <label style="cursor: pointer;"><input type="checkbox" value="fir" onchange="updateAnalytics()" style="accent-color: #8b5cf6;"> FIR %</label>
@@ -362,7 +359,6 @@
 </div>
 
 <script>
-    // --- SUPABASE & STATE ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -373,9 +369,9 @@
     let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let trendChart = null, puttChart = null, driveChart = null;
+    let roundWeather = { temp: null, wind: null };
 
     // --- WEATHER API (OPEN-METEO) ---
-    let roundWeather = { temp: null, wind: null };
     function fetchWeather() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async position => {
@@ -383,8 +379,11 @@
                     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&current_weather=true`);
                     const data = await res.json();
                     if(data.current_weather) {
+                        const deg = data.current_weather.winddirection;
+                        const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+                        const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
                         roundWeather.temp = data.current_weather.temperature + "°C";
-                        roundWeather.wind = data.current_weather.windspeed + " km/h";
+                        roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
                         document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
                     }
                 } catch(e) {}
@@ -392,7 +391,6 @@
         }
     }
 
-    // --- BULK CSV IMPORT LOGIC ---
     async function handleBulkImport(input) {
         const file = input.files[0]; const reader = new FileReader();
         reader.onload = async function(e) {
@@ -406,13 +404,10 @@
                 const cols = rows[i].split(',').map(c => c.trim().replace(/\r/g, ''));
                 payload.push({ user_id: currentUser.id, date_played: cols[headers.indexOf('date_played')], course_name: cols[headers.indexOf('course_name')], total_score: parseInt(cols[headers.indexOf('total_score')]), total_putts: parseInt(cols[headers.indexOf('total_putts')]) || 0, tee_name: cols[headers.indexOf('tee_name')] || 'Default' });
             }
-            try { const { error } = await supabaseClient.from('logged_rounds').insert(payload); if (error) throw error; alert("✅ Bulk Import Processed."); fetchHistory(); loadAnalyticsData(); } 
-            catch(err) { alert("❌ Error saving import: " + err.message); }
-        };
-        reader.readAsText(file);
+            try { const { error } = await supabaseClient.from('logged_rounds').insert(payload); if (error) throw error; alert("✅ Bulk Import Processed."); fetchHistory(); loadAnalyticsData(); } catch(err) { alert("❌ Error saving import: " + err.message); }
+        }; reader.readAsText(file);
     }
 
-    // --- LOCAL STORAGE CACHE & REDUNDANCY ---
     function saveLocalState() { const el = document.getElementById('current-course-display'); if (!el) return; localStorage.setItem('golf_round_state', JSON.stringify({ courseName: el.innerText, holeCount: currentHoleCount, pars: currentCoursePars, yardages: currentYardages, roundData: roundData, weather: roundWeather })); }
     function loadLocalState() { const saved = localStorage.getItem('golf_round_state'); if(saved) { try { const s=JSON.parse(saved); document.getElementById('current-course-display').innerText = s.courseName; document.getElementById('current-course-display').style.color = 'var(--accent-green)'; currentHoleCount = s.holeCount||18; currentCoursePars = s.pars||Array(18).fill(""); currentYardages = s.yardages||Array(18).fill(""); roundData = s.roundData||Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" })); roundWeather = s.weather || roundWeather; if(roundWeather.temp) document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; document.getElementById('btn-18-holes').classList.toggle('active', currentHoleCount === 18); document.getElementById('btn-9-holes').classList.toggle('active', currentHoleCount === 9); } catch(e) {} } }
     
@@ -423,8 +418,7 @@
                 const queue = JSON.parse(queueStr);
                 for (const round of queue) {
                     const { data: roundHeader, error: hErr } = await supabaseClient.from('logged_rounds').insert([round.header]).select('id').single();
-                    if (hErr) throw hErr;
-                    await supabaseClient.from('hole_scores').insert(round.holes.map(h => ({ ...h, round_id: roundHeader.id })));
+                    if (hErr) throw hErr; await supabaseClient.from('hole_scores').insert(round.holes.map(h => ({ ...h, round_id: roundHeader.id })));
                 }
                 localStorage.removeItem('golf_offline_queue'); fetchHistory(); loadAnalyticsData(); console.log("Offline queue synced successfully.");
             } catch (e) { console.error("Failed to sync offline queue", e); }
@@ -468,6 +462,7 @@
         
         searchTimeout = setTimeout(async () => { 
             try { 
+                // Reverted to strict substring matching to fix "Boulder Creek" issue
                 const { data } = await supabaseClient.from('course_directory').select('course_name').ilike('course_name', `%${query}%`).limit(10); 
                 if (data && data.length > 0) { dropdown.innerHTML = data.map(c => `<li onclick="selectCourseFromDropdown('${c.course_name.replace(/'/g, "\\'")}')">${c.course_name.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
             } catch(err) {} 
@@ -532,7 +527,7 @@
 
     function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
     function toggleGridDrops(index) { let cVal = parseInt(roundData[index].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; roundData[index].drops = newVal; const btn = document.getElementById(`grid-drops-${index}`); if(btn) { btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; } if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
-    function toggleGridHit(index, type) { const btn = document.getElementById(`grid-${type}-${index}`); let ns = type === 'sandSave' ? (btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no")) : (btn.innerText === "MISS" ? "hit" : "miss"); btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); roundData[index][type] = ns === "-" ? "" : ns; if(ns === 'hit' && type !== 'sandSave') roundData[index][type + 'Adv'] = []; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
+    function toggleGridHit(index, type) { const btn = document.getElementById(`grid-${type}-${index}`); let ns = type === 'sandSave' ? (btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no")) : (btn.innerText === "MISS" ? "hit" : "miss"); btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); roundData[index][type] = ns === "-" ? "" : ns; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
 
     function togglePlayMode(isPlayMode) { document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; if(isPlayMode) updatePlayModeUI(); }
 
@@ -660,14 +655,14 @@
 
     function populateFilters() {
         const uC = [...new Set(masterAnalyticsData.map(r => r.course_name))].sort();
-        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Courses')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Courses')"> ${c}</label>`).join('');
+        document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c}" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
         const uY = [...new Set(masterAnalyticsData.map(r => new Date(r.date_played).getUTCFullYear().toString()))].sort((a,b)=>b-a);
-        document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Years')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Years')"> ${y}</label>`).join('');
+        document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
     }
 
     function toggleFilterDropdown(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
-    function toggleGroupToggles(mainCb, childClass, btnTextId, defaultText) { const cbs = document.querySelectorAll(childClass); cbs.forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}` : `0 ${defaultText}`; updateAnalytics(); }
-    function checkGroupToggles(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}` : `${checkedCount} ${defaultText}`; updateAnalytics(); }
+    function toggleGroupToggles(mainCb, childClass, btnTextId, defaultText) { const cbs = document.querySelectorAll(childClass); cbs.forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}s` : `0 ${defaultText}s`; updateAnalytics(); }
+    function checkGroupToggles(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); updateAnalytics(); }
     document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
 
     function calculateHandicap(allRounds) {
@@ -718,7 +713,7 @@
             let m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
             let b = (sumY - m * sumX) / n;
             let trendData = baseScores.map((_, i) => m * i + b);
-            trendDatasets.push({ label: 'Trendline', data: trendData, borderColor: 'rgba(255, 255, 255, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, yAxisID: 'y' });
+            trendDatasets.push({ label: 'Trendline', data: trendData, borderColor: 'rgba(255, 255, 255, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, yAxisID: 'y', pointHoverRadius: 0 });
             
             let strokeShift = (m * (n - 1)).toFixed(1);
             if(strokeShift < 0) { badge.innerHTML = `<span style="color: var(--accent-green);">📈 Trending Better (${strokeShift} Strokes)</span>`; badge.style.display = 'block'; }
