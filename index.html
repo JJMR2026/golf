@@ -327,7 +327,6 @@
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null };
 
-    // --- INIT AUTH & PERSISTENCE ---
     async function initializeApp() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
@@ -415,17 +414,24 @@
 
     function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); if(viewId==='view-new-round') fetchWeather(); }
 
-    // --- FIX: SEARCH ENGINE NOW EXCLUSIVELY SEARCHES TEES, IGNORING DIRECTORY DUPLICATES ---
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', e => {
         const query = e.target.value.trim().toLowerCase(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
         if (query.length < 2) { dropdown.classList.remove('active'); return; }
+        
         searchTimeout = setTimeout(async () => { 
             try { 
+                // Only search the TEES table directly to mathematically guarantee we never pull a course without tees
                 const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${query}%`).limit(100); 
                 if(error) throw error;
                 const uniqueCourses = [...new Set(data.map(item => item.course_name))].slice(0, 10);
-                if (uniqueCourses.length > 0) { dropdown.innerHTML = uniqueCourses.map(c => `<li onclick="selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); dropdown.classList.add('active'); } else { dropdown.classList.remove('active'); }
+                
+                if (uniqueCourses.length > 0) { 
+                    dropdown.innerHTML = uniqueCourses.map(c => `<li onclick="selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
+                    dropdown.classList.add('active'); 
+                } else { 
+                    dropdown.classList.remove('active'); 
+                }
             } catch(err) { console.error(err); } 
         }, 250); 
     });
@@ -436,15 +442,18 @@
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
         document.getElementById('api-status').innerText = "⏳ Loading..."; fetchWeather();
         try {
-            let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').eq('course_name', query.toUpperCase());
-            if (!teeData || teeData.length === 0) { const res = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`); teeData = res.data; }
+            // Case-insensitive direct query on the Tees table
+            let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', query);
+            
             if (teeData && teeData.length > 0) {
                 const fetchedCourseName = teeData[0].course_name;
-                availableTees = teeData.filter(t => t.course_name === fetchedCourseName);
+                availableTees = teeData;
+                
                 let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
                 currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
                 document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                 roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
+                
                 populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
             }
         } catch(e) { console.error(e); }
@@ -618,7 +627,7 @@
 
     function forceSyncFilters() {
         document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
-        const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = true;
+        const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = false;
         document.getElementById('month-btn-text').innerText = 'All Months';
         document.getElementById('year-btn-text').innerText = 'All Years';
         document.getElementById('course-btn-text').innerText = 'All Courses';
