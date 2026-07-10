@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Golf Tracker Pro</title>
     
-    <!-- PWA App Mode Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
@@ -46,12 +45,14 @@
         .setup-group label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
 
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 14px; letter-spacing: 1px; }
-        .badge { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11px; text-transform: uppercase; align-content: center; }
+        .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
+        .badge-btn { background-color: #1f1f1f; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: var(--text-main); cursor: pointer; transition: 0.2s; }
+        .badge-btn:hover { background-color: #2a2a2a; color: var(--accent-green); }
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
+        
         .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
-        .matrix-grid { display: grid; grid-template-columns: 80px repeat(18, minmax(60px, 1fr)); gap: 6px; min-width: 1000px; }
+        .matrix-grid { display: grid; gap: 6px; min-width: 1000px; }
         .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
         .cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
         .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
@@ -73,10 +74,17 @@
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
-        .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; }
+        .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
         .history-item:hover { background-color: #1a1a1a; }
-        .history-item:last-child { border-bottom: none; }
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
+        
+        /* History Folder Accordion */
+        details.year-folder summary { padding: 15px; font-weight: bold; cursor: pointer; color: var(--text-main); outline: none; background: #1a1a1a; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        details.year-folder summary::after { content: '▼'; font-size: 12px; color: var(--text-muted); }
+        details.year-folder[open] summary::after { content: '▲'; }
+        details.year-folder summary::-webkit-details-marker { display: none; }
+        .folder-content { padding: 5px 0 15px 0; }
+
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; flex-direction: column; }
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
@@ -141,7 +149,7 @@
     <!-- ==================== NEW ROUND VIEW ==================== -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
-            <div class="search-header">SEARCH GOLF COURSES <span class="search-toggle" onclick="document.getElementById('search-body').style.display = document.getElementById('search-body').style.display === 'none' ? 'block' : 'none'">TOGGLE</span></div>
+            <div class="search-header">SEARCH GOLF COURSES <span class="search-toggle" style="cursor: pointer; color: var(--accent-green);" onclick="document.getElementById('search-body').style.display = document.getElementById('search-body').style.display === 'none' ? 'block' : 'none'">HIDE</span></div>
             <div id="search-body">
                 <div class="search-row">
                     <input type="text" id="course-search-input" placeholder="e.g., McKenzie Meadows" autocomplete="off">
@@ -154,8 +162,6 @@
                     <select id="tee-select" style="width: 100%; margin-bottom: 10px;" onchange="handleTeeChange()"></select>
                     <div class="setup-row" id="manual-tee-row" style="display: none;">
                         <div class="setup-group"><label>Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue"></div>
-                        <div class="setup-group"><label>Course Rating</label><input type="number" step="0.1" id="setup-rating" placeholder="e.g. 71.2"></div>
-                        <div class="setup-group"><label>Slope Rating</label><input type="number" id="setup-slope" placeholder="e.g. 125"></div>
                     </div>
                 </div>
                 <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
@@ -164,8 +170,8 @@
 
         <div class="card">
             <div class="scorecard-header">
-                <h3 id="current-course-display">STANDARD LAYOUT</h3>
-                <div class="badge">18 HOLES</div>
+                <h3 id="current-course-display" style="color: var(--text-muted);">NO COURSE SELECTED</h3>
+                <button id="hole-toggle-btn" class="badge-btn" onclick="toggleHoleCount()">18 HOLES</button>
             </div>
             <div class="view-toggle-row">
                 <button class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Grid View</button>
@@ -179,7 +185,7 @@
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
                     </div>
-                    <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR 4 • - YDS • HCP -</span>
+                    <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
                 </div>
                 
                 <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" inputmode="numeric" onchange="syncPlayToState('score', this.value)"></div></div>
@@ -239,6 +245,12 @@
                 <select class="filter-select" id="filter-month" onchange="updateAnalytics()">
                     <option value="all">All Months</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
                 </select>
+                <select class="filter-select" id="filter-hole-select" onchange="updateAnalytics()">
+                    <option value="all">All Holes</option>
+                    <option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option>
+                    <option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option>
+                    <option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option>
+                </select>
                 
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleCourseFilter()"><span>Filter Courses...</span><span style="font-size: 10px;">▼</span></div>
@@ -278,14 +290,10 @@
 <div id="history-modal" class="modal-overlay">
     <div class="modal-content card" style="margin-top: 40px;">
         <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
+        <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
         
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
-            <div style="display: flex; gap: 10px;">
-                <div class="setup-group" style="width: 80px;"><label style="font-size: 10px;">RATING</label><input type="number" step="0.1" id="modal-rating" style="padding: 8px;"></div>
-                <div class="setup-group" style="width: 80px;"><label style="font-size: 10px;">SLOPE</label><input type="number" id="modal-slope" style="padding: 8px;"></div>
-            </div>
         </div>
 
         <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
@@ -305,9 +313,9 @@
     Chart.defaults.borderColor = '#2a2a2a';
 
     let currentUser = null;
+    let currentHoleCount = 18;
     let currentCoursePars = Array(18).fill(""); 
     let currentYardages = Array(18).fill(""); 
-    let currentHandicaps = Array(18).fill(""); 
     let currentPlayHole = 0; 
     let roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
     
@@ -320,6 +328,15 @@
     let trendChart = null; 
     let puttChart = null; 
     let driveChart = null;
+
+    // --- GLOBAL ENTER KEY PROGRESSION ---
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]):not([disabled])'));
+            const index = inputs.indexOf(e.target);
+            if (index > -1 && index < inputs.length - 1) inputs[index + 1].focus();
+        }
+    });
 
     // --- AUTHENTICATION ENGINE ---
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -335,7 +352,7 @@
     }
     async function logOut() { await supabaseClient.auth.signOut(); }
 
-    // --- SEARCH LOGIC (LOCAL DB ONLY) ---
+    // --- SEARCH LOGIC (LOCAL DB) ---
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', function(e) {
         const query = e.target.value.trim(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
@@ -352,7 +369,7 @@
 
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
-        const statusEl = document.getElementById('api-status'); statusEl.innerText = "⏳ Loading course and tees...";
+        const statusEl = document.getElementById('api-status'); statusEl.innerText = "⏳ Loading local database...";
         try {
             const { data, error } = await supabaseClient.from('course_directory').select('course_name, pars').ilike('course_name', `%${query}%`).limit(1);
             if (error) throw error;
@@ -360,57 +377,68 @@
                 const fetchedCourseName = data[0].course_name;
                 let parsedPars = data[0].pars; if (typeof parsedPars === 'string') parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']'));
                 if (!Array.isArray(parsedPars)) parsedPars = Array(18).fill("");
-                currentCoursePars = [...parsedPars]; currentYardages = Array(18).fill(""); currentHandicaps = Array(18).fill("");
+                currentCoursePars = [...parsedPars]; currentYardages = Array(18).fill(""); 
                 document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase();
+                document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                 roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, sandSave: "" }));
                 const { data: teeData } = await supabaseClient.from('course_tees').select('*').eq('course_name', fetchedCourseName);
                 availableTees = teeData || []; populateTeeDropdown(); statusEl.innerText = ""; buildGrid(); updatePlayModeUI(); return;
             }
         } catch(e) {}
-        document.getElementById('current-course-display').innerText = query.toUpperCase(); statusEl.innerText = "ℹ️ Course not found. Please enter manually.";
-        currentCoursePars = Array(18).fill(""); currentYardages = Array(18).fill(""); currentHandicaps = Array(18).fill("");
+        document.getElementById('current-course-display').innerText = query.toUpperCase(); 
+        document.getElementById('current-course-display').style.color = 'var(--accent-green)';
+        statusEl.innerText = "ℹ️ Course not found. Please enter manually.";
+        currentCoursePars = Array(18).fill(""); currentYardages = Array(18).fill(""); 
         availableTees = []; populateTeeDropdown(); buildGrid(); updatePlayModeUI();
     }
 
     function populateTeeDropdown() {
         const container = document.getElementById('course-setup-container'); const select = document.getElementById('tee-select');
         container.style.display = 'block'; select.innerHTML = '<option value="">-- Select a Tee --</option>';
-        availableTees.forEach(t => select.innerHTML += `<option value="${t.id}">${t.tee_name} (Rating: ${t.course_rating || 'N/A'}, Slope: ${t.slope_rating || 'N/A'})</option>`);
+        availableTees.forEach(t => select.innerHTML += `<option value="${t.id}">${t.tee_name}</option>`);
         select.innerHTML += '<option value="new">+ Add New Tee Manually</option>';
-        document.getElementById('setup-tee').value = ""; document.getElementById('setup-rating').value = ""; document.getElementById('setup-slope').value = ""; handleTeeChange();
+        document.getElementById('setup-tee').value = ""; handleTeeChange();
     }
 
     function handleTeeChange() {
         const val = document.getElementById('tee-select').value; const manualRow = document.getElementById('manual-tee-row');
-        if (val === 'new') { manualRow.style.display = 'flex'; selectedTee = null; currentYardages = Array(18).fill(""); currentHandicaps = Array(18).fill("");
-        } else if (val === "") { manualRow.style.display = 'none'; selectedTee = null; currentYardages = Array(18).fill(""); currentHandicaps = Array(18).fill("");
+        if (val === 'new') { manualRow.style.display = 'flex'; selectedTee = null; currentYardages = Array(18).fill("");
+        } else if (val === "") { manualRow.style.display = 'none'; selectedTee = null; currentYardages = Array(18).fill(""); 
         } else {
             manualRow.style.display = 'none'; selectedTee = availableTees.find(t => t.id === val);
             if (selectedTee) {
                 if (Array.isArray(selectedTee.pars) && selectedTee.pars.length > 0) currentCoursePars = [...selectedTee.pars];
                 if (Array.isArray(selectedTee.yardages) && selectedTee.yardages.length > 0) currentYardages = [...selectedTee.yardages]; else currentYardages = Array(18).fill("");
-                if (Array.isArray(selectedTee.stroke_indexes) && selectedTee.stroke_indexes.length > 0) currentHandicaps = [...selectedTee.stroke_indexes]; else currentHandicaps = Array(18).fill("");
             }
         }
+        buildGrid(); updatePlayModeUI();
+    }
+
+    // --- HOLE TOGGLE (9 vs 18) ---
+    function toggleHoleCount() {
+        currentHoleCount = currentHoleCount === 18 ? 9 : 18;
+        document.getElementById('hole-toggle-btn').innerText = `${currentHoleCount} HOLES`;
+        if (currentPlayHole >= currentHoleCount) currentPlayHole = 0;
         buildGrid(); updatePlayModeUI();
     }
 
     // --- GRID UI ---
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; 
+        grid.style.gridTemplateColumns = `80px repeat(${currentHoleCount}, minmax(60px, 1fr))`;
+        
         const rows = [
-            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YARDAGE', type: 'yardage' }, { label: 'HCP', type: 'hcp' },
+            { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YARDAGE', type: 'yardage' },
             { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, 
             { label: 'DRIVE (YDS)', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }
         ];
         rows.forEach(row => {
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
-            for (let i = 0; i < 18; i++) {
+            for (let i = 0; i < currentHoleCount; i++) {
                 const cell = document.createElement('div');
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; } 
                 else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; } 
                 else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" placeholder="yds" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI()">`; }
-                else if (row.type === 'hcp') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" placeholder="idx" value="${currentHandicaps[i] ?? ''}" onchange="currentHandicaps[${i}] = this.value; updatePlayModeUI()">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') {
                     cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; let p = row.type === 'drive' ? 'yds' : '-';
                     cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" placeholder="${p}" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`;
@@ -431,19 +459,8 @@
     }
 
     function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); }
-    function toggleGridDrops(index) {
-        let cVal = parseInt(roundData[index].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; roundData[index].drops = newVal;
-        const btn = document.getElementById(`grid-drops-${index}`);
-        if(btn) { btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; }
-        if(currentPlayHole === index) updatePlayModeUI();
-    }
-    function toggleGridHit(index, type) {
-        const btn = document.getElementById(`grid-${type}-${index}`);
-        let ns = type === 'sandSave' ? (btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no")) : (btn.innerText === "MISS" ? "hit" : "miss");
-        btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit');
-        roundData[index][type] = ns === "-" ? "" : ns; if(ns === 'hit' && type !== 'sandSave') roundData[index][type + 'Adv'] = []; 
-        if(currentPlayHole === index) updatePlayModeUI();
-    }
+    function toggleGridDrops(index) { let cVal = parseInt(roundData[index].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; roundData[index].drops = newVal; const btn = document.getElementById(`grid-drops-${index}`); if(btn) { btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; } if(currentPlayHole === index) updatePlayModeUI(); }
+    function toggleGridHit(index, type) { const btn = document.getElementById(`grid-${type}-${index}`); let ns = type === 'sandSave' ? (btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no")) : (btn.innerText === "MISS" ? "hit" : "miss"); btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); roundData[index][type] = ns === "-" ? "" : ns; if(ns === 'hit' && type !== 'sandSave') roundData[index][type + 'Adv'] = []; if(currentPlayHole === index) updatePlayModeUI(); }
 
     // --- PLAY MODE UI ---
     function togglePlayMode(isPlayMode) {
@@ -453,8 +470,8 @@
     }
 
     function updatePlayModeUI() {
-        const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-'; const hcp = currentHandicaps[currentPlayHole] || '-';
-        document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`; document.getElementById('play-par-title').innerText = `PAR ${par || '-'} • ${yds} YDS • HCP ${hcp}`;
+        const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-';
+        document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`; document.getElementById('play-par-title').innerText = `PAR ${par || '-'} • ${yds} YDS`;
         document.getElementById('play-score').value = state.score; document.getElementById('play-putts').value = state.putts; document.getElementById('play-drive').value = state.drive;
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
@@ -467,49 +484,29 @@
         });
         
         document.getElementById('play-drive-block').style.display = par === 3 ? 'none' : 'flex'; document.getElementById('play-fir-block').style.display = par === 3 ? 'none' : 'block';
-        document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible'; document.getElementById('play-next-btn').innerText = currentPlayHole === 17 ? 'FINISH' : 'NEXT HOLE →';
+        document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible'; document.getElementById('play-next-btn').innerText = currentPlayHole === (currentHoleCount - 1) ? 'FINISH' : 'NEXT HOLE →';
     }
 
-    function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min(17, currentPlayHole + dir)); updatePlayModeUI(); }
-    function setPlayToggle(type, status) {
-        roundData[currentPlayHole][type] = (roundData[currentPlayHole][type] === status) ? "" : status; 
-        if((status === 'hit' || status === 'yes') && type !== 'sandSave') roundData[currentPlayHole][type + 'Adv'] = [];
-        const btn = document.getElementById(`grid-${type}-${currentPlayHole}`);
-        if(btn) { btn.innerText = roundData[currentPlayHole][type] === "" ? "-" : roundData[currentPlayHole][type].toUpperCase(); if(status === 'hit' || status === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); }
-        updatePlayModeUI();
-    }
-    function setAdvToggle(type, value) {
-        let arr = roundData[currentPlayHole][type + 'Adv']; if (!Array.isArray(arr)) arr = [];
-        if (arr.includes(value)) arr = arr.filter(v => v !== value); else arr.push(value);
-        roundData[currentPlayHole][type + 'Adv'] = arr; updatePlayModeUI();
-    }
-    function updatePar(index, val) {
-        let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(5, p));
-        document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI();
-    }
-    function updateDriveDistances() {
-        for (let i = 0; i < 18; i++) {
-            const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`);
-            if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } }
-        }
-    }
+    function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min((currentHoleCount - 1), currentPlayHole + dir)); updatePlayModeUI(); }
+    function setPlayToggle(type, status) { roundData[currentPlayHole][type] = (roundData[currentPlayHole][type] === status) ? "" : status; if((status === 'hit' || status === 'yes') && type !== 'sandSave') roundData[currentPlayHole][type + 'Adv'] = []; const btn = document.getElementById(`grid-${type}-${currentPlayHole}`); if(btn) { btn.innerText = roundData[currentPlayHole][type] === "" ? "-" : roundData[currentPlayHole][type].toUpperCase(); if(status === 'hit' || status === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); } updatePlayModeUI(); }
+    function setAdvToggle(type, value) { let arr = roundData[currentPlayHole][type + 'Adv']; if (!Array.isArray(arr)) arr = []; if (arr.includes(value)) arr = arr.filter(v => v !== value); else arr.push(value); roundData[currentPlayHole][type + 'Adv'] = arr; updatePlayModeUI(); }
+    function updatePar(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(5, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); }
+    function updateDriveDistances() { for (let i = 0; i < currentHoleCount; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } }
 
     // --- SUBMIT ROUND ---
     async function submitRound() {
         if (!currentUser) return alert("❌ You must be logged in to save data.");
         const courseName = document.getElementById('current-course-display').innerText;
-        if (!courseName || courseName === 'STANDARD LAYOUT' || courseName === '') return alert("⚠️ Please fetch a valid course.");
+        if (!courseName || courseName === 'NO COURSE SELECTED' || courseName === '') return alert("⚠️ Please fetch a valid course.");
         
-        const teeVal = document.getElementById('tee-select').value; let teeName = null, cr = null, sr = null;
+        const teeVal = document.getElementById('tee-select').value; let teeName = null;
         if (teeVal === 'new') {
-            teeName = document.getElementById('setup-tee').value.trim(); cr = parseFloat(document.getElementById('setup-rating').value); sr = parseInt(document.getElementById('setup-slope').value);
-            if (teeName && !isNaN(cr) && !isNaN(sr)) {
-                try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, course_rating: cr, slope_rating: sr, pars: currentCoursePars, yardages: currentYardages, stroke_indexes: currentHandicaps }]); } catch(e) {}
-            }
-        } else if (selectedTee) { teeName = selectedTee.tee_name; cr = selectedTee.course_rating; sr = selectedTee.slope_rating; }
+            teeName = document.getElementById('setup-tee').value.trim(); 
+            if (teeName) { try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); } catch(e) {} }
+        } else if (selectedTee) { teeName = selectedTee.tee_name; }
 
         let totalScore = 0; let totalPutts = 0; const holesPayload = [];
-        for (let i = 0; i < 18; i++) {
+        for (let i = 0; i < currentHoleCount; i++) {
             const s = parseInt(roundData[i].score);
             if (!isNaN(s)) {
                 totalScore += s; totalPutts += parseInt(roundData[i].putts) || 0;
@@ -525,7 +522,7 @@
 
         try {
             const { data: roundHeader, error: headerError } = await supabaseClient.from('logged_rounds').insert([{ 
-                user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName, course_rating: isNaN(cr) ? null : cr, slope_rating: isNaN(sr) ? null : sr
+                user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName
             }]).select('id').single();
             if (headerError) throw headerError;
             await supabaseClient.from('hole_scores').insert(holesPayload.map(h => ({ ...h, round_id: roundHeader.id })));
@@ -534,30 +531,60 @@
         finally { submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false; }
     }
 
-    // --- HISTORY UI ---
+    // --- HISTORY UI (COLLAPSIBLE FOLDERS) ---
     async function fetchHistory() {
         if(!currentUser) return;
-        const { data } = await supabaseClient.from('logged_rounds').select('*').eq('user_id', currentUser.id).order('date_played', { ascending: false });
-        document.getElementById('history-list').innerHTML = (data||[]).map(r => `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${r.course_rating || null}, ${r.slope_rating || null})"><div><strong>${r.course_name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name} Tees` : ''}</span></div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">Tap to edit</span></div></div>`).join('');
+        const { data } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
+        if(!data || data.length === 0) { document.getElementById('history-list').innerHTML = '<div class="empty-state">No rounds found.</div>'; return; }
+        
+        // Group by Year
+        const grouped = data.reduce((acc, round) => {
+            const year = new Date(round.date_played).getUTCFullYear();
+            if(!acc[year]) acc[year] = []; acc[year].push(round); return acc;
+        }, {});
+
+        let html = '';
+        const sortedYears = Object.keys(grouped).sort((a,b) => b-a);
+        sortedYears.forEach((year, index) => {
+            const rounds = grouped[year];
+            // Only keep the most recent year folder open by default
+            html += `<details class="year-folder" ${index === 0 ? 'open' : ''}>
+                        <summary>${year} Season <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">${rounds.length} Rounds</span></summary>
+                        <div class="folder-content">`;
+            rounds.forEach(r => {
+                const holesPlayed = r.hole_scores.filter(h => h.score && h.score > 0).length;
+                html += `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${holesPlayed})">
+                            <div><strong>${r.course_name}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name} Tees` : ''}</span></div>
+                            <div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">${holesPlayed} Holes</span></div>
+                         </div>`;
+            });
+            html += `</div></details>`;
+        });
+        document.getElementById('history-list').innerHTML = html;
     }
 
-    async function openHistoryModal(id, name, date, score, rating, slope) {
+    async function openHistoryModal(id, name, date, score, holesPlayed) {
         document.getElementById('modal-course-title').innerText = name; document.getElementById('modal-total-score').innerText = score;
-        document.getElementById('modal-rating').value = rating || ''; document.getElementById('modal-slope').value = slope || '';
         activeModalRoundId = id; document.getElementById('history-modal').classList.add('active');
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = '⏳ Loading...';
-        modalCoursePars = Array(18).fill(""); modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
+        
+        // Dynamically build the grid based on how many holes were played
+        let viewHoles = holesPlayed > 9 ? 18 : 9;
+        modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
+        
         const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
-        if(data) data.forEach(h => { const i = h.hole_number - 1; if(i>=0 && i<18){ modalCoursePars[i]=h.par||""; modalRoundData[i]={id:h.id,score:h.score||"",putts:h.putts!==null?h.putts:"",fir:h.fir||"",gir:h.gir||"",drive:h.drive_distance||"",drops:h.drops||0,sandSave:h.sand_save||""}; }});
-        buildModalGrid();
+        if(data) data.forEach(h => { const i = h.hole_number - 1; if(i>=0 && i<viewHoles){ modalCoursePars[i]=h.par||""; modalRoundData[i]={id:h.id,score:h.score||"",putts:h.putts!==null?h.putts:"",fir:h.fir||"",gir:h.gir||"",drive:h.drive_distance||"",drops:h.drops||0,sandSave:h.sand_save||""}; }});
+        
+        buildModalGrid(viewHoles);
     }
 
-    function buildModalGrid() {
+    function buildModalGrid(holesCount) {
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; 
+        grid.style.gridTemplateColumns = `80px repeat(${holesCount}, minmax(60px, 1fr))`;
         const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }];
         rows.forEach(r => {
             const lc = document.createElement('div'); lc.className = 'row-label'; lc.innerText = r.label; grid.appendChild(lc);
-            for(let i=0; i<18; i++) {
+            for(let i=0; i<holesCount; i++) {
                 const c = document.createElement('div'); c.className = 'cell';
                 if(r.type === 'header') { c.className = 'cell hole-header'; c.innerText = i+1; }
                 else if(r.type === 'par') c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
@@ -570,19 +597,19 @@
                 grid.appendChild(c);
             }
         });
-        document.getElementById('modal-delete-btn').onclick = () => deleteActiveRound(activeModalRoundId); document.getElementById('modal-save-btn').onclick = () => saveModalChanges(activeModalRoundId);
+        document.getElementById('modal-delete-btn').onclick = () => deleteActiveRound(activeModalRoundId); document.getElementById('modal-save-btn').onclick = () => saveModalChanges(activeModalRoundId, holesCount);
     }
     
     function toggleModalDrops(btn, i) { let cVal = parseInt(modalRoundData[i].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; modalRoundData[i].drops = newVal; btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; }
     function toggleModalHit(b, i, t) { let ns = t==='sandSave'?(b.innerText==="NO"?"yes":(b.innerText==="YES"?"-":"no")):(b.innerText==="MISS"?"hit":"miss"); b.innerText=ns==="-"?"-":ns.toUpperCase(); if(ns==='hit'||ns==='yes')b.classList.add('hit'); else b.classList.remove('hit'); modalRoundData[i][t] = ns==="-"?"":ns; }
     function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); activeModalRoundId = null; }
     
-    async function saveModalChanges(id) {
-        if(!id) return; let tScore=0; let tPutts=0; const nCr = parseFloat(document.getElementById('modal-rating').value); const nSr = parseInt(document.getElementById('modal-slope').value);
-        for(let i=0; i<18; i++) { const hd=modalRoundData[i]; const s=parseInt(hd.score); if(!isNaN(s))tScore+=s; if(!isNaN(parseInt(hd.putts)))tPutts+=parseInt(hd.putts);
+    async function saveModalChanges(id, holesCount) {
+        if(!id) return; let tScore=0; let tPutts=0; 
+        for(let i=0; i<holesCount; i++) { const hd=modalRoundData[i]; const s=parseInt(hd.score); if(!isNaN(s))tScore+=s; if(!isNaN(parseInt(hd.putts)))tPutts+=parseInt(hd.putts);
             if(hd.id) await supabaseClient.from('hole_scores').update({ par:parseInt(modalCoursePars[i])||null, score:s||null, putts:parseInt(hd.putts)||0, fir:hd.fir||null, gir:hd.gir||null, drive_distance:parseInt(hd.drive)||null, drops:parseInt(hd.drops)||0, sand_save:hd.sandSave||null }).eq('id',hd.id);
         }
-        await supabaseClient.from('logged_rounds').update({ total_score: tScore, total_putts: tPutts, course_rating: isNaN(nCr) ? null : nCr, slope_rating: isNaN(nSr) ? null : nSr }).eq('id',id);
+        await supabaseClient.from('logged_rounds').update({ total_score: tScore, total_putts: tPutts }).eq('id',id);
         alert("✅ Updated."); fetchHistory(); closeHistoryModal(); loadAnalyticsData();
     }
     async function deleteActiveRound(id) { if(id && confirm("Delete round?")) { await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); fetchHistory(); closeHistoryModal(); loadAnalyticsData(); } }
@@ -632,7 +659,7 @@
         return Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
     }
 
-    function renderCharts(filteredRounds) {
+    function renderCharts(filteredRounds, specificHole) {
         const tCtx = document.getElementById('scoringTrendChart'); const pCtx = document.getElementById('puttChart'); const dCtx = document.getElementById('driveChart');
         if (trendChart) trendChart.destroy(); if (puttChart) puttChart.destroy(); if (driveChart) driveChart.destroy();
         if (filteredRounds.length === 0) { tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; return; }
@@ -642,20 +669,30 @@
         
         // 1. Multi-Overlay Scoring Trend
         const activeOverlays = Array.from(document.querySelectorAll('#chart-overlays input:checked')).map(cb => cb.value);
-        let trendDatasets = [{ label: 'Total Score', data: chartData.map(r => r.total_score), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
+        let baseScores = [];
+        if (specificHole !== 'all') {
+            chartData.forEach(r => { const hs = r.hole_scores.find(h => h.hole_number == specificHole); baseScores.push(hs ? hs.score || 0 : 0); });
+        } else {
+            baseScores = chartData.map(r => r.total_score);
+        }
+        
+        let trendDatasets = [{ label: specificHole !== 'all' ? `Hole ${specificHole} Score` : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
         
         const oColors = { putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', drops: '#ef4444' };
-        const oLabels = { putts: 'Total Putts', fir: 'FIR %', gir: 'GIR %', drops: 'Drops' };
+        const oLabels = { putts: 'Putts', fir: 'FIR %', gir: 'GIR %', drops: 'Drops' };
 
         activeOverlays.forEach(overlay => {
             let oData = [];
             chartData.forEach(r => {
                 let p=0, fH=0, fT=0, gH=0, gT=0, dr=0;
-                r.hole_scores.forEach(h => {
+                let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
+                
+                targetHoles.forEach(h => {
                     if (h.putts) p += h.putts; if (h.drops) dr += h.drops;
                     if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; }
                     if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; }
                 });
+                
                 if (overlay === 'putts') oData.push(p);
                 if (overlay === 'drops') oData.push(dr);
                 if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0);
@@ -667,20 +704,15 @@
         trendChart = new Chart(tCtx.getContext('2d'), {
             type: 'line',
             data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: activeOverlays.length > 0, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, 
-                scales: { 
-                    x: { display: false }, 
-                    y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } },
-                    y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } }
-                } 
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: activeOverlays.length > 0, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } }
         });
 
         // 2. Putting Breakdown
         let p0=0, p1=0, p2=0, p3=0;
-        chartData.forEach(r => r.hole_scores.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }));
+        chartData.forEach(r => {
+            let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
+            targetHoles.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; });
+        });
         puttChart = new Chart(pCtx.getContext('2d'), {
             type: 'doughnut',
             data: { labels: ['0-Putt (Chip in)', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] },
@@ -689,7 +721,9 @@
 
         // 3. Drive Distances
         let p4Drives = [], p5Drives = [];
-        chartData.forEach((r, idx) => { r.hole_scores.forEach(h => { if (h.drive_distance && h.drive_distance > 0) {
+        chartData.forEach((r, idx) => { 
+            let targetHoles = specificHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specificHole) : r.hole_scores;
+            targetHoles.forEach(h => { if (h.drive_distance && h.drive_distance > 0) {
             if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
             if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name} (Hole ${h.hole_number})` });
         }})});
@@ -704,43 +738,47 @@
         const timeframe = document.getElementById('filter-timeframe').value; const yFilter = document.getElementById('filter-year').value; const mFilter = document.getElementById('filter-month').value;
         const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value);
         const only18 = document.getElementById('filter-18-only').checked;
+        const specHole = document.getElementById('filter-hole-select').value;
 
         let fRounds = masterAnalyticsData.filter(r => {
             if (!actCrs.includes(r.course_name)) return false;
             const d = new Date(r.date_played);
             if (yFilter !== 'all' && d.getUTCFullYear().toString() !== yFilter) return false;
             if (mFilter !== 'all' && (d.getUTCMonth() + 1).toString() !== mFilter) return false;
-            if (only18) {
-                const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length;
-                if (playedHoles < 18) return false;
-            }
+            if (only18) { const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; if (playedHoles < 18) return false; }
+            if (specHole !== 'all') { const hasHole = r.hole_scores.some(h => h.hole_number == specHole && h.score && h.score > 0); if(!hasHole) return false; }
             return true;
         });
         
         if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
-        
         document.getElementById('hcp-display').innerText = calculateHandicap(fRounds);
-        renderCharts(fRounds);
+        renderCharts(fRounds, specHole);
 
         const rCnt = fRounds.length;
         let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, p5:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 };
+        let totalStrokes = 0;
 
-        fRounds.forEach(r => r.hole_scores.forEach(h => {
-            if (!h.score || !h.par) return; const d = h.score - h.par;
-            if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d===4) s.qd++; else if(d>=5) s.p5++;
-            if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; }
-            if(h.drops) s.drp+=h.drops;
-            if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; }
-            if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; }
-            if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; }
-        }));
+        fRounds.forEach(r => {
+            let targetHoles = specHole !== 'all' ? r.hole_scores.filter(h => h.hole_number == specHole) : r.hole_scores;
+            targetHoles.forEach(h => {
+                if (!h.score || !h.par) return; const d = h.score - h.par;
+                totalStrokes += h.score;
+                if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d===4) s.qd++; else if(d>=5) s.p5++;
+                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; }
+                if(h.drops) s.drp+=h.drops;
+                if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; }
+                if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; }
+                if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; }
+            })
+        });
 
         const t = document.getElementById('analytics-data-table');
-        if(rCnt===0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">No rounds match these filters.</td></tr></tbody>`;
-        const cA = (tot) => (tot / rCnt).toFixed(1); const cP = (tot) => ((tot / (rCnt * 18)) * 100).toFixed(1) + '%';
+        if(rCnt===0) return t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;">No data matches these filters.</td></tr></tbody>`;
+        const cA = (tot) => (tot / rCnt).toFixed(1); const cP = (tot) => ((tot / (specHole !== 'all' ? rCnt : rCnt * 18)) * 100).toFixed(1) + '%';
         
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>%</th></tr></thead>
             <tbody>
+                <tr><td>${specHole !== 'all' ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
                 <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
                 <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
                 <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
@@ -748,8 +786,8 @@
                 <tr><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
                 <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
                 <tr><td>Drops</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
-                <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (s.fT / 14)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-                <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (s.gT / 18)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+                <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (specHole !== 'all' ? rCnt : (s.fT / 14))).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+                <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (specHole !== 'all' ? rCnt : (s.gT / 18))).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
                 <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / rCnt).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             </tbody>`;
     }
