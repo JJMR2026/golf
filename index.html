@@ -271,7 +271,7 @@
                         <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
-                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" onchange="updateAnalytics()" checked> 18-Holes Only</label>
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" checked onchange="updateAnalytics()"> 18-Holes Only</label>
             </div>
             
             <div class="charts-grid">
@@ -305,10 +305,7 @@
 <div id="history-modal" class="modal-overlay">
     <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px;">
-            <h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3>
-            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div>
-        </div>
+        <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
         <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
@@ -347,24 +344,28 @@
         const display = document.getElementById('weather-display');
         display.innerText = "🌤️ Locating course for weather...";
         
-        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName + ' Golf')}&format=json&limit=1`)
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.length > 0) fetchWeatherByCoords(data[0].lat, data[0].lon, display);
-                else {
-                    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName)}&format=json&limit=1`)
-                        .then(res => res.json())
-                        .then(data2 => {
-                            if (data2 && data2.length > 0) fetchWeatherByCoords(data2[0].lat, data2[0].lon, display);
-                            else fallbackToDeviceGPS(display);
-                        }).catch(() => fallbackToDeviceGPS(display));
-                }
-            }).catch(() => fallbackToDeviceGPS(display));
+        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName + ' Golf')}&format=json&limit=1`, {
+            headers: { 'User-Agent': 'GolfScorecardApp/1.0 (contact: jjmr2026@github)' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.length > 0) fetchWeatherByCoords(data[0].lat, data[0].lon, display);
+            else {
+                fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName)}&format=json&limit=1`, {
+                    headers: { 'User-Agent': 'GolfScorecardApp/1.0 (contact: jjmr2026@github)' }
+                })
+                .then(res => res.json())
+                .then(data2 => {
+                    if (data2 && data2.length > 0) fetchWeatherByCoords(data2[0].lat, data2[0].lon, display);
+                    else fallbackToDeviceGPS(display);
+                }).catch(() => fallbackToDeviceGPS(display));
+            }
+        }).catch(() => fallbackToDeviceGPS(display));
     }
 
     function fallbackToDeviceGPS(display) {
         if (navigator.geolocation) {
-            display.innerText = "🌤️ Course not on map, trying GPS...";
+            display.innerText = "🌤️ Map search bounced, pinging device GPS...";
             navigator.geolocation.getCurrentPosition(
                 pos => fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, display),
                 () => { display.innerText = "⚠️ Weather unavailable (Course unfound & GPS blocked)"; }
@@ -377,12 +378,16 @@
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
             const data = await res.json();
             if(data.current_weather) {
-                const deg = data.current_weather.winddirection; const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]; const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
-                roundWeather.temp = data.current_weather.temperature + "°C"; roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
+                let windAngle = data.current_weather.winddirection; 
+                const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]; 
+                const dir = dirs[Math.round((((windAngle % 360) + 360) % 360) / 45) % 8];
+                
+                roundWeather.temp = data.current_weather.temperature + "°C"; 
+                roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
                 display.innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
                 saveLocalState();
             }
-        } catch(e) { display.innerText = "⚠️ Weather unavailable"; }
+        } catch(e) { console.error(e); display.innerText = "⚠️ Weather unavailable"; }
     }
 
     async function submitFeedback() {
@@ -706,10 +711,10 @@
         if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
         try {
-            const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
+            const { data, error = null } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
             if(error) throw error; masterAnalyticsData = data || []; 
-            forceSyncFilters(); 
             populateFilters(); 
+            forceSyncFilters(); 
             updateAnalytics(); 
         } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
@@ -753,10 +758,10 @@
         let averages = [];
         if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
         if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.`); if (averages.length > 1 && best.val < worst.val) { insights.push(`🟢 <b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.`); } }
-        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); else insights.push(`🟢 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.`); }
-        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.`); else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`); if (rightPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`); } }
-        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.`); } }
-        if (drops > 0) { let dropsPerRound = drops / fRounds.length; if (dropsPerRound >= 2) insights.push(`⚠️ <b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.`); }
+        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); else insights.push(`🟢 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); if (threePuttRate > 10) insights.push('⚠️ <b>3-Putts:</b> ' + threePuttRate.toFixed(0) + '% of your holes result in a 3-putt.'); }
+        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push('🔴 <b>Driving Accuracy:</b> Hitting only ' + firPct.toFixed(0) + '% of fairways.'); else insights.push('🟢 <b>Driving Accuracy:</b> Hitting ' + firPct.toFixed(0) + '% of fairways.'); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push('🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ' + leftPct.toFixed(0) + '% are to the <b>LEFT</b>.'); if (rightPct >= 50) insights.push('🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ' + rightPct.toFixed(0) + '% are to the <b>RIGHT</b>.'); } }
+        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push('🔴 <b>Approach Shots:</b> Hitting ' + girPct.toFixed(0) + '% of greens in regulation.'); else insights.push('🟢 <b>Approach Shots:</b> Hitting ' + girPct.toFixed(0) + '% of greens in regulation.'); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push('🎯 <b>Distance Control:</b> ' + shortPct.toFixed(0) + '% of your missed greens land <b>SHORT</b>.'); } }
+        if (drops > 0) { let dropsPerRound = drops / fRounds.length; if (dropsPerRound >= 2) insights.push('⚠️ <b>Course Management:</b> You average ' + dropsPerRound.toFixed(1) + ' penalty drops per round.'); }
         if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<ul style="margin:0; padding-left: 20px; line-height: 1.8;"><li>${insights.join('</li><li>')}</li></ul>`;
     }
 
@@ -874,7 +879,7 @@
                     if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
                 }
                 
-                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
+                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
             }) 
         });
         
