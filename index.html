@@ -428,6 +428,14 @@
             } catch(err) { console.error(err); } 
         }, 250); 
     });
+    
+    document.getElementById('course-search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('search-dropdown').classList.remove('active');
+            fetchCourseDetails();
+        }
+    });
 
     function selectCourseFromDropdown(courseName) { document.getElementById('course-search-input').value = courseName.toUpperCase(); document.getElementById('search-dropdown').classList.remove('active'); fetchCourseDetails(); }
 
@@ -658,8 +666,8 @@
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
             if(error) throw error; masterAnalyticsData = data || []; 
-            forceSyncFilters(); 
             populateFilters(); 
+            forceSyncFilters(); 
             updateAnalytics(); 
         } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
