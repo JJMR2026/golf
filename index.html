@@ -195,7 +195,7 @@
                     <h3 id="current-course-display">NO COURSE</h3>
                     <div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div>
                 </div>
-                <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
+                <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;">⛅ Fetching local weather...</div>
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 <div id="play-mode-container">
@@ -305,7 +305,11 @@
 <div id="history-modal" class="modal-overlay">
     <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
+        <div class="scorecard-header" style="margin-bottom: 5px;">
+            <h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div>
+        </div>
+        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
         </div>
@@ -333,6 +337,8 @@
         else if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } 
         else { document.getElementById('auth-overlay').style.display = 'flex'; }
 
+        fetchWeather(); // Call explicitly on load
+
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
@@ -340,7 +346,9 @@
     }
 
     function fetchWeather() {
+        const display = document.getElementById('weather-display');
         if (navigator.geolocation) {
+            display.innerText = "🌤️ Fetching local weather...";
             navigator.geolocation.getCurrentPosition(async position => {
                 try {
                     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&current_weather=true`);
@@ -348,10 +356,15 @@
                     if(data.current_weather) {
                         const deg = data.current_weather.winddirection; const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]; const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
                         roundWeather.temp = data.current_weather.temperature + "°C"; roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
-                        document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
+                        display.innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
+                        saveLocalState();
                     }
-                } catch(e) {}
+                } catch(e) { display.innerText = "⚠️ Weather unavailable"; }
+            }, () => {
+                display.innerText = "⚠️ Location blocked - Weather unavailable";
             });
+        } else {
+            display.innerText = "⚠️ Geolocation not supported";
         }
     }
 
@@ -441,7 +454,7 @@
 
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
-        document.getElementById('api-status').innerText = "⏳ Loading..."; fetchWeather();
+        document.getElementById('api-status').innerText = "⏳ Loading...";
         try {
             let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`);
             
@@ -468,7 +481,28 @@
 
     function populateTeeDropdown() {
         const select = document.getElementById('tee-select'); document.getElementById('course-setup-container').style.display = 'block';
-        select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.tee_name.trim()}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
+        
+        // Dynamic Sorting Algorithm (Longest to Shortest, Fallback to Colors)
+        const colorOrder = { 'Black': 1, 'Blue': 2, 'White': 3, 'Silver': 4, 'Red': 5 };
+        availableTees.sort((a, b) => {
+            let yardA = 0, yardB = 0;
+            try {
+                let yaArr = typeof a.yardages === 'string' ? JSON.parse(a.yardages.replace(/{/g, '[').replace(/}/g, ']')) : a.yardages;
+                if (Array.isArray(yaArr)) yardA = yaArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+            } catch(e) {}
+            try {
+                let ybArr = typeof b.yardages === 'string' ? JSON.parse(b.yardages.replace(/{/g, '[').replace(/}/g, ']')) : b.yardages;
+                if (Array.isArray(ybArr)) yardB = ybArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+            } catch(e) {}
+
+            if (yardA > 0 && yardB > 0 && yardA !== yardB) return yardB - yardA; // Longest first
+
+            let ca = colorOrder[a.tee_name.trim()] || 99;
+            let cb = colorOrder[b.tee_name.trim()] || 99;
+            return ca - cb;
+        });
+
+        select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
         document.getElementById('setup-tee').value = ""; handleTeeChange();
     }
 
@@ -478,7 +512,7 @@
         else if (val === "") { manualRow.style.display = 'none'; selectedTee = null; currentYardages = Array(18).fill(""); } 
         else { 
             manualRow.style.display = 'none'; 
-            selectedTee = availableTees.find(t => t.tee_name.trim() === val); 
+            selectedTee = availableTees.find(t => t.id == val); 
             if (selectedTee) { 
                 let p = selectedTee.pars; if(typeof p === 'string') try{p=JSON.parse(p.replace(/{/g,'[').replace(/}/g,']'))}catch(e){}
                 let y = selectedTee.yardages; if(typeof y === 'string') try{y=JSON.parse(y.replace(/{/g,'[').replace(/}/g,']'))}catch(e){}
@@ -603,15 +637,22 @@
             rounds.forEach(r => {
                 const holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score && h.score > 0).length : 0;
                 let w = (r.weather_temp && r.weather_wind) ? `<br><span style="font-size:10px;color:var(--text-muted)">⛅ ${r.weather_temp} | 💨 ${r.weather_wind}</span>` : '';
-                html += `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${holesPlayed})"><div><strong>${r.course_name.trim()}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name.trim()}` : ''}</span>${w}</div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">${holesPlayed === 0 ? 'Bulk Import' : holesPlayed + ' Holes'}</span></div></div>`;
+                html += `<div class="history-item" onclick="openHistoryModal('${r.id}', '${r.course_name.replace(/'/g, "\\'")}', '${r.date_played}', ${r.total_score}, ${holesPlayed}, '${r.weather_temp || ''}', '${r.weather_wind || ''}')"><div><strong>${r.course_name.trim()}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played} ${r.tee_name ? `• ${r.tee_name.trim()}` : ''}</span>${w}</div><div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong><br><span style="font-size:12px;color:var(--text-muted)">${holesPlayed === 0 ? 'Bulk Import' : holesPlayed + ' Holes'}</span></div></div>`;
             });
             html += `</div></details>`;
         });
         document.getElementById('history-list').innerHTML = html;
     }
 
-    async function openHistoryModal(id, name, date, score, holesPlayed) {
-        document.getElementById('modal-course-title').innerText = name.trim(); document.getElementById('modal-total-score').innerText = score; activeModalRoundId = id; document.getElementById('history-modal').classList.add('active'); document.getElementById('modal-scorecard-grid').innerHTML = '⏳ Loading...';
+    async function openHistoryModal(id, name, date, score, holesPlayed, temp, wind) {
+        document.getElementById('modal-course-title').innerText = name.trim(); 
+        document.getElementById('modal-total-score').innerText = score; 
+        
+        // Inject weather directly into the modal header
+        let wText = (temp && wind) ? `⛅ ${temp} | 💨 ${wind}` : '';
+        document.getElementById('modal-weather').innerText = wText;
+
+        activeModalRoundId = id; document.getElementById('history-modal').classList.add('active'); document.getElementById('modal-scorecard-grid').innerHTML = '⏳ Loading...';
         if (holesPlayed === 0) { document.getElementById('modal-scorecard-grid').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Bulk imported rounds do not contain hole-by-hole data.</div>'; return; }
         let viewHoles = holesPlayed > 9 ? 18 : 9; modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
         const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
@@ -666,8 +707,8 @@
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
             if(error) throw error; masterAnalyticsData = data || []; 
-            populateFilters(); 
             forceSyncFilters(); 
+            populateFilters(); 
             updateAnalytics(); 
         } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
