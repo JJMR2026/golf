@@ -195,7 +195,7 @@
                     <h3 id="current-course-display">NO COURSE</h3>
                     <div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div>
                 </div>
-                <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;">⛅ Fetching local weather...</div>
+                <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 <div id="play-mode-container">
@@ -337,35 +337,52 @@
         else if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } 
         else { document.getElementById('auth-overlay').style.display = 'flex'; }
 
-        fetchWeather(); // Call explicitly on load
-
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
         });
     }
 
-    function fetchWeather() {
+    function fetchWeatherForCourse(courseName) {
         const display = document.getElementById('weather-display');
+        display.innerText = "🌤️ Locating course for weather...";
+        
+        fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName + ' Golf')}&format=json&limit=1`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0) fetchWeatherByCoords(data[0].lat, data[0].lon, display);
+                else {
+                    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName)}&format=json&limit=1`)
+                        .then(res => res.json())
+                        .then(data2 => {
+                            if (data2 && data2.length > 0) fetchWeatherByCoords(data2[0].lat, data2[0].lon, display);
+                            else fallbackToDeviceGPS(display);
+                        }).catch(() => fallbackToDeviceGPS(display));
+                }
+            }).catch(() => fallbackToDeviceGPS(display));
+    }
+
+    function fallbackToDeviceGPS(display) {
         if (navigator.geolocation) {
-            display.innerText = "🌤️ Fetching local weather...";
-            navigator.geolocation.getCurrentPosition(async position => {
-                try {
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&current_weather=true`);
-                    const data = await res.json();
-                    if(data.current_weather) {
-                        const deg = data.current_weather.winddirection; const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]; const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
-                        roundWeather.temp = data.current_weather.temperature + "°C"; roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
-                        display.innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
-                        saveLocalState();
-                    }
-                } catch(e) { display.innerText = "⚠️ Weather unavailable"; }
-            }, () => {
-                display.innerText = "⚠️ Location blocked - Weather unavailable";
-            });
-        } else {
-            display.innerText = "⚠️ Geolocation not supported";
-        }
+            display.innerText = "🌤️ Course not on map, trying GPS...";
+            navigator.geolocation.getCurrentPosition(
+                pos => fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, display),
+                () => { display.innerText = "⚠️ Weather unavailable (Course unfound & GPS blocked)"; }
+            );
+        } else display.innerText = "⚠️ Weather unavailable";
+    }
+
+    async function fetchWeatherByCoords(lat, lon, display) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            const data = await res.json();
+            if(data.current_weather) {
+                const deg = data.current_weather.winddirection; const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]; const dir = dirs[Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8];
+                roundWeather.temp = data.current_weather.temperature + "°C"; roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
+                display.innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
+                saveLocalState();
+            }
+        } catch(e) { display.innerText = "⚠️ Weather unavailable"; }
     }
 
     async function submitFeedback() {
@@ -425,7 +442,7 @@
     async function changePassword() { const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; }
     async function logOut() { localStorage.removeItem('golf_guest_mode'); localStorage.removeItem('golf_round_state'); await supabaseClient.auth.signOut(); location.reload(); }
 
-    function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); if(viewId==='view-new-round') fetchWeather(); }
+    function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); }
 
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', e => {
@@ -466,6 +483,8 @@
                     const fetchedCourseName = matchedCourse.course_name.trim();
                     availableTees = teeData.filter(t => t.course_name.trim() === fetchedCourseName);
                     
+                    fetchWeatherForCourse(fetchedCourseName);
+                    
                     let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
                     currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
                     document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
@@ -482,7 +501,6 @@
     function populateTeeDropdown() {
         const select = document.getElementById('tee-select'); document.getElementById('course-setup-container').style.display = 'block';
         
-        // Dynamic Sorting Algorithm (Longest to Shortest, Fallback to Colors)
         const colorOrder = { 'Black': 1, 'Blue': 2, 'White': 3, 'Silver': 4, 'Red': 5 };
         availableTees.sort((a, b) => {
             let yardA = 0, yardB = 0;
@@ -495,7 +513,7 @@
                 if (Array.isArray(ybArr)) yardB = ybArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0);
             } catch(e) {}
 
-            if (yardA > 0 && yardB > 0 && yardA !== yardB) return yardB - yardA; // Longest first
+            if (yardA > 0 && yardB > 0 && yardA !== yardB) return yardB - yardA;
 
             let ca = colorOrder[a.tee_name.trim()] || 99;
             let cb = colorOrder[b.tee_name.trim()] || 99;
@@ -561,22 +579,6 @@
             
             let hb = document.getElementById(hBtn); if(hb) hb.classList.remove('active'); 
             let mb = document.getElementById(mBtn); if(mb) mb.classList.remove('active');
-            
-            let advOps = document.getElementById(`adv-${type}-options`);
-            if (advOps) {
-                advOps.style.display = 'none'; 
-                document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
-            }
-            
-            if(state[type] === (type === 'sandSave' ? 'yes' : 'hit')) {
-                if(hb) hb.classList.add('active');
-            } else if(state[type] === (type === 'sandSave' ? 'no' : 'miss')) { 
-                if(mb) mb.classList.add('active'); 
-                if (advOps) {
-                    advOps.style.display = 'flex'; 
-                    if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); }); 
-                }
-            }
         });
         
         let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.display = par === 3 ? 'none' : 'flex'; 
@@ -648,7 +650,6 @@
         document.getElementById('modal-course-title').innerText = name.trim(); 
         document.getElementById('modal-total-score').innerText = score; 
         
-        // Inject weather directly into the modal header
         let wText = (temp && wind) ? `⛅ ${temp} | 💨 ${wind}` : '';
         document.getElementById('modal-weather').innerText = wText;
 
