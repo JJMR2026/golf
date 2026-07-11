@@ -334,6 +334,8 @@
         else if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } 
         else { document.getElementById('auth-overlay').style.display = 'flex'; }
 
+        fetchWeather(); 
+
         supabaseClient.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
@@ -345,35 +347,37 @@
         display.innerText = "🌤️ Locating course for weather...";
         
         fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName + ' Golf')}&format=json&limit=1`, {
-            headers: { 'User-Agent': 'GolfScorecardApp/1.0 (contact: jjmr2026@github)' }
+            headers: { 'User-Agent': 'GolfScorecardApp/1.0' }
         })
         .then(res => res.json())
         .then(data => {
-            if (data && data.length > 0) fetchWeatherByCoords(data[0].lat, data[0].lon, display);
+            if (data && data.length > 0) fetchWeatherByCoords(data[0].lat, data[0].lon, display, courseName);
             else {
                 fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName)}&format=json&limit=1`, {
-                    headers: { 'User-Agent': 'GolfScorecardApp/1.0 (contact: jjmr2026@github)' }
+                    headers: { 'User-Agent': 'GolfScorecardApp/1.0' }
                 })
                 .then(res => res.json())
                 .then(data2 => {
-                    if (data2 && data2.length > 0) fetchWeatherByCoords(data2[0].lat, data2[0].lon, display);
-                    else fallbackToDeviceGPS(display);
-                }).catch(() => fallbackToDeviceGPS(display));
+                    if (data2 && data2.length > 0) fetchWeatherByCoords(data2[0].lat, data2[0].lon, display, courseName);
+                    else fallbackToDeviceGPS(display, courseName);
+                }).catch(() => fallbackToDeviceGPS(display, courseName));
             }
-        }).catch(() => fallbackToDeviceGPS(display));
+        }).catch(() => fallbackToDeviceGPS(display, courseName));
     }
 
-    function fallbackToDeviceGPS(display) {
+    function fallbackToDeviceGPS(display, courseName) {
         if (navigator.geolocation) {
-            display.innerText = "🌤️ Map search bounced, pinging device GPS...";
+            display.innerHTML = `<span style="cursor:pointer;" onclick="fetchWeatherForCourse('${courseName.replace(/'/g, "\\'")}')">🌤️ Map search bounced, pinging device GPS...</span>`;
             navigator.geolocation.getCurrentPosition(
-                pos => fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, display),
-                () => { display.innerText = "⚠️ Weather unavailable (Course unfound & GPS blocked)"; }
+                pos => fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, display, courseName),
+                (err) => { 
+                    display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="retryLocation('${courseName.replace(/'/g, "\\'")}')">⚠️ Location Blocked - Tap to Retry</button>`; 
+                }
             );
         } else display.innerText = "⚠️ Weather unavailable";
     }
 
-    async function fetchWeatherByCoords(lat, lon, display) {
+    async function fetchWeatherByCoords(lat, lon, display, courseName) {
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
             const data = await res.json();
@@ -387,8 +391,34 @@
                 display.innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
                 saveLocalState();
             }
-        } catch(e) { console.error(e); display.innerText = "⚠️ Weather unavailable"; }
+        } catch(e) { 
+            console.error(e); 
+            display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="retryLocation('${courseName ? courseName.replace(/'/g, "\\'") : ""}')">⚠️ Weather unavailable - Tap to Retry</button>`; 
+        }
     }
+
+    function fetchWeather() {
+        const display = document.getElementById('weather-display');
+        if (navigator.geolocation) {
+            display.innerText = "🌤️ Fetching local weather...";
+            navigator.geolocation.getCurrentPosition(async position => {
+                fetchWeatherByCoords(position.coords.latitude, position.coords.longitude, display, "");
+            }, (err) => {
+                display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="retryLocation()">⚠️ Location Blocked - Tap to Retry</button>`;
+            });
+        } else {
+            display.innerText = "⚠️ Geolocation not supported";
+        }
+    }
+
+    window.retryLocation = function(courseName = null) {
+        alert("If your browser blocked location access, a website cannot force the prompt to reappear.\n\nOn Apple devices, tap the 'aA' icon in your Safari address bar, open 'Website Settings', and change Location to 'Allow'.");
+        if (courseName && courseName !== "") {
+            fetchWeatherForCourse(courseName);
+        } else {
+            fetchWeather();
+        }
+    };
 
     async function submitFeedback() {
         const text = document.getElementById('feedback-text').value.trim(); if(!text) return;
@@ -568,6 +598,15 @@
     }
 
     function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
+    
+    // NEW TWO-WAY PLAY MODE SYNC
+    function syncPlayToState(field, val) { 
+        roundData[currentPlayHole][field] = val; 
+        const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); 
+        if(gridInput) gridInput.value = val; 
+        saveLocalState(); 
+    }
+
     function toggleGridDrops(index) { let cVal = parseInt(roundData[index].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; roundData[index].drops = newVal; const btn = document.getElementById(`grid-drops-${index}`); if(btn) { btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; } if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
     function toggleGridHit(index, type) { const btn = document.getElementById(`grid-${type}-${index}`); let ns = type === 'sandSave' ? (btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no")) : (btn.innerText === "MISS" ? "hit" : "miss"); btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); roundData[index][type] = ns === "-" ? "" : ns; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
 
@@ -584,6 +623,22 @@
             
             let hb = document.getElementById(hBtn); if(hb) hb.classList.remove('active'); 
             let mb = document.getElementById(mBtn); if(mb) mb.classList.remove('active');
+            
+            let advOps = document.getElementById(`adv-${type}-options`);
+            if (advOps) {
+                advOps.style.display = 'none'; 
+                document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
+            }
+            
+            if(state[type] === (type === 'sandSave' ? 'yes' : 'hit')) {
+                if(hb) hb.classList.add('active');
+            } else if(state[type] === (type === 'sandSave' ? 'no' : 'miss')) { 
+                if(mb) mb.classList.add('active'); 
+                if (advOps) {
+                    advOps.style.display = 'flex'; 
+                    if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); }); 
+                }
+            }
         });
         
         let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.display = par === 3 ? 'none' : 'flex'; 
@@ -711,7 +766,7 @@
         if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
         try {
-            const { data, error = null } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
+            const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
             if(error) throw error; masterAnalyticsData = data || []; 
             populateFilters(); 
             forceSyncFilters(); 
@@ -758,10 +813,10 @@
         let averages = [];
         if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
         if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.`); if (averages.length > 1 && best.val < worst.val) { insights.push(`🟢 <b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.`); } }
-        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); else insights.push(`🟢 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); if (threePuttRate > 10) insights.push('⚠️ <b>3-Putts:</b> ' + threePuttRate.toFixed(0) + '% of your holes result in a 3-putt.'); }
-        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push('🔴 <b>Driving Accuracy:</b> Hitting only ' + firPct.toFixed(0) + '% of fairways.'); else insights.push('🟢 <b>Driving Accuracy:</b> Hitting ' + firPct.toFixed(0) + '% of fairways.'); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push('🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ' + leftPct.toFixed(0) + '% are to the <b>LEFT</b>.'); if (rightPct >= 50) insights.push('🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ' + rightPct.toFixed(0) + '% are to the <b>RIGHT</b>.'); } }
-        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push('🔴 <b>Approach Shots:</b> Hitting ' + girPct.toFixed(0) + '% of greens in regulation.'); else insights.push('🟢 <b>Approach Shots:</b> Hitting ' + girPct.toFixed(0) + '% of greens in regulation.'); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push('🎯 <b>Distance Control:</b> ' + shortPct.toFixed(0) + '% of your missed greens land <b>SHORT</b>.'); } }
-        if (drops > 0) { let dropsPerRound = drops / fRounds.length; if (dropsPerRound >= 2) insights.push('⚠️ <b>Course Management:</b> You average ' + dropsPerRound.toFixed(1) + ' penalty drops per round.'); }
+        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); else insights.push(`🟢 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.`); }
+        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.`); else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`); if (rightPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`); } }
+        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.`); } }
+        if (drops > 0) { let dropsPerRound = drops / fRounds.length; if (dropsPerRound >= 2) insights.push(`⚠️ <b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.`); }
         if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<ul style="margin:0; padding-left: 20px; line-height: 1.8;"><li>${insights.join('</li><li>')}</li></ul>`;
     }
 
@@ -879,7 +934,7 @@
                     if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
                 }
                 
-                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
+                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
             }) 
         });
         
