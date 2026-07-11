@@ -271,7 +271,7 @@
                         <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
-                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" checked onchange="updateAnalytics()"> 18-Holes Only</label>
+                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" onchange="updateAnalytics()" checked> 18-Holes Only</label>
             </div>
             
             <div class="charts-grid">
@@ -438,9 +438,7 @@
             let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`);
             
             if (teeData && teeData.length > 0) {
-                // Try exact match first
                 let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase() === query.toUpperCase());
-                // Fallback to first partial match if exact match fails
                 if (!matchedCourse) { matchedCourse = teeData[0]; }
                 
                 if (matchedCourse) {
@@ -518,12 +516,32 @@
 
         ['fir', 'gir', 'sandSave'].forEach(type => {
             let hBtn = type === 'sandSave' ? `${type}-yes-btn` : `${type}-hit-btn`; let mBtn = type === 'sandSave' ? `${type}-no-btn` : `${type}-miss-btn`;
-            document.getElementById(hBtn).classList.remove('active'); document.getElementById(mBtn).classList.remove('active');
-            if (type !== 'sandSave') { document.getElementById(`adv-${type}-options`).style.display = 'none'; document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active')); }
-            if(state[type] === (type === 'sandSave' ? 'yes' : 'hit')) document.getElementById(hBtn).classList.add('active');
-            else if(state[type] === (type === 'sandSave' ? 'no' : 'miss')) { document.getElementById(mBtn).classList.add('active'); if (type !== 'sandSave') { document.getElementById(`adv-${type}-options`).style.display = 'flex'; if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); }); } }
+            
+            let hb = document.getElementById(hBtn); if(hb) hb.classList.remove('active'); 
+            let mb = document.getElementById(mBtn); if(mb) mb.classList.remove('active');
+            
+            let advOps = document.getElementById(`adv-${type}-options`);
+            if (advOps) {
+                advOps.style.display = 'none'; 
+                document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
+            }
+            
+            if(state[type] === (type === 'sandSave' ? 'yes' : 'hit')) {
+                if(hb) hb.classList.add('active');
+            } else if(state[type] === (type === 'sandSave' ? 'no' : 'miss')) { 
+                if(mb) mb.classList.add('active'); 
+                if (advOps) {
+                    advOps.style.display = 'flex'; 
+                    if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); }); 
+                }
+            }
         });
-        document.getElementById('play-drive-block').style.display = par === 3 ? 'none' : 'flex'; document.getElementById('play-fir-block').style.display = par === 3 ? 'none' : 'block'; document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible'; document.getElementById('play-next-btn').innerText = currentPlayHole === (currentHoleCount - 1) ? 'FINISH' : 'NEXT HOLE →';
+        
+        let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.display = par === 3 ? 'none' : 'flex'; 
+        let fBlock = document.getElementById('play-fir-block'); if(fBlock) fBlock.style.display = par === 3 ? 'none' : 'flex'; 
+        
+        document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible'; 
+        document.getElementById('play-next-btn').innerText = currentPlayHole === (currentHoleCount - 1) ? 'FINISH' : 'NEXT HOLE →';
     }
 
     function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min((currentHoleCount - 1), currentPlayHole + dir)); updatePlayModeUI(); }
@@ -640,8 +658,8 @@
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
             if(error) throw error; masterAnalyticsData = data || []; 
-            populateFilters(); 
             forceSyncFilters(); 
+            populateFilters(); 
             updateAnalytics(); 
         } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
     }
