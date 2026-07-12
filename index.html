@@ -156,7 +156,6 @@
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
         
-        <!-- CONDENSED LOGIN OPTIONS -->
         <div class="login-option">
             <h4 style="color: var(--text-main);">Login / Sign Up</h4>
             <p><strong>1. Real Email:</strong> Full tracking & secure password recovery.<br>
@@ -166,7 +165,6 @@
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
         <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 10px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
         
-        <!-- PASSWORD RECOVERY LINK -->
         <div style="text-align: right; margin-bottom: 15px; width: 100%;">
             <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); font-size: 12px; text-decoration: none;">Forgot Password?</a>
         </div>
@@ -843,6 +841,7 @@
         
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
+        // --- PACE TRACKING CALCULATION ---
         let strokes = 0; let parSum = 0; let holesPlayed = 0;
         let totalCoursePar = currentCoursePars.slice(0, currentHoleCount).reduce((a,b) => a + (parseInt(b) || 4), 0);
         
@@ -865,6 +864,7 @@
             document.getElementById('pace-projected-display').innerText = `Pace: --`;
         }
 
+        // --- MISSING DATA CHECKER (INDEPENDENT FLAGS & NAV) ---
         let missingBanner = document.getElementById('play-warning-banner');
         let missingHtml = "";
         
@@ -886,6 +886,7 @@
             missingBanner.style.display = 'none';
         }
 
+        // --- ADVANCED OPTIONS VISIBILITY ---
         let dropsAdvOps = document.getElementById('adv-drops-options');
         if (dropsAdvOps) {
             if (dropsVal > 0) {
@@ -1134,83 +1135,6 @@
         document.getElementById('hole-btn-text').innerText = 'All Holes';
     }
 
-    window.updateAnalytics = function() {
-        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
-        let fRounds = masterAnalyticsData.filter(r => { 
-            if (!actCrs.includes(r.course_name.trim())) return false; 
-            const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
-            
-            if (only18) { 
-                if(r.hole_scores && r.hole_scores.length > 0) {
-                    const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
-                    if (playedHoles < 18) return false; 
-                } 
-            } 
-            
-            let isFullyFiltered = actHoles.length < 18 || actPars.length < 4;
-            if (isFullyFiltered && (!r.hole_scores || r.hole_scores.length === 0)) return false;
-
-            if (actHoles.length < 18) { const hasHole = r.hole_scores.some(h => actHoles.includes(h.hole_number.toString()) && h.score && h.score > 0); if(!hasHole) return false; } 
-            if (actPars.length < 4) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; } 
-            return true; 
-        });
-        
-        const t = document.getElementById('analytics-data-table');
-        if(fRounds.length === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
-
-        if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
-        document.getElementById('hcp-display').innerText = calculateHandicap(fRounds); renderCharts(fRounds, actHoles, actPars); document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
-        
-        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; let totalStrokes = 0; let totalHolesCount = 0; let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
-        fRounds.forEach(r => { 
-            let targetHoles = r.hole_scores || []; 
-            if (targetHoles.length === 0) { totalStrokes += r.total_score; totalHolesCount += 18; s.putts += r.total_putts || 0; s.pHP += 18; return; }
-            
-            if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
-            if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
-            
-            targetHoles.forEach(h => { 
-                if (!h.score) return; 
-                totalStrokes += h.score; 
-                totalHolesCount++; 
-                
-                if (h.par) {
-                    const d = h.score - h.par; 
-                    if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
-                    if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
-                }
-                
-                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
-            }) 
-        });
-        
-        if(totalHolesCount === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
-        const cA = (tot) => (tot / fRounds.length).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
-        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead><tbody>
-            <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
-            <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
-            <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
-            <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
-            <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
-            <tr><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
-            <tr><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
-            <tr><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
-            <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
-            <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
-            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
-            <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-            <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-            <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
-            <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
-            <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / fRounds.length).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
-        </tbody>`;
-    };
-
     async function loadAnalyticsData() {
         if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
@@ -1243,14 +1167,34 @@
         if (n === 3) { countToUse = 1; adj = -2.0; } else if (n === 4) { countToUse = 1; adj = -1.0; } else if (n === 5) { countToUse = 1; adj = 0; } else if (n === 6) { countToUse = 2; adj = -1.0; } else if (n >= 7 && n <= 8) { countToUse = 2; adj = 0; } else if (n >= 9 && n <= 11) { countToUse = 3; adj = 0; } else if (n >= 12 && n <= 14) { countToUse = 4; adj = 0; } else if (n >= 15 && n <= 16) { countToUse = 5; adj = 0; } else if (n >= 17 && n <= 18) { countToUse = 6; adj = 0; } else if (n === 19) { countToUse = 7; adj = 0; } else if (n === 20) { countToUse = 8; adj = 0; }
         const avg = (diffs.slice(0, countToUse).reduce((a,b) => a+b, 0) / countToUse) + adj; return Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
     }
+
+    function calculateHcpHistory(rounds) {
+        let chrono = [...rounds].reverse();
+        let history = [];
+        for (let i = 0; i < chrono.length; i++) {
+            let windowRounds = chrono.slice(Math.max(0, i - 19), i + 1).reverse();
+            let h = calculateHandicap(windowRounds);
+            history.push({ date: chrono[i].date_played, hcp: h });
+        }
+        return history;
+    }
     
     function generateInsights(fRounds) {
-        let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0;
+        let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0, bbOpp=0, bbHit=0;
         fRounds.forEach(r => { 
             if(!r.hole_scores || r.hole_scores.length === 0) {
                 if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return;
             }
-            r.hole_scores.forEach(h => {
+            
+            let hs = r.hole_scores.slice().sort((a,b) => a.hole_number - b.hole_number);
+            for(let i=0; i<hs.length - 1; i++) {
+                let curr = hs[i], next = hs[i+1];
+                if(curr.score && curr.par && next.score && next.par) {
+                    if(curr.score > curr.par) { bbOpp++; if(next.score <= next.par) bbHit++; }
+                }
+            }
+
+            hs.forEach(h => {
                 if(h.score && h.par) { let diff = h.score - h.par; if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} }
                 if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
                 
@@ -1292,6 +1236,9 @@
         let averages = [];
         if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
         if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.`); if (averages.length > 1 && best.val < worst.val) { insights.push(`🟢 <b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.`); } }
+        
+        if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`🔥 <b>Mental Toughness:</b> You successfully "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.`); else insights.push(`🧠 <b>Mental Toughness:</b> You "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.`); }
+
         if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); else insights.push(`🟢 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.`); }
         if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.`); else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`); if (rightPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`); } }
         if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.`); } }
@@ -1305,11 +1252,86 @@
         if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<ul style="margin:0; padding-left: 20px; line-height: 1.8;"><li>${insights.join('</li><li>')}</li></ul>`;
     }
 
+    function ensureNewChartsContainers() {
+        let chartsGrid = document.querySelector('.charts-grid');
+        if(!document.getElementById('hcpTrendChart')) {
+            let hcCont = document.createElement('div'); hcCont.className = 'chart-container';
+            hcCont.innerHTML = '<canvas id="hcpTrendChart"></canvas>';
+            chartsGrid.appendChild(hcCont);
+        }
+        if(!document.getElementById('missRadarChart')) {
+            let radarCont = document.createElement('div'); radarCont.className = 'chart-container';
+            radarCont.innerHTML = '<canvas id="missRadarChart"></canvas>';
+            chartsGrid.appendChild(radarCont);
+        }
+        
+        let insightsCard = document.querySelector('.insights-card');
+        if(!document.getElementById('trophy-room-box')) {
+            let trophyBox = document.createElement('div');
+            trophyBox.id = 'trophy-room-box';
+            trophyBox.style.cssText = 'display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;';
+            insightsCard.parentNode.insertBefore(trophyBox, insightsCard.nextSibling);
+        }
+    }
+
+    function updateTrophyRoom(fRounds) {
+        let lowScore = 999, lowScoreCourse = "";
+        let longDrive = 0, longDriveCourse = "";
+        let lowPutts = 999;
+        let mostFir = 0;
+
+        fRounds.forEach(r => {
+            let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
+            
+            if (holesPlayed >= 18) {
+                if (r.total_score > 0 && r.total_score < lowScore) { lowScore = r.total_score; lowScoreCourse = r.course_name.trim(); }
+                if (r.total_putts > 0 && r.total_putts < lowPutts) lowPutts = r.total_putts;
+                
+                let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
+                if (firs > mostFir) mostFir = firs;
+            }
+            
+            if (r.hole_scores) {
+                r.hole_scores.forEach(h => {
+                    if (h.drive_distance > longDrive && (!h.drive_exception || h.drive_exception === "")) {
+                        longDrive = h.drive_distance;
+                        longDriveCourse = r.course_name.trim();
+                    }
+                });
+            }
+        });
+
+        const tBox = document.getElementById('trophy-room-box');
+        if(!tBox) return;
+        
+        const tStyle = "flex: 1; min-width: 120px; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
+        const labelStyle = "font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;";
+        const valStyle = "font-size: 24px; color: #f59e0b; font-weight: bold;";
+        const subStyle = "font-size: 10px; color: #666; margin-top: 5px;";
+
+        tBox.innerHTML = `
+            <div style="width: 100%; font-size: 14px; font-weight: bold; color: #f59e0b; text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
+            <div style="${tStyle}"><div style="${labelStyle}">Low Round</div><div style="${valStyle}">${lowScore === 999 ? '--' : lowScore}</div><div style="${subStyle}">${lowScoreCourse}</div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Long Drive</div><div style="${valStyle}">${longDrive === 0 ? '--' : longDrive + 'y'}</div><div style="${subStyle}">${longDriveCourse}</div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${lowPutts === 999 ? '--' : lowPutts}</div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${mostFir}</div></div>
+        `;
+    }
+
     function renderCharts(filteredRounds, actHoles, actPars) {
+        ensureNewChartsContainers();
+
         const tCtx = document.getElementById('scoringTrendChart'); const pCtx = document.getElementById('puttChart'); const dCtx = document.getElementById('driveChart');
         if (trendChart) trendChart.destroy(); if (puttChart) puttChart.destroy(); if (driveChart) driveChart.destroy();
-        if (filteredRounds.length === 0) { tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; return; }
+        if (hcpChart) hcpChart.destroy(); if (radarChart) radarChart.destroy();
+        
+        if (filteredRounds.length === 0) { 
+            tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; 
+            document.getElementById('hcpTrendChart').parentElement.style.display = 'none'; document.getElementById('missRadarChart').parentElement.style.display = 'none';
+            return; 
+        }
         tCtx.parentElement.style.display = 'block'; pCtx.parentElement.style.display = 'block'; dCtx.parentElement.style.display = 'block';
+        document.getElementById('hcpTrendChart').parentElement.style.display = 'block'; document.getElementById('missRadarChart').parentElement.style.display = 'block';
         
         const chartData = [...filteredRounds].reverse(); const activeOverlays = Array.from(document.querySelectorAll('#chart-overlays input:checked')).map(cb => cb.value);
         let baseScores = [];
@@ -1376,6 +1398,135 @@
             }
         })});
         driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances (Excluding Exceptions)', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
+
+        // Render HCP Chart
+        let hcpHist = calculateHcpHistory(filteredRounds);
+        let validHcp = hcpHist.filter(h => h.hcp !== "--.-");
+        let hcCtx = document.getElementById('hcpTrendChart').getContext('2d');
+        hcpChart = new Chart(hcCtx, {
+            type: 'line',
+            data: {
+                labels: validHcp.map(h => new Date(h.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})),
+                datasets: [{
+                    label: 'Handicap Index',
+                    data: validHcp.map(h => parseFloat(h.hcp)),
+                    borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: '#121212'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Handicap Trend (Last 20)', color: '#f3f4f6' } }, scales: { x: { display: false }, y: { grid: { color: '#2a2a2a' } } } }
+        });
+
+        // Render Radar Chart
+        let fL=0, fR=0, gL=0, gR=0, gS=0, gLg=0;
+        chartData.forEach(r => {
+            let th = r.hole_scores || [];
+            if (actHoles.length < 18) th = th.filter(h => actHoles.includes(h.hole_number.toString())); 
+            if (actPars.length < 4) th = th.filter(h => actPars.includes(h.par.toString()));
+            th.forEach(h => {
+                let fA = h.fir_adv || ""; let gA = h.gir_adv || "";
+                if(fA.includes('LEFT')) fL++; if(fA.includes('RIGHT')) fR++;
+                if(gA.includes('LEFT')) gL++; if(gA.includes('RIGHT')) gR++;
+                if(gA.includes('SHORT')) gS++; if(gA.includes('LONG')) gLg++;
+            });
+        });
+        let radCtx = document.getElementById('missRadarChart').getContext('2d');
+        radarChart = new Chart(radCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Miss Left', 'Miss Short', 'Miss Right', 'Miss Long'],
+                datasets: [{
+                    label: 'Directional Misses (FIR & GIR)',
+                    data: [fL+gL, gS, fR+gR, gLg],
+                    borderColor: '#d946ef', backgroundColor: 'rgba(217, 70, 239, 0.2)',
+                    borderWidth: 2, pointBackgroundColor: '#d946ef'
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                scales: { r: { angleLines: { color: '#333' }, grid: { color: '#333' }, pointLabels: { color: '#9ca3af' }, ticks: { display: false, backdropColor: 'transparent' } } },
+                plugins: { legend: { display: false }, title: { display: true, text: 'Miss Tendencies', color: '#f3f4f6' } }
+            }
+        });
+    }
+
+    window.updateAnalytics = function() {
+        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        let fRounds = masterAnalyticsData.filter(r => { 
+            if (!actCrs.includes(r.course_name.trim())) return false; 
+            const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
+            
+            if (only18) { 
+                if(r.hole_scores && r.hole_scores.length > 0) {
+                    const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
+                    if (playedHoles < 18) return false; 
+                } 
+            } 
+            
+            let isFullyFiltered = actHoles.length < 18 || actPars.length < 4;
+            if (isFullyFiltered && (!r.hole_scores || r.hole_scores.length === 0)) return false;
+
+            if (actHoles.length < 18) { const hasHole = r.hole_scores.some(h => actHoles.includes(h.hole_number.toString()) && h.score && h.score > 0); if(!hasHole) return false; } 
+            if (actPars.length < 4) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; } 
+            return true; 
+        });
+        
+        const t = document.getElementById('analytics-data-table');
+        if(fRounds.length === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
+
+        if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
+        document.getElementById('hcp-display').innerText = calculateHandicap(fRounds); renderCharts(fRounds, actHoles, actPars); 
+        document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
+        updateTrophyRoom(fRounds);
+        
+        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; let totalStrokes = 0; let totalHolesCount = 0; let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
+        fRounds.forEach(r => { 
+            let targetHoles = r.hole_scores || []; 
+            if (targetHoles.length === 0) { totalStrokes += r.total_score; totalHolesCount += 18; s.putts += r.total_putts || 0; s.pHP += 18; return; }
+            
+            if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
+            if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
+            
+            targetHoles.forEach(h => { 
+                if (!h.score) return; 
+                totalStrokes += h.score; 
+                totalHolesCount++; 
+                
+                if (h.par) {
+                    const d = h.score - h.par; 
+                    if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
+                    if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
+                }
+                
+                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
+            }) 
+        });
+        
+        if(totalHolesCount === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
+        const cA = (tot) => (tot / fRounds.length).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
+        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead><tbody>
+            <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
+            <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
+            <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
+            <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
+            <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
+            <tr><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
+            <tr><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
+            <tr><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
+            <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
+            <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
+            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
+            <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
+            <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
+            <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / fRounds.length).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
+        </tbody>`;
     }
     // --- END analyticsLogic ---
 
