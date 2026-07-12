@@ -1,11 +1,11 @@
 <!-- 
 ====================================================================================
- █████╗ ████████╗███╗   ███╗██╗     
-██╔══██╗╚══██╔══╝████╗ ████║██║     
-███████║   ██║   ██╔████╔██║██║     
-██╔══██║   ██║   ██║╚██╔╝██║██║     
-██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
-╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
+ ██╗  ██╗████████╗███╗   ███╗██╗     
+ ██║  ██║╚══██╔══╝████╗ ████║██║     
+ ███████║   ██║   ██╔████╔██║██║     
+ ██╔══██║   ██║   ██║╚██╔╝██║██║     
+ ██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
+ ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
 ====================================================================================
 -->
 <!DOCTYPE html>
@@ -100,7 +100,7 @@
         .play-nav button { padding: 16px; font-size: 16px; }
 
         /* Missing Data Banner Styling */
-        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; display: flex; flex-direction: column; gap: 10px; }
+        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; }
         #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
@@ -175,10 +175,14 @@
     <div class="auth-card">
         <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('settings-overlay').style.display='none'">✕</button>
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
-        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
-        <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 15px;">
-        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="primary" style="width: 100%;" onclick="changePassword()">Update Password</button></div>
-        <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
+        
+        <div id="password-change-section">
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
+            <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 15px;">
+            <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="primary" style="width: 100%;" onclick="changePassword()">Update Password</button></div>
+            <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
+        </div>
+
         <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
             <textarea id="feedback-text" rows="3" placeholder="Tell us what's broken or what you'd like to see added..." style="width: 100%; margin-bottom: 10px; resize: vertical;"></textarea>
@@ -195,7 +199,7 @@
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
-            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️ Account</button>
+            <button class="view-toggle-btn" onclick="openSettings()">⚙️ Account</button>
         </div>
     </div>
 
@@ -454,6 +458,15 @@
         });
     }
 
+    window.openSettings = function() {
+        if (!currentUser) {
+            document.getElementById('password-change-section').style.display = 'none';
+        } else {
+            document.getElementById('password-change-section').style.display = 'block';
+        }
+        document.getElementById('settings-overlay').style.display = 'flex';
+    }
+
     function fetchWeatherForCourse(courseName) {
         const display = document.getElementById('weather-display');
         display.innerText = "🌤️ Locating course for weather...";
@@ -491,7 +504,8 @@
 
     async function fetchWeatherByCoords(lat, lon, display, courseName) {
         try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            // FIX: Added &timezone=auto to fetch local time instead of UTC 7am
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
             const data = await res.json();
             if(data.current_weather) {
                 let windAngle = data.current_weather.winddirection; 
@@ -764,6 +778,12 @@
         updatePlayModeUI();
     };
 
+    window.goToHoleAndDismiss = function(holeIndex, key) {
+        dismissMissingWarning(key);
+        currentPlayHole = holeIndex;
+        updatePlayModeUI();
+    };
+
     function updatePlayModeUI() {
         const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-';
         document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`; document.getElementById('play-par-title').innerText = `PAR ${par || '-'} • ${yds} YDS`;
@@ -795,7 +815,7 @@
             document.getElementById('pace-projected-display').innerText = `Pace: --`;
         }
 
-        // --- MISSING DATA CHECKER (INDEPENDENT FLAGS) ---
+        // --- MISSING DATA CHECKER (INDEPENDENT FLAGS & NAV) ---
         let missingBanner = document.getElementById('play-warning-banner');
         let missingHtml = "";
         
@@ -803,15 +823,15 @@
             let s = parseInt(roundData[i].score);
             let p = parseInt(currentCoursePars[i]) || 4;
             if (s > 0 && i !== currentPlayHole) {
-                if (roundData[i].putts === "" && !dismissedWarnings.includes(`${i}-putts`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-putts')">Hole ${i+1} Putts ✕</span>`;
-                if (roundData[i].gir === "" && !dismissedWarnings.includes(`${i}-gir`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-gir')">Hole ${i+1} GIR ✕</span>`;
-                if (p > 3 && roundData[i].fir === "" && !dismissedWarnings.includes(`${i}-fir`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-fir')">Hole ${i+1} FIR ✕</span>`;
-                if (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === "") && !dismissedWarnings.includes(`${i}-drive`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-drive')">Hole ${i+1} Drive ✕</span>`;
+                if (roundData[i].putts === "" && !dismissedWarnings.includes(`${i}-putts`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-putts')">Hole ${i+1} Putts</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-putts')">✕</span></div>`;
+                if (roundData[i].gir === "" && !dismissedWarnings.includes(`${i}-gir`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-gir')">Hole ${i+1} GIR</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-gir')">✕</span></div>`;
+                if (p > 3 && roundData[i].fir === "" && !dismissedWarnings.includes(`${i}-fir`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-fir')">Hole ${i+1} FIR</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-fir')">✕</span></div>`;
+                if (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === "") && !dismissedWarnings.includes(`${i}-drive`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-drive')">Hole ${i+1} Drive</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-drive')">✕</span></div>`;
             }
         }
         
         if (missingHtml !== "") {
-            document.getElementById('play-warning-text').innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center;"><b style="width:100%; font-size:11px; margin-bottom:4px;">⚠️ MISSING STATS (Tap to dismiss):</b>${missingHtml}</div>`;
+            document.getElementById('play-warning-text').innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center;"><b style="width:100%; font-size:11px; margin-bottom:4px;">⚠️ MISSING STATS:</b>${missingHtml}</div>`;
             missingBanner.style.display = 'block';
         } else {
             missingBanner.style.display = 'none';
