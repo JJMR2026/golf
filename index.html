@@ -1,3 +1,13 @@
+<!-- 
+====================================================================================
+ █████╗ ████████╗███╗   ███╗██╗     
+██╔══██╗╚══██╔══╝████╗ ████║██║     
+███████║   ██║   ██╔████╔██║██║     
+██╔══██║   ██║   ██║╚██╔╝██║██║     
+██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
+╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
+====================================================================================
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +20,17 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+<!-- 
+====================================================================================
+ ██████╗███████╗███████╗
+██╔════╝██╔════╝██╔════╝
+██║     ███████╗███████╗
+██║     ╚════██║╚════██║
+╚██████╗███████║███████║
+ ╚═════╝╚══════╝╚══════╝
+====================================================================================
+-->
     <style>
         :root { --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a; --accent-green: #10b981; --accent-hover: #059669; --text-main: #f3f4f6; --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333; }
         body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -67,8 +88,8 @@
         
         #play-mode-container { display: none; flex-direction: column; gap: 20px; }
         .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
-        .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
-        .play-label { font-size: 16px; font-weight: 600; }
+        .play-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); flex-wrap: wrap;}
+        .play-label { font-size: 16px; font-weight: 600; min-width: 120px;}
         .play-input { width: 80px; height: 50px; background: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
         .play-input input { font-size: 20px; padding: 0;}
         .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; flex-wrap: wrap; }
@@ -76,6 +97,10 @@
         .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
+
+        /* Missing Data Banner Styling */
+        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
         .history-item:hover { background-color: #1a1a1a; }
@@ -199,13 +224,40 @@
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 <div id="play-mode-container">
-                    <span id="play-hole-title" style="color: var(--accent-green);">HOLE 1</span>
-                    <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
+                    
+                    <!-- NEW LIVE PACE TRACKER -->
+                    <div id="play-pace-tracker">
+                        <span id="pace-score-display">Strokes: 0 (E)</span>
+                        <span id="pace-projected-display">Pace: --</span>
+                    </div>
+
+                    <!-- MISSING DATA WARNING BANNER -->
+                    <div id="play-warning-banner" style="display: none;">
+                        <span id="play-warning-text">⚠️ Missing Stats</span>
+                        <span style="cursor:pointer; font-size: 16px;" onclick="dismissMissingWarning()">✕</span>
+                    </div>
+
+                    <span id="play-hole-title" style="color: var(--accent-green); font-size: 24px; font-weight: bold;">HOLE 1</span>
+                    <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold; display: block; margin-bottom: 15px;">PAR - • - YDS</span>
+                    
                     <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
                     <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
                     <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
                     <div class="play-row"><div class="play-label">GIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div></div>
-                    <div class="play-row" id="play-drive-block"><div class="play-label">DRIVE (YDS)</div><div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div></div>
+                    
+                    <!-- DRIVE BLOCK WITH EXCEPTIONS -->
+                    <div class="play-row" id="play-drive-block" style="flex-wrap: wrap;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <div class="play-label">DRIVE (YDS)</div>
+                            <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div>
+                        </div>
+                        <select id="play-drive-exception" style="width: 100%; margin-top: 10px; font-size: 14px; padding: 8px;" onchange="syncPlayToState('driveException', this.value)">
+                            <option value="">Normal Drive</option>
+                            <option value="IRON">Positional / Iron</option>
+                            <option value="MISS">Chunk / Topped / OB</option>
+                        </select>
+                    </div>
+
                     <div class="play-row"><div class="play-label">DROPS</div><div class="play-input"><button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:var(--cell-bg); border:1px solid var(--cell-border); border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button></div></div>
                     <div class="play-row"><div class="play-label">SAND SAVE</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button><button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button></div></div>
                     <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
@@ -305,7 +357,10 @@
 <div id="history-modal" class="modal-overlay">
     <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px;"><h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3><div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div></div>
+        <div class="scorecard-header" style="margin-bottom: 5px;">
+            <h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div>
+        </div>
         <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
@@ -318,25 +373,25 @@
     </form>
 </div>
 
+<!-- 
+====================================================================================
+ ██████╗██████╗ ██████╗ ███████╗    ██╗ █████╗ ██╗   ██╗ █████╗ ███████╗ ██████╗██████╗ ██████╗ ████████╗
+██╔════╝██╔══██╗██╔══██╗██╔════╝    ██║██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗╚══██╔══╝
+██║     ██████╔╝██████╔╝█████╗      ██║███████║██║   ██║███████║███████╗██║     ██████╔╝██████╔╝   ██║   
+██║     ██╔══██╗██╔══██╗██╔══╝ ██   ██║██╔══██║╚██╗ ██╔╝██╔══██║╚════██║██║     ██╔══██╗██╔═══╝    ██║   
+╚██████╗██║  ██║██║  ██║███████╗╚█████╔╝██║  ██║ ╚████╔╝ ██║  ██║███████║╚██████╗██║  ██║██║       ██║   
+ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝       ╚═╝   
+====================================================================================
+-->
 <script>
-    // ====================================================================================
-    //  ██████╗  ██████╗ ██╗     ███████╗    ████████╗██████╗  █████╗  ██████╗██╗  ██╗███████╗██████╗ 
-    // ██╔════╝ ██╔═══██╗██║     ██╔════╝    ╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
-    // ██║  ███╗██║   ██║██║     █████╗         ██║   ██████╔╝███████║██║     █████╔╝ █████╗  ██████╔╝
-    // ██║   ██║██║   ██║██║     ██╔══╝         ██║   ██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
-    // ╚██████╔╝╚██████╔╝███████╗██║            ██║   ██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║
-    //  ╚═════╝  ╚═════╝ ╚══════╝╚═╝            ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
-    //                       --- CORE JAVASCRIPT START ---
-    // ====================================================================================
-
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#2a2a2a';
 
-    let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, dropsAdv: [], sandSave: "" })), masterAnalyticsData = [];
-    let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
-    let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null };
+    let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" })), masterAnalyticsData = [];
+    let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", driveException: "", drops: 0, sandSave: "" }));
+    let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
 
     // --- INJECT MISSING ADVANCED TRACKING UI DYNAMICALLY ---
     const firBlock = document.getElementById('play-fir-block');
@@ -375,14 +430,25 @@
 
     async function initializeApp() {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
-        else if (localStorage.getItem('golf_guest_mode') === 'true') { document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); } 
+        if (session) { 
+            currentUser = session.user; 
+            localStorage.removeItem('golf_guest_mode'); 
+            document.getElementById('auth-overlay').style.display = 'none'; 
+            loadLocalState(); // FIXED: Caching works for logged in users now
+            buildGrid(); 
+            processOfflineQueue(); 
+        } 
+        else if (localStorage.getItem('golf_guest_mode') === 'true') { 
+            document.getElementById('auth-overlay').style.display = 'none'; 
+            loadLocalState(); 
+            buildGrid(); 
+        } 
         else { document.getElementById('auth-overlay').style.display = 'flex'; }
 
         fetchWeather(); 
 
         supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; buildGrid(); processOfflineQueue(); } 
+            if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
         });
     }
@@ -486,8 +552,38 @@
         }; reader.readAsText(file);
     }
 
-    function saveLocalState() { const el = document.getElementById('current-course-display'); if (!el) return; localStorage.setItem('golf_round_state', JSON.stringify({ courseName: el.innerText.trim(), holeCount: currentHoleCount, pars: currentCoursePars, yardages: currentYardages, roundData: roundData, weather: roundWeather })); }
-    function loadLocalState() { const saved = localStorage.getItem('golf_round_state'); if(saved) { try { const s=JSON.parse(saved); document.getElementById('current-course-display').innerText = s.courseName; document.getElementById('current-course-display').style.color = 'var(--accent-green)'; currentHoleCount = s.holeCount||18; currentCoursePars = s.pars||Array(18).fill(""); currentYardages = s.yardages||Array(18).fill(""); roundData = s.roundData||Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, dropsAdv: [], sandSave: "" })); roundWeather = s.weather || roundWeather; if(roundWeather.temp) document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; document.getElementById('btn-18-holes').classList.toggle('active', currentHoleCount === 18); document.getElementById('btn-9-holes').classList.toggle('active', currentHoleCount === 9); } catch(e) {} } }
+    function saveLocalState() { 
+        const el = document.getElementById('current-course-display'); if (!el) return; 
+        localStorage.setItem('golf_round_state', JSON.stringify({ 
+            courseName: el.innerText.trim(), 
+            holeCount: currentHoleCount, 
+            pars: currentCoursePars, 
+            yardages: currentYardages, 
+            roundData: roundData, 
+            weather: roundWeather,
+            dismissedWarnings: dismissedWarnings
+        })); 
+    }
+    
+    function loadLocalState() { 
+        const saved = localStorage.getItem('golf_round_state'); 
+        if(saved) { 
+            try { 
+                const s = JSON.parse(saved); 
+                document.getElementById('current-course-display').innerText = s.courseName; 
+                document.getElementById('current-course-display').style.color = 'var(--accent-green)'; 
+                currentHoleCount = s.holeCount || 18; 
+                currentCoursePars = s.pars || Array(18).fill(""); 
+                currentYardages = s.yardages || Array(18).fill(""); 
+                roundData = s.roundData || Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" })); 
+                roundWeather = s.weather || roundWeather; 
+                dismissedWarnings = s.dismissedWarnings || [];
+                if(roundWeather.temp) document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; 
+                document.getElementById('btn-18-holes').classList.toggle('active', currentHoleCount === 18); 
+                document.getElementById('btn-9-holes').classList.toggle('active', currentHoleCount === 9); 
+            } catch(e) {} 
+        } 
+    }
     
     async function processOfflineQueue() {
         const queueStr = localStorage.getItem('golf_offline_queue');
@@ -511,7 +607,7 @@
 
     document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
     document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { if (currentCoursePars[currentPlayHole] === 3) document.getElementById('play-drops-btn').focus(); else document.getElementById('play-drive').focus(); }, 150); });
-    document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drops-btn').focus(), 150); });
+    document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-exception').focus(), 150); });
 
     function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
 
@@ -567,7 +663,8 @@
                     
                     let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
                     currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
-                    roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", drops: 0, dropsAdv: [], sandSave: "" }));
+                    roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" }));
+                    dismissedWarnings = [];
                     document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                     
                     populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
@@ -643,7 +740,7 @@
     }
 
     function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
-    function syncPlayToState(field, val) { roundData[currentPlayHole][field] = val; const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); if(gridInput) gridInput.value = val; saveLocalState(); }
+    function syncPlayToState(field, val) { roundData[currentPlayHole][field] = val; const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); if(gridInput) gridInput.value = val; saveLocalState(); updatePlayModeUI(); }
 
     function toggleGridDrops(index) { 
         let cVal = parseInt(roundData[index].drops) || 0; 
@@ -660,13 +757,73 @@
 
     function togglePlayMode(isPlayMode) { document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; if(isPlayMode) updatePlayModeUI(); }
 
+    function dismissMissingWarning() {
+        const wText = document.getElementById('play-warning-text').innerText;
+        const holeMatch = wText.match(/Hole (\d+)/);
+        if (holeMatch) {
+            let hNum = parseInt(holeMatch[1]) - 1;
+            if(!dismissedWarnings.includes(hNum)) dismissedWarnings.push(hNum);
+            saveLocalState();
+            updatePlayModeUI();
+        }
+    }
+
     function updatePlayModeUI() {
         const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-';
         document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`; document.getElementById('play-par-title').innerText = `PAR ${par || '-'} • ${yds} YDS`;
         document.getElementById('play-score').value = state.score; document.getElementById('play-putts').value = state.putts; document.getElementById('play-drive').value = state.drive;
+        document.getElementById('play-drive-exception').value = state.driveException || "";
+        
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
-        // Handle Drops Advanced Options Visibility & Counting
+        // --- PACE TRACKING CALCULATION ---
+        let strokes = 0; let parSum = 0; let holesPlayed = 0;
+        let totalCoursePar = currentCoursePars.slice(0, currentHoleCount).reduce((a,b) => a + (parseInt(b) || 4), 0);
+        
+        for(let i=0; i<currentHoleCount; i++) {
+            let s = parseInt(roundData[i].score);
+            let p = parseInt(currentCoursePars[i]) || 4;
+            if(s > 0) { strokes += s; parSum += p; holesPlayed++; }
+        }
+        
+        let relToPar = strokes - parSum;
+        let relStr = relToPar > 0 ? `+${relToPar}` : (relToPar === 0 ? 'E' : relToPar);
+        document.getElementById('pace-score-display').innerText = `Strokes: ${strokes} (${relStr})`;
+        
+        if (holesPlayed > 0) {
+            let paceRel = Math.round((relToPar / holesPlayed) * currentHoleCount);
+            let paceTotal = totalCoursePar + paceRel;
+            let paceRelStr = paceRel > 0 ? `+${paceRel}` : (paceRel === 0 ? 'E' : paceRel);
+            document.getElementById('pace-projected-display').innerText = `Pace: ${paceTotal} (${paceRelStr})`;
+        } else {
+            document.getElementById('pace-projected-display').innerText = `Pace: --`;
+        }
+
+        // --- MISSING DATA CHECKER (NUDGE) ---
+        let missingBanner = document.getElementById('play-warning-banner');
+        let foundMissing = -1; let missingTypes = [];
+        
+        for(let i=0; i<currentHoleCount; i++) {
+            let s = parseInt(roundData[i].score);
+            let p = parseInt(currentCoursePars[i]) || 4;
+            if (s > 0 && !dismissedWarnings.includes(i) && i !== currentPlayHole) {
+                if (roundData[i].putts === "") missingTypes.push("Putts");
+                if (roundData[i].gir === "") missingTypes.push("GIR");
+                if (p > 3 && roundData[i].fir === "") missingTypes.push("FIR");
+                if (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === "")) missingTypes.push("Drive");
+                
+                if (missingTypes.length > 0) { foundMissing = i; break; }
+            }
+        }
+        
+        if (foundMissing !== -1) {
+            document.getElementById('play-warning-text').innerText = `⚠️ Missing stats on Hole ${foundMissing + 1}: ${missingTypes.join(', ')}`;
+            missingBanner.style.display = 'flex';
+        } else {
+            missingBanner.style.display = 'none';
+        }
+
+        // --- ADVANCED OPTIONS VISIBILITY ---
         let dropsAdvOps = document.getElementById('adv-drops-options');
         if (dropsAdvOps) {
             if (dropsVal > 0) {
@@ -702,7 +859,6 @@
                 if (advOps) {
                     advOps.style.display = 'flex'; 
                     if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { 
-                        // Strict check to not accidentally trigger drops
                         if(b.classList.contains('drop-type-btn')) return;
                         if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); 
                     }); 
@@ -760,10 +916,20 @@
         if (teeVal === 'new') { teeName = document.getElementById('setup-tee').value.trim(); if (teeName) { try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); } catch(e) {} } } else if (selectedTee) { teeName = selectedTee.tee_name.trim(); }
 
         let totalScore = 0; let totalPutts = 0; const holesPayload = [];
+        let missingCheck = [];
+
         for (let i = 0; i < currentHoleCount; i++) {
             const s = parseInt(roundData[i].score);
+            let p = parseInt(currentCoursePars[i]) || 4;
+            
             if (!isNaN(s)) {
                 totalScore += s; totalPutts += parseInt(roundData[i].putts) || 0;
+                
+                // Final Submit Check
+                if (roundData[i].putts === "" || roundData[i].gir === "" || (p > 3 && roundData[i].fir === "") || (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === ""))) {
+                    missingCheck.push(i+1);
+                }
+
                 holesPayload.push({ 
                     user_id: currentUser.id, 
                     hole_number: i + 1, 
@@ -775,14 +941,22 @@
                     gir: roundData[i].gir || null, 
                     gir_adv: (roundData[i].girAdv || []).join(','),
                     drive_distance: parseInt(roundData[i].drive) || null, 
+                    drive_exception: roundData[i].driveException || null,
                     drops: parseInt(roundData[i].drops) || 0, 
                     drops_adv: (roundData[i].dropsAdv || []).join(','),
                     sand_save: roundData[i].sandSave || null 
                 });
             }
         }
+        
         if(holesPayload.length === 0) return alert("⚠️ No scores entered.");
-        const submitBtn = document.querySelector('.log-btn-container button'); if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
+        
+        if (missingCheck.length > 0) {
+            if(!confirm(`⚠️ You are missing some stats (Putts/FIR/GIR/Drive) on the following holes:\n\nHole(s): ${missingCheck.join(', ')}\n\nSubmit scorecard anyway?`)) return;
+        }
+
+        const submitBtn = document.querySelector('.log-btn-container button') || document.querySelector('#golf-entry-form .primary:last-child'); 
+        if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
 
         try {
             const { data: roundHeader, error: headerError } = await supabaseClient.from('logged_rounds').insert([{ user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }]).select('id').single();
@@ -917,16 +1091,12 @@
                 if(h.score && h.par) { let diff = h.score - h.par; if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} }
                 if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
                 
-                if(h.drops && h.drops_adv) {
+                if(h.drops) {
                     drops += h.drops;
-                    let dArr = h.drops_adv.split(',');
-                    dArr.forEach(d => {
-                        if(d === 'OB') dropsOB++;
-                        if(d === 'WATER') dropsWater++;
-                        if(d === 'LOST') dropsLost++;
-                    });
-                } else if (h.drops) {
-                    drops += h.drops;
+                    let dA = h.drops_adv || "";
+                    if(dA.includes('OB')) dropsOB++;
+                    if(dA.includes('WATER')) dropsWater++;
+                    if(dA.includes('LOST')) dropsLost++;
                 }
 
                 if(h.fir === 'hit' || h.fir === 'miss') { 
@@ -1032,8 +1202,13 @@
         puttChart = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['0-Putt (Chip in)', '1-Putt', '2-Putt', '3+ Putt'], datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } } });
 
         let p4Drives = [], p5Drives = [];
-        chartData.forEach((r, idx) => { let targetHoles = r.hole_scores || []; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { if (h.drive_distance && h.drive_distance > 0) { if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name.trim()} (Hole ${h.hole_number})` }); if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name.trim()} (Hole ${h.hole_number})` }); }})});
-        driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
+        chartData.forEach((r, idx) => { let targetHoles = r.hole_scores || []; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { 
+            if (h.drive_distance && h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) { 
+                if (h.par === 4) p4Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name.trim()} (Hole ${h.hole_number})` }); 
+                if (h.par === 5) p5Drives.push({ x: idx, y: h.drive_distance, rawLabel: `${r.course_name.trim()} (Hole ${h.hole_number})` }); 
+            }
+        })});
+        driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances (Excluding Exceptions)', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
     }
 
     initializeApp();
