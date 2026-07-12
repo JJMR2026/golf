@@ -1,11 +1,11 @@
 <!-- 
 ====================================================================================
- ██╗  ██╗████████╗███╗   ███╗██╗     
- ██║  ██║╚══██╔══╝████╗ ████║██║     
- ███████║   ██║   ██╔████╔██║██║     
- ██╔══██║   ██║   ██║╚██╔╝██║██║     
- ██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
- ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
+ █████╗ ████████╗███╗   ███╗██╗     
+██╔══██╗╚══██╔══╝████╗ ████║██║     
+███████║   ██║   ██╔████╔██║██║     
+██╔══██║   ██║   ██║╚██╔╝██║██║     
+██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
+╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
 ====================================================================================
 -->
 <!DOCTYPE html>
@@ -158,16 +158,22 @@
 <div id="auth-overlay">
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
-        <div class="login-option"><h4>1. Real Email (Recommended)</h4><p>Full tracking, insights, and secure password recovery. Emails are strictly used for recovery and never shared.</p></div>
+        <div class="login-option"><h4>1. Real Email (Recommended)</h4><p>Full tracking, insights, and secure password recovery.</p></div>
         <div class="login-option"><h4 style="color: #3b82f6;">2. Nickname</h4><p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p></div>
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;">
-        <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 15px;">
+        <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 10px;">
+        
+        <!-- PASSWORD RECOVERY LINK -->
+        <div style="text-align: right; margin-bottom: 15px; width: 100%;">
+            <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); font-size: 12px; text-decoration: none;">Forgot Password?</a>
+        </div>
+
         <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button><button class="primary" onclick="handleAuth('login')">Log In</button></div>
         <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color);">
-            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">3. Guest Mode</h4><p>Track a single round. No data is saved permanently and no analytics are generated.</p></div>
+            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">3. Guest Mode</h4><p>Track a single round. No data is saved permanently.</p></div>
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
-        <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px;"></div>
+        <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
     </div>
 </div>
 
@@ -275,7 +281,7 @@
     <div id="view-history" class="view-container">
         <div class="card">
             <div class="scorecard-header">
-                <h3>ROUND HISTORY</h3>
+                <h3 id="history-total-rounds-header">ROUND HISTORY</h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="file" id="csv-upload" style="display:none" accept=".csv" onchange="handleBulkImport(this)">
                     <button class="view-toggle-btn" style="padding: 6px 12px; font-size: 11px;" onclick="document.getElementById('csv-upload').click()">📥 Import CSV</button>
@@ -380,12 +386,12 @@
 
 <!-- 
 ====================================================================================
- ██████╗██████╗ ██████╗ ███████╗    ██╗ █████╗ ██╗   ██╗ █████╗ ███████╗ ██████╗██████╗ ██████╗ ████████╗
-██╔════╝██╔══██╗██╔══██╗██╔════╝    ██║██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗╚══██╔══╝
-██║     ██████╔╝██████╔╝█████╗      ██║███████║██║   ██║███████║███████╗██║     ██████╔╝██████╔╝   ██║   
-██║     ██╔══██╗██╔══██╗██╔══╝ ██   ██║██╔══██║╚██╗ ██╔╝██╔══██║╚════██║██║     ██╔══██╗██╔═══╝    ██║   
-╚██████╗██║  ██║██║  ██║███████╗╚█████╔╝██║  ██║ ╚████╔╝ ██║  ██║███████║╚██████╗██║  ██║██║       ██║   
- ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝       ╚═╝   
+      ██╗ █████╗ ██╗   ██╗ █████╗ ███████╗ ██████╗██████╗ ██████╗ ████████╗
+      ██║██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗╚══██╔══╝
+      ██║███████║██║   ██║███████║███████╗██║     ██████╔╝██████╔╝   ██║   
+ ██   ██║██╔══██║╚██╗ ██╔╝██╔══██║╚════██║██║     ██╔══██╗██╔═══╝    ██║   
+ ╚█████╔╝██║  ██║ ╚████╔╝ ██║  ██║███████║╚██████╗██║  ██║██║       ██║   
+  ╚════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝       ╚═╝   
 ====================================================================================
 -->
 <script>
@@ -450,10 +456,13 @@
         } 
         else { document.getElementById('auth-overlay').style.display = 'flex'; }
 
-        fetchWeather(); 
-
         supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); processOfflineQueue(); } 
+            if (event === 'PASSWORD_RECOVERY') {
+                document.getElementById('auth-overlay').style.display = 'none';
+                openSettings();
+                document.getElementById('settings-msg').innerText = "Security token verified. Please enter your new password below.";
+            }
+            else if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
         });
     }
@@ -496,7 +505,7 @@
             navigator.geolocation.getCurrentPosition(
                 pos => fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, display, courseName),
                 (err) => { 
-                    display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="retryLocation('${courseName.replace(/'/g, "\\'")}')">⚠️ Location Blocked - Tap to Retry</button>`; 
+                    display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="fetchWeatherForCourse('${courseName.replace(/'/g, "\\'")}')">⚠️ Location Blocked - Tap to Retry</button>`; 
                 }
             );
         } else display.innerText = "⚠️ Weather unavailable";
@@ -504,7 +513,6 @@
 
     async function fetchWeatherByCoords(lat, lon, display, courseName) {
         try {
-            // FIX: Added &timezone=auto to fetch local time instead of UTC 7am
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
             const data = await res.json();
             if(data.current_weather) {
@@ -519,32 +527,9 @@
             }
         } catch(e) { 
             console.error(e); 
-            display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="retryLocation('${courseName ? courseName.replace(/'/g, "\\'") : ""}')">⚠️ Weather unavailable - Tap to Retry</button>`; 
+            display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="fetchWeatherForCourse('${courseName ? courseName.replace(/'/g, "\\'") : ""}')">⚠️ Weather unavailable - Tap to Retry</button>`; 
         }
     }
-
-    function fetchWeather() {
-        const display = document.getElementById('weather-display');
-        if (navigator.geolocation) {
-            display.innerText = "🌤️ Fetching local weather...";
-            navigator.geolocation.getCurrentPosition(async position => {
-                fetchWeatherByCoords(position.coords.latitude, position.coords.longitude, display, "");
-            }, (err) => {
-                display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="retryLocation()">⚠️ Location Blocked - Tap to Retry</button>`;
-            });
-        } else {
-            display.innerText = "⚠️ Geolocation not supported";
-        }
-    }
-
-    window.retryLocation = function(courseName = null) {
-        alert("If your browser blocked location access, a website cannot force the prompt to reappear.\n\nOn Apple devices, tap the 'aA' icon in your Safari address bar, open 'Website Settings', and change Location to 'Allow'.");
-        if (courseName && courseName !== "") {
-            fetchWeatherForCourse(courseName);
-        } else {
-            fetchWeather();
-        }
-    };
 
     async function submitFeedback() {
         const text = document.getElementById('feedback-text').value.trim(); if(!text) return;
@@ -630,6 +615,26 @@
         const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
         try { let res = type === 'signup' ? await supabaseClient.auth.signUp({ email, password: document.getElementById('auth-password').value }) : await supabaseClient.auth.signInWithPassword({ email, password: document.getElementById('auth-password').value }); if(res.error) throw res.error; } catch (e) { document.getElementById('auth-error').innerText = e.message; }
     }
+    
+    async function handleForgotPassword() {
+        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); 
+        const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local";
+        if (!email) return alert("Please enter your email or nickname first.");
+        if (!email.includes('@') || email.includes('@golf.local')) return alert("Password recovery is only available if you signed up with a real email address.");
+        
+        try {
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+              redirectTo: window.location.origin + window.location.pathname,
+            });
+            if (error) throw error;
+            document.getElementById('auth-error').style.color = "var(--accent-green)";
+            document.getElementById('auth-error').innerText = "Recovery email sent! Check your inbox.";
+        } catch (e) {
+            document.getElementById('auth-error').style.color = "#ef4444";
+            document.getElementById('auth-error').innerText = e.message;
+        }
+    }
+    
     async function changePassword() { const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; }
     async function logOut() { localStorage.removeItem('golf_guest_mode'); localStorage.removeItem('golf_round_state'); await supabaseClient.auth.signOut(); location.reload(); }
 
@@ -735,6 +740,11 @@
 
     function setHoleCount(count) { currentHoleCount = count; document.getElementById('btn-18-holes').classList.toggle('active', count === 18); document.getElementById('btn-9-holes').classList.toggle('active', count === 9); if (currentPlayHole >= currentHoleCount) currentPlayHole = 0; buildGrid(); updatePlayModeUI(); saveLocalState(); }
 
+    window.jumpToPlayMode = function(index) { 
+        currentPlayHole = index; 
+        togglePlayMode(true); 
+    };
+
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `80px repeat(${currentHoleCount}, minmax(60px, 1fr))`;
         const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YDS', type: 'yardage' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }];
@@ -742,7 +752,7 @@
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
             for (let i = 0; i < currentHoleCount; i++) {
                 const cell = document.createElement('div');
-                if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerText = i + 1; } 
+                if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerHTML = `<button type="button" onclick="jumpToPlayMode(${i})" style="width:100%;height:100%;background:transparent;border:none;color:var(--text-muted);font-weight:bold;cursor:pointer;padding:0;">${i + 1}</button>`; } 
                 else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; } 
                 else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI(); saveLocalState();">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`; }
@@ -995,6 +1005,10 @@
         if(!data || data.length === 0) { document.getElementById('history-list').innerHTML = '<div class="empty-state">No rounds found.</div>'; return; }
         const grouped = data.reduce((acc, round) => { const year = new Date(round.date_played).getUTCFullYear(); if(!acc[year]) acc[year] = []; acc[year].push(round); return acc; }, {});
         let html = '';
+        
+        // Update Total Rounds Header
+        document.getElementById('history-total-rounds-header').innerHTML = `ROUND HISTORY <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">(${data.length} Total Rounds)</span>`;
+
         Object.keys(grouped).sort((a,b) => b-a).forEach((year, index) => {
             const rounds = grouped[year];
             html += `<details class="year-folder" ${index === 0 ? 'open' : ''}><summary>${year} Season <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">${rounds.length} Rounds</span></summary><div class="folder-content">`;
