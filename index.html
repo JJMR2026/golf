@@ -1,11 +1,11 @@
 <!-- 
 ====================================================================================
- █████╗ ████████╗███╗   ███╗██╗     
-██╔══██╗╚══██╔══╝████╗ ████║██║     
-███████║   ██║   ██╔████╔██║██║     
-██╔══██║   ██║   ██║╚██╔╝██║██║     
-██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
-╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
+ ██╗  ██╗████████╗███╗   ███╗██╗     
+ ██║  ██║╚══██╔══╝████╗ ████║██║     
+ ███████║   ██║   ██╔████╔██║██║     
+ ██╔══██║   ██║   ██║╚██╔╝██║██║     
+ ██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
+ ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
 ====================================================================================
 -->
 <!DOCTYPE html>
@@ -99,7 +99,6 @@
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
-        /* Missing Data Banner Styling */
         #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; }
         #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
@@ -145,8 +144,6 @@
         #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto; position: relative;}
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
-        .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .checkbox-container input { width: auto; margin: 0; }
         
         .login-option { background: #1a1a1a; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
         .login-option h4 { margin: 0 0 5px 0; color: var(--accent-green); font-size: 14px; }
@@ -158,19 +155,29 @@
 <div id="auth-overlay">
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
-        <div class="login-option"><h4>1. Real Email (Recommended)</h4><p>Full tracking, insights, and secure password recovery.</p></div>
-        <div class="login-option"><h4 style="color: #3b82f6;">2. Nickname</h4><p>Full tracking and insights, but <b>password recovery is impossible</b> if forgotten.</p></div>
-        <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;">
-        <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 10px;">
+        
+        <!-- CONDENSED LOGIN OPTIONS -->
+        <div class="login-option">
+            <h4 style="color: var(--text-main);">Login / Sign Up</h4>
+            <p><strong>1. Real Email:</strong> Full tracking & secure password recovery.<br>
+            <strong>2. Nickname:</strong> Full tracking, but NO password recovery.</p>
+        </div>
+
+        <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
+        <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 10px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
         
         <!-- PASSWORD RECOVERY LINK -->
         <div style="text-align: right; margin-bottom: 15px; width: 100%;">
             <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); font-size: 12px; text-decoration: none;">Forgot Password?</a>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="handleAuth('signup')">Sign Up</button><button class="primary" onclick="handleAuth('login')">Log In</button></div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')">Sign Up</button>
+            <button class="primary" id="login-btn" onclick="handleAuth('login')">Log In</button>
+        </div>
+
         <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color);">
-            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">3. Guest Mode</h4><p>Track a single round. No data is saved permanently.</p></div>
+            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">Guest Mode</h4><p>Track a single round. No data is saved permanently.</p></div>
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
@@ -214,7 +221,7 @@
             <div class="search-header">SEARCH GOLF COURSES</div>
             <div class="search-row">
                 <input type="text" id="course-search-input" placeholder="Search..." autocomplete="off">
-                <button class="primary" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
+                <button class="primary" id="fetch-course-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
                 <ul id="search-dropdown" class="dropdown-list"></ul>
             </div>
             <div id="course-setup-container" style="display: none; margin-top: 20px;">
@@ -237,13 +244,11 @@
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 <div id="play-mode-container">
                     
-                    <!-- LIVE PACE TRACKER -->
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
                         <span id="pace-projected-display">Pace: --</span>
                     </div>
 
-                    <!-- MISSING DATA WARNING BANNER -->
                     <div id="play-warning-banner" style="display: none;">
                         <span id="play-warning-text" style="width: 100%;">⚠️ Missing Stats</span>
                     </div>
@@ -256,7 +261,6 @@
                     <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
                     <div class="play-row"><div class="play-label">GIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div></div>
                     
-                    <!-- DRIVE BLOCK WITH EXCEPTIONS -->
                     <div class="play-row" id="play-drive-block" style="flex-wrap: wrap;">
                         <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                             <div class="play-label">DRIVE (YDS)</div>
@@ -404,41 +408,7 @@
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
 
-    // --- INJECT MISSING ADVANCED TRACKING UI DYNAMICALLY ---
-    const firBlock = document.getElementById('play-fir-block');
-    if(firBlock && !document.getElementById('adv-fir-options')) {
-        const advFir = document.createElement('div');
-        advFir.id = 'adv-fir-options'; advFir.className = 'advanced-tracking';
-        advFir.style.cssText = 'display: none; width: 100%; gap: 5px; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
-        advFir.innerHTML = `<button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button>
-                            <button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button>`;
-        firBlock.parentNode.insertBefore(advFir, firBlock.nextSibling);
-    }
-    const girBtn = document.getElementById('gir-hit-btn');
-    if(girBtn && !document.getElementById('adv-gir-options')) {
-        const girBlock = girBtn.closest('.play-row');
-        const advGir = document.createElement('div');
-        advGir.id = 'adv-gir-options'; advGir.className = 'advanced-tracking';
-        advGir.style.cssText = 'display: none; width: 100%; gap: 5px; flex-wrap: wrap; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
-        advGir.innerHTML = `<button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button>
-                            <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button>
-                            <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LEFT')">LEFT</button>
-                            <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'RIGHT')">RIGHT</button>
-                            <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button>`;
-        girBlock.parentNode.insertBefore(advGir, girBlock.nextSibling);
-    }
-    const dropsBtn = document.getElementById('play-drops-btn');
-    if(dropsBtn && !document.getElementById('adv-drops-options')) {
-        const dropsBlock = dropsBtn.closest('.play-row');
-        const advDrops = document.createElement('div');
-        advDrops.id = 'adv-drops-options'; advDrops.className = 'advanced-tracking';
-        advDrops.style.cssText = 'display: none; width: 100%; gap: 5px; flex-wrap: wrap; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
-        advDrops.innerHTML = `<button type="button" class="adv-btn drop-type-btn" data-type="OB" onclick="setAdvToggle('drops', 'OB')">OB</button>
-                              <button type="button" class="adv-btn drop-type-btn" data-type="WATER" onclick="setAdvToggle('drops', 'WATER')">WATER</button>
-                              <button type="button" class="adv-btn drop-type-btn" data-type="LOST" onclick="setAdvToggle('drops', 'LOST')">LOST</button>`;
-        dropsBlock.parentNode.insertBefore(advDrops, dropsBlock.nextSibling);
-    }
-
+    // --- START initializeApp ---
     async function initializeApp() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { 
@@ -465,8 +435,96 @@
             else if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
         });
+        
+        injectMissingUI();
     }
+    // --- END initializeApp ---
 
+    // --- START injectMissingUI ---
+    function injectMissingUI() {
+        const firBlock = document.getElementById('play-fir-block');
+        if(firBlock && !document.getElementById('adv-fir-options')) {
+            const advFir = document.createElement('div');
+            advFir.id = 'adv-fir-options'; advFir.className = 'advanced-tracking';
+            advFir.style.cssText = 'display: none; width: 100%; gap: 5px; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
+            advFir.innerHTML = `<button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button>
+                                <button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button>`;
+            firBlock.parentNode.insertBefore(advFir, firBlock.nextSibling);
+        }
+        const girBtn = document.getElementById('gir-hit-btn');
+        if(girBtn && !document.getElementById('adv-gir-options')) {
+            const girBlock = girBtn.closest('.play-row');
+            const advGir = document.createElement('div');
+            advGir.id = 'adv-gir-options'; advGir.className = 'advanced-tracking';
+            advGir.style.cssText = 'display: none; width: 100%; gap: 5px; flex-wrap: wrap; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
+            advGir.innerHTML = `<button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button>
+                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button>
+                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LEFT')">LEFT</button>
+                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'RIGHT')">RIGHT</button>
+                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button>`;
+            girBlock.parentNode.insertBefore(advGir, girBlock.nextSibling);
+        }
+        const dropsBtn = document.getElementById('play-drops-btn');
+        if(dropsBtn && !document.getElementById('adv-drops-options')) {
+            const dropsBlock = dropsBtn.closest('.play-row');
+            const advDrops = document.createElement('div');
+            advDrops.id = 'adv-drops-options'; advDrops.className = 'advanced-tracking';
+            advDrops.style.cssText = 'display: none; width: 100%; gap: 5px; flex-wrap: wrap; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
+            advDrops.innerHTML = `<button type="button" class="adv-btn drop-type-btn" data-type="OB" onclick="setAdvToggle('drops', 'OB')">OB</button>
+                                  <button type="button" class="adv-btn drop-type-btn" data-type="WATER" onclick="setAdvToggle('drops', 'WATER')">WATER</button>
+                                  <button type="button" class="adv-btn drop-type-btn" data-type="LOST" onclick="setAdvToggle('drops', 'LOST')">LOST</button>`;
+            dropsBlock.parentNode.insertBefore(advDrops, dropsBlock.nextSibling);
+        }
+    }
+    // --- END injectMissingUI ---
+
+    // --- START handleAuth ---
+    async function handleAuth(type) {
+        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); 
+        const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
+        
+        const btnId = type === 'signup' ? 'signup-btn' : 'login-btn';
+        const btn = document.getElementById(btnId);
+        const originalText = btn.innerText;
+        btn.innerText = "⏳..."; btn.disabled = true;
+        
+        try { 
+            let res = type === 'signup' 
+                ? await supabaseClient.auth.signUp({ email, password: document.getElementById('auth-password').value }) 
+                : await supabaseClient.auth.signInWithPassword({ email, password: document.getElementById('auth-password').value }); 
+            if(res.error) throw res.error; 
+        } catch (e) { 
+            document.getElementById('auth-error').style.color = "#ef4444";
+            document.getElementById('auth-error').innerText = e.message; 
+        } finally {
+            btn.innerText = originalText; btn.disabled = false;
+        }
+    }
+    // --- END handleAuth ---
+
+    // --- START authFunctions ---
+    async function handleForgotPassword() {
+        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); 
+        const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local";
+        if (!email) return alert("Please enter your email or nickname first.");
+        if (!email.includes('@') || email.includes('@golf.local')) return alert("Password recovery is only available if you signed up with a real email address.");
+        
+        try {
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+              redirectTo: window.location.origin + window.location.pathname,
+            });
+            if (error) throw error;
+            document.getElementById('auth-error').style.color = "var(--accent-green)";
+            document.getElementById('auth-error').innerText = "Recovery email sent! Check your inbox.";
+        } catch (e) {
+            document.getElementById('auth-error').style.color = "#ef4444";
+            document.getElementById('auth-error').innerText = e.message;
+        }
+    }
+    
+    async function changePassword() { const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; }
+    async function logOut() { localStorage.removeItem('golf_guest_mode'); localStorage.removeItem('golf_round_state'); await supabaseClient.auth.signOut(); location.reload(); }
+    
     window.openSettings = function() {
         if (!currentUser) {
             document.getElementById('password-change-section').style.display = 'none';
@@ -475,7 +533,11 @@
         }
         document.getElementById('settings-overlay').style.display = 'flex';
     }
+    function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
+    function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); }
+    // --- END authFunctions ---
 
+    // --- START weatherLogic ---
     function fetchWeatherForCourse(courseName) {
         const display = document.getElementById('weather-display');
         display.innerText = "🌤️ Locating course for weather...";
@@ -500,15 +562,7 @@
     }
 
     function fallbackToDeviceGPS(display, courseName) {
-        if (navigator.geolocation) {
-            display.innerHTML = `<span style="cursor:pointer;" onclick="fetchWeatherForCourse('${courseName.replace(/'/g, "\\'")}')">🌤️ Map search bounced, pinging device GPS...</span>`;
-            navigator.geolocation.getCurrentPosition(
-                pos => fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, display, courseName),
-                (err) => { 
-                    display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="fetchWeatherForCourse('${courseName.replace(/'/g, "\\'")}')">⚠️ Location Blocked - Tap to Retry</button>`; 
-                }
-            );
-        } else display.innerText = "⚠️ Weather unavailable";
+        display.innerText = "⚠️ Weather unavailable";
     }
 
     async function fetchWeatherByCoords(lat, lon, display, courseName) {
@@ -527,10 +581,12 @@
             }
         } catch(e) { 
             console.error(e); 
-            display.innerHTML = `<button type="button" class="adv-btn" style="border-color:#ef4444; color:#ef4444; width:auto; padding:4px 8px;" onclick="fetchWeatherForCourse('${courseName ? courseName.replace(/'/g, "\\'") : ""}')">⚠️ Weather unavailable - Tap to Retry</button>`; 
+            display.innerText = "⚠️ Weather unavailable"; 
         }
     }
+    // --- END weatherLogic ---
 
+    // --- START helperFunctions ---
     async function submitFeedback() {
         const text = document.getElementById('feedback-text').value.trim(); if(!text) return;
         const btn = document.getElementById('feedback-btn'); btn.innerText = "Sending...";
@@ -595,51 +651,9 @@
             } catch (e) { console.error("Failed to sync offline queue", e); }
         }
     }
+    // --- END helperFunctions ---
 
-    document.addEventListener('input', e => {
-        if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
-            let val = e.target.value, idParts = e.target.id.split('-'), type = idParts[1], idx = parseInt(idParts[2]);
-            if (type === 'score' && (val.length === 2 || (val.length === 1 && parseInt(val) >= 2))) { let next = document.getElementById(`grid-putts-${idx}`); if (next) setTimeout(() => next.focus(), 150); } 
-            else if (type === 'putts' && val.length === 1) { let next = (currentCoursePars[idx] === 3) ? document.getElementById(`grid-score-${idx + 1}`) : document.getElementById(`grid-drive-${idx}`); if (next) setTimeout(() => next.focus(), 150); }
-            else if (type === 'drive' && val.length === 3) { let next = document.getElementById(`grid-score-${idx + 1}`); if (next) setTimeout(() => next.focus(), 150); }
-        }
-    });
-
-    document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
-    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { if (currentCoursePars[currentPlayHole] === 3) document.getElementById('play-drops-btn').focus(); else document.getElementById('play-drive').focus(); }, 150); });
-    document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-exception').focus(), 150); });
-
-    function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
-
-    async function handleAuth(type) {
-        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
-        try { let res = type === 'signup' ? await supabaseClient.auth.signUp({ email, password: document.getElementById('auth-password').value }) : await supabaseClient.auth.signInWithPassword({ email, password: document.getElementById('auth-password').value }); if(res.error) throw res.error; } catch (e) { document.getElementById('auth-error').innerText = e.message; }
-    }
-    
-    async function handleForgotPassword() {
-        const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); 
-        const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local";
-        if (!email) return alert("Please enter your email or nickname first.");
-        if (!email.includes('@') || email.includes('@golf.local')) return alert("Password recovery is only available if you signed up with a real email address.");
-        
-        try {
-            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-              redirectTo: window.location.origin + window.location.pathname,
-            });
-            if (error) throw error;
-            document.getElementById('auth-error').style.color = "var(--accent-green)";
-            document.getElementById('auth-error').innerText = "Recovery email sent! Check your inbox.";
-        } catch (e) {
-            document.getElementById('auth-error').style.color = "#ef4444";
-            document.getElementById('auth-error').innerText = e.message;
-        }
-    }
-    
-    async function changePassword() { const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; }
-    async function logOut() { localStorage.removeItem('golf_guest_mode'); localStorage.removeItem('golf_round_state'); await supabaseClient.auth.signOut(); location.reload(); }
-
-    function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); }
-
+    // --- START inputListeners ---
     let searchTimeout = null;
     document.getElementById('course-search-input').addEventListener('input', e => {
         const query = e.target.value.trim().toLowerCase(); const dropdown = document.getElementById('search-dropdown'); clearTimeout(searchTimeout);
@@ -663,11 +677,31 @@
         }
     });
 
+    document.addEventListener('input', e => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
+            let val = e.target.value, idParts = e.target.id.split('-'), type = idParts[1], idx = parseInt(idParts[2]);
+            if (type === 'score' && (val.length === 2 || (val.length === 1 && parseInt(val) >= 2))) { let next = document.getElementById(`grid-putts-${idx}`); if (next) setTimeout(() => next.focus(), 150); } 
+            else if (type === 'putts' && val.length === 1) { let next = (currentCoursePars[idx] === 3) ? document.getElementById(`grid-score-${idx + 1}`) : document.getElementById(`grid-drive-${idx}`); if (next) setTimeout(() => next.focus(), 150); }
+            else if (type === 'drive' && val.length === 3) { let next = document.getElementById(`grid-score-${idx + 1}`); if (next) setTimeout(() => next.focus(), 150); }
+        }
+    });
+
+    document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
+    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { if (currentCoursePars[currentPlayHole] === 3) document.getElementById('play-drops-btn').focus(); else document.getElementById('play-drive').focus(); }, 150); });
+    document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-exception').focus(), 150); });
+    // --- END inputListeners ---
+
+    // --- START fetchCourseDetails ---
     function selectCourseFromDropdown(courseName) { document.getElementById('course-search-input').value = courseName.toUpperCase(); document.getElementById('search-dropdown').classList.remove('active'); fetchCourseDetails(); }
 
     async function fetchCourseDetails() {
         const query = document.getElementById('course-search-input').value.trim(); if(!query) return;
-        document.getElementById('api-status').innerText = "⏳ Loading...";
+        
+        const fetchBtn = document.getElementById('fetch-course-btn');
+        const originalText = fetchBtn.innerText;
+        fetchBtn.innerText = "⏳..."; fetchBtn.disabled = true;
+        document.getElementById('api-status').innerText = "Loading...";
+
         try {
             let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`);
             
@@ -687,14 +721,19 @@
                     dismissedWarnings = [];
                     document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                     
-                    populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); return;
+                    populateTeeDropdown(); document.getElementById('api-status').innerText = ""; buildGrid(); updatePlayModeUI(); saveLocalState(); 
+                    fetchBtn.innerText = originalText; fetchBtn.disabled = false;
+                    return;
                 }
             }
         } catch(e) { console.error(e); }
         document.getElementById('current-course-display').innerText = query.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)'; document.getElementById('api-status').innerText = "ℹ️ Course not found in database. Please enter manually.";
         currentCoursePars = Array(18).fill(""); currentYardages = Array(18).fill(""); availableTees = []; populateTeeDropdown(); buildGrid(); updatePlayModeUI(); saveLocalState();
+        fetchBtn.innerText = originalText; fetchBtn.disabled = false;
     }
+    // --- END fetchCourseDetails ---
 
+    // --- START uiBuilders ---
     function populateTeeDropdown() {
         const select = document.getElementById('tee-select'); document.getElementById('course-setup-container').style.display = 'block';
         
@@ -763,7 +802,9 @@
         });
         updateDriveDistances();
     }
+    // --- END uiBuilders ---
 
+    // --- START playModeLogic ---
     function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
     function syncPlayToState(field, val) { roundData[currentPlayHole][field] = val; const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); if(gridInput) gridInput.value = val; saveLocalState(); updatePlayModeUI(); }
 
@@ -802,7 +843,6 @@
         
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
-        // --- PACE TRACKING CALCULATION ---
         let strokes = 0; let parSum = 0; let holesPlayed = 0;
         let totalCoursePar = currentCoursePars.slice(0, currentHoleCount).reduce((a,b) => a + (parseInt(b) || 4), 0);
         
@@ -825,7 +865,6 @@
             document.getElementById('pace-projected-display').innerText = `Pace: --`;
         }
 
-        // --- MISSING DATA CHECKER (INDEPENDENT FLAGS & NAV) ---
         let missingBanner = document.getElementById('play-warning-banner');
         let missingHtml = "";
         
@@ -847,7 +886,6 @@
             missingBanner.style.display = 'none';
         }
 
-        // --- ADVANCED OPTIONS VISIBILITY ---
         let dropsAdvOps = document.getElementById('adv-drops-options');
         if (dropsAdvOps) {
             if (dropsVal > 0) {
@@ -931,7 +969,9 @@
 
     function updatePar(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(6, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
     function updateDriveDistances() { for (let i = 0; i < currentHoleCount; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } }
+    // --- END playModeLogic ---
 
+    // --- START submitRound ---
     async function submitRound() {
         if (!currentUser) { if (confirm("Guest Round Complete!\n\nSince you are not logged in, this scorecard cannot be saved to the permanent History dashboard.\n\nClear your local scorecard to start a new round?")) { localStorage.removeItem('golf_round_state'); location.reload(); } return; }
         const courseName = document.getElementById('current-course-display').innerText.trim();
@@ -978,8 +1018,8 @@
             if(!confirm(`⚠️ You are missing some stats (Putts/FIR/GIR/Drive) on the following holes:\n\nHole(s): ${missingCheck.join(', ')}\n\nSubmit scorecard anyway?`)) return;
         }
 
-        // --- SUBMIT LOCKOUT (Anti-Double-Click) ---
         const submitBtn = document.getElementById('submit-round-btn'); 
+        const originalBtnText = submitBtn.innerText;
         if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
 
         try {
@@ -995,10 +1035,12 @@
             alert("📶 Network Offline.\n\nRound saved to your local device. It will automatically upload to the cloud the next time you open the app online.");
             localStorage.removeItem('golf_round_state'); location.reload();
         } finally { 
-            if(submitBtn){ submitBtn.innerText = "COMPLETE ROUND"; submitBtn.disabled = false; } 
+            if(submitBtn){ submitBtn.innerText = originalBtnText; submitBtn.disabled = false; } 
         }
     }
+    // --- END submitRound ---
 
+    // --- START historyLogic ---
     async function fetchHistory() {
         if(!currentUser) return;
         const { data } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
@@ -1006,7 +1048,6 @@
         const grouped = data.reduce((acc, round) => { const year = new Date(round.date_played).getUTCFullYear(); if(!acc[year]) acc[year] = []; acc[year].push(round); return acc; }, {});
         let html = '';
         
-        // Update Total Rounds Header
         document.getElementById('history-total-rounds-header').innerHTML = `ROUND HISTORY <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">(${data.length} Total Rounds)</span>`;
 
         Object.keys(grouped).sort((a,b) => b-a).forEach((year, index) => {
@@ -1061,13 +1102,28 @@
     
     async function saveModalChanges(id, holesCount) {
         if(!id) return; let tScore=0; let tPutts=0; 
-        for(let i=0; i<holesCount; i++) { const hd=modalRoundData[i]; const s=parseInt(hd.score); if(!isNaN(s))tScore+=s; if(!isNaN(parseInt(hd.putts)))tPutts+=parseInt(hd.putts);
-            if(hd.id) await supabaseClient.from('hole_scores').update({ par:parseInt(modalCoursePars[i])||null, score:s||null, putts:parseInt(hd.putts)||0, fir:hd.fir||null, gir:hd.gir||null, drive_distance:parseInt(hd.drive)||null, drops:parseInt(hd.drops)||0, sand_save:hd.sandSave||null }).eq('id',hd.id);
-        }
-        await supabaseClient.from('logged_rounds').update({ total_score: tScore, total_putts: tPutts }).eq('id',id); alert("✅ Updated."); fetchHistory(); closeHistoryModal(); loadAnalyticsData();
-    }
-    async function deleteActiveRound(id) { if(id && confirm("Delete round?")) { await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); fetchHistory(); closeHistoryModal(); loadAnalyticsData(); } }
+        
+        const saveBtn = document.getElementById('modal-save-btn');
+        const originalText = saveBtn.innerText;
+        saveBtn.innerText = "⏳ Saving..."; saveBtn.disabled = true;
 
+        try {
+            for(let i=0; i<holesCount; i++) { const hd=modalRoundData[i]; const s=parseInt(hd.score); if(!isNaN(s))tScore+=s; if(!isNaN(parseInt(hd.putts)))tPutts+=parseInt(hd.putts);
+                if(hd.id) await supabaseClient.from('hole_scores').update({ par:parseInt(modalCoursePars[i])||null, score:s||null, putts:parseInt(hd.putts)||0, fir:hd.fir||null, gir:hd.gir||null, drive_distance:parseInt(hd.drive)||null, drops:parseInt(hd.drops)||0, sand_save:hd.sandSave||null }).eq('id',hd.id);
+            }
+            await supabaseClient.from('logged_rounds').update({ total_score: tScore, total_putts: tPutts }).eq('id',id); 
+            alert("✅ Updated."); fetchHistory(); closeHistoryModal(); loadAnalyticsData();
+        } catch(e) {
+            console.error(e); alert("❌ Error saving changes.");
+        } finally {
+            saveBtn.innerText = originalText; saveBtn.disabled = false;
+        }
+    }
+
+    async function deleteActiveRound(id) { if(id && confirm("Delete round?")) { await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); fetchHistory(); closeHistoryModal(); loadAnalyticsData(); } }
+    // --- END historyLogic ---
+
+    // --- START analyticsLogic ---
     function forceSyncFilters() {
         document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
         const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = true;
@@ -1077,6 +1133,83 @@
         document.getElementById('par-btn-text').innerText = 'All Pars';
         document.getElementById('hole-btn-text').innerText = 'All Holes';
     }
+
+    window.updateAnalytics = function() {
+        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        let fRounds = masterAnalyticsData.filter(r => { 
+            if (!actCrs.includes(r.course_name.trim())) return false; 
+            const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
+            
+            if (only18) { 
+                if(r.hole_scores && r.hole_scores.length > 0) {
+                    const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
+                    if (playedHoles < 18) return false; 
+                } 
+            } 
+            
+            let isFullyFiltered = actHoles.length < 18 || actPars.length < 4;
+            if (isFullyFiltered && (!r.hole_scores || r.hole_scores.length === 0)) return false;
+
+            if (actHoles.length < 18) { const hasHole = r.hole_scores.some(h => actHoles.includes(h.hole_number.toString()) && h.score && h.score > 0); if(!hasHole) return false; } 
+            if (actPars.length < 4) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; } 
+            return true; 
+        });
+        
+        const t = document.getElementById('analytics-data-table');
+        if(fRounds.length === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
+
+        if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
+        document.getElementById('hcp-display').innerText = calculateHandicap(fRounds); renderCharts(fRounds, actHoles, actPars); document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
+        
+        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; let totalStrokes = 0; let totalHolesCount = 0; let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
+        fRounds.forEach(r => { 
+            let targetHoles = r.hole_scores || []; 
+            if (targetHoles.length === 0) { totalStrokes += r.total_score; totalHolesCount += 18; s.putts += r.total_putts || 0; s.pHP += 18; return; }
+            
+            if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
+            if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
+            
+            targetHoles.forEach(h => { 
+                if (!h.score) return; 
+                totalStrokes += h.score; 
+                totalHolesCount++; 
+                
+                if (h.par) {
+                    const d = h.score - h.par; 
+                    if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
+                    if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
+                }
+                
+                if(h.putts !== null && h.putts !== "") { s.putts+=h.putts; s.pHP++; } if(h.drops) s.drp+=h.drops; if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } if(h.gir==='hit'||h.gir==='miss') { s.gT++; if(h.gir==='hit') s.gH++; } if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
+            }) 
+        });
+        
+        if(totalHolesCount === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
+        const cA = (tot) => (tot / fRounds.length).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
+        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead><tbody>
+            <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
+            <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
+            <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
+            <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
+            <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
+            <tr><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
+            <tr><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
+            <tr><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
+            <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
+            <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
+            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
+            <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
+            <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
+            <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / fRounds.length).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
+        </tbody>`;
+    };
 
     async function loadAnalyticsData() {
         if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
@@ -1244,6 +1377,7 @@
         })});
         driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances (Excluding Exceptions)', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
     }
+    // --- END analyticsLogic ---
 
     initializeApp();
 </script>
