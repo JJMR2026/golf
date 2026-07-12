@@ -43,8 +43,9 @@
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        .nav-buttons { display: flex; gap: 10px; margin-bottom: 5px; width: 100%; }
-        button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; flex: 1; text-align: center; }
+        .nav-buttons { display: flex; gap: 8px; margin-bottom: 5px; width: 100%; justify-content: space-between; }
+        .nav-buttons button { flex: 1; padding: 12px 5px; font-size: 13px; text-align: center; border-radius: 8px; }
+        button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; transition: all 0.2s; }
         button:hover { background-color: #1f1f1f; }
         button.primary, button.nav-btn.active { background-color: var(--accent-green); color: #000; border: none; }
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
@@ -99,7 +100,7 @@
         .play-nav button { padding: 16px; font-size: 16px; }
 
         /* Missing Data Banner Styling */
-        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: bold; display: flex; flex-direction: column; gap: 10px; }
         #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
@@ -142,7 +143,7 @@
         .insights-card h4 { margin: 0 0 15px 0; color: #3b82f6; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
 
         #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
-        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto;}
+        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto; position: relative;}
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
         .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: #1f1f1f; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
         .checkbox-container input { width: auto; margin: 0; }
@@ -172,10 +173,11 @@
 
 <div id="settings-overlay" style="display: none;">
     <div class="auth-card">
+        <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('settings-overlay').style.display='none'">✕</button>
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
         <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 15px;">
-        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='none'">Cancel</button><button class="primary" onclick="changePassword()">Update Password</button></div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="primary" style="width: 100%;" onclick="changePassword()">Update Password</button></div>
         <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
         <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
@@ -189,11 +191,11 @@
 
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div class="nav-buttons" style="margin:0; flex:1;">
+        <div class="nav-buttons">
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
-            <button class="view-toggle-btn" style="flex: 0 0 auto; margin-left: 0; padding: 12px 10px;" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️ Account</button>
+            <button class="view-toggle-btn" onclick="document.getElementById('settings-overlay').style.display='flex'">⚙️ Account</button>
         </div>
     </div>
 
@@ -225,7 +227,7 @@
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 <div id="play-mode-container">
                     
-                    <!-- NEW LIVE PACE TRACKER -->
+                    <!-- LIVE PACE TRACKER -->
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
                         <span id="pace-projected-display">Pace: --</span>
@@ -233,8 +235,7 @@
 
                     <!-- MISSING DATA WARNING BANNER -->
                     <div id="play-warning-banner" style="display: none;">
-                        <span id="play-warning-text">⚠️ Missing Stats</span>
-                        <span style="cursor:pointer; font-size: 16px;" onclick="dismissMissingWarning()">✕</span>
+                        <span id="play-warning-text" style="width: 100%;">⚠️ Missing Stats</span>
                     </div>
 
                     <span id="play-hole-title" style="color: var(--accent-green); font-size: 24px; font-weight: bold;">HOLE 1</span>
@@ -262,7 +263,7 @@
                     <div class="play-row"><div class="play-label">SAND SAVE</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button><button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button></div></div>
                     <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
                 </div>
-                <button type="button" class="primary" style="width: 100%; margin-top:20px;" onclick="submitRound()">COMPLETE ROUND</button>
+                <button type="button" id="submit-round-btn" class="primary" style="width: 100%; margin-top:20px;" onclick="submitRound()">COMPLETE ROUND</button>
             </div>
         </form>
     </div>
@@ -390,7 +391,7 @@
     Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#2a2a2a';
 
     let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" })), masterAnalyticsData = [];
-    let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", driveException: "", drops: 0, sandSave: "" }));
+    let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
 
     // --- INJECT MISSING ADVANCED TRACKING UI DYNAMICALLY ---
@@ -434,7 +435,7 @@
             currentUser = session.user; 
             localStorage.removeItem('golf_guest_mode'); 
             document.getElementById('auth-overlay').style.display = 'none'; 
-            loadLocalState(); // FIXED: Caching works for logged in users now
+            loadLocalState(); 
             buildGrid(); 
             processOfflineQueue(); 
         } 
@@ -757,16 +758,11 @@
 
     function togglePlayMode(isPlayMode) { document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; if(isPlayMode) updatePlayModeUI(); }
 
-    function dismissMissingWarning() {
-        const wText = document.getElementById('play-warning-text').innerText;
-        const holeMatch = wText.match(/Hole (\d+)/);
-        if (holeMatch) {
-            let hNum = parseInt(holeMatch[1]) - 1;
-            if(!dismissedWarnings.includes(hNum)) dismissedWarnings.push(hNum);
-            saveLocalState();
-            updatePlayModeUI();
-        }
-    }
+    window.dismissMissingWarning = function(key) {
+        if(!dismissedWarnings.includes(key)) dismissedWarnings.push(key);
+        saveLocalState();
+        updatePlayModeUI();
+    };
 
     function updatePlayModeUI() {
         const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-';
@@ -799,26 +795,24 @@
             document.getElementById('pace-projected-display').innerText = `Pace: --`;
         }
 
-        // --- MISSING DATA CHECKER (NUDGE) ---
+        // --- MISSING DATA CHECKER (INDEPENDENT FLAGS) ---
         let missingBanner = document.getElementById('play-warning-banner');
-        let foundMissing = -1; let missingTypes = [];
+        let missingHtml = "";
         
         for(let i=0; i<currentHoleCount; i++) {
             let s = parseInt(roundData[i].score);
             let p = parseInt(currentCoursePars[i]) || 4;
-            if (s > 0 && !dismissedWarnings.includes(i) && i !== currentPlayHole) {
-                if (roundData[i].putts === "") missingTypes.push("Putts");
-                if (roundData[i].gir === "") missingTypes.push("GIR");
-                if (p > 3 && roundData[i].fir === "") missingTypes.push("FIR");
-                if (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === "")) missingTypes.push("Drive");
-                
-                if (missingTypes.length > 0) { foundMissing = i; break; }
+            if (s > 0 && i !== currentPlayHole) {
+                if (roundData[i].putts === "" && !dismissedWarnings.includes(`${i}-putts`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-putts')">Hole ${i+1} Putts ✕</span>`;
+                if (roundData[i].gir === "" && !dismissedWarnings.includes(`${i}-gir`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-gir')">Hole ${i+1} GIR ✕</span>`;
+                if (p > 3 && roundData[i].fir === "" && !dismissedWarnings.includes(`${i}-fir`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-fir')">Hole ${i+1} FIR ✕</span>`;
+                if (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === "") && !dismissedWarnings.includes(`${i}-drive`)) missingHtml += `<span class="adv-btn" style="background:#b45309; color:#fff; cursor:pointer;" onclick="dismissMissingWarning('${i}-drive')">Hole ${i+1} Drive ✕</span>`;
             }
         }
         
-        if (foundMissing !== -1) {
-            document.getElementById('play-warning-text').innerText = `⚠️ Missing stats on Hole ${foundMissing + 1}: ${missingTypes.join(', ')}`;
-            missingBanner.style.display = 'flex';
+        if (missingHtml !== "") {
+            document.getElementById('play-warning-text').innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center;"><b style="width:100%; font-size:11px; margin-bottom:4px;">⚠️ MISSING STATS (Tap to dismiss):</b>${missingHtml}</div>`;
+            missingBanner.style.display = 'block';
         } else {
             missingBanner.style.display = 'none';
         }
@@ -925,7 +919,6 @@
             if (!isNaN(s)) {
                 totalScore += s; totalPutts += parseInt(roundData[i].putts) || 0;
                 
-                // Final Submit Check
                 if (roundData[i].putts === "" || roundData[i].gir === "" || (p > 3 && roundData[i].fir === "") || (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === ""))) {
                     missingCheck.push(i+1);
                 }
@@ -955,7 +948,8 @@
             if(!confirm(`⚠️ You are missing some stats (Putts/FIR/GIR/Drive) on the following holes:\n\nHole(s): ${missingCheck.join(', ')}\n\nSubmit scorecard anyway?`)) return;
         }
 
-        const submitBtn = document.querySelector('.log-btn-container button') || document.querySelector('#golf-entry-form .primary:last-child'); 
+        // --- SUBMIT LOCKOUT (Anti-Double-Click) ---
+        const submitBtn = document.getElementById('submit-round-btn'); 
         if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
 
         try {
@@ -970,7 +964,9 @@
             localStorage.setItem('golf_offline_queue', JSON.stringify(queue));
             alert("📶 Network Offline.\n\nRound saved to your local device. It will automatically upload to the cloud the next time you open the app online.");
             localStorage.removeItem('golf_round_state'); location.reload();
-        } finally { if(submitBtn){ submitBtn.innerText = "COMPLETE & LOG SCORECARD →"; submitBtn.disabled = false;} }
+        } finally { 
+            if(submitBtn){ submitBtn.innerText = "COMPLETE ROUND"; submitBtn.disabled = false; } 
+        }
     }
 
     async function fetchHistory() {
@@ -1091,12 +1087,16 @@
                 if(h.score && h.par) { let diff = h.score - h.par; if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} }
                 if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
                 
-                if(h.drops) {
+                if(h.drops && h.drops_adv) {
                     drops += h.drops;
-                    let dA = h.drops_adv || "";
-                    if(dA.includes('OB')) dropsOB++;
-                    if(dA.includes('WATER')) dropsWater++;
-                    if(dA.includes('LOST')) dropsLost++;
+                    let dArr = h.drops_adv.split(',');
+                    dArr.forEach(d => {
+                        if(d === 'OB') dropsOB++;
+                        if(d === 'WATER') dropsWater++;
+                        if(d === 'LOST') dropsLost++;
+                    });
+                } else if (h.drops) {
+                    drops += h.drops;
                 }
 
                 if(h.fir === 'hit' || h.fir === 'miss') { 
