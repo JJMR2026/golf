@@ -1,11 +1,11 @@
 <!-- 
 ====================================================================================
- ██╗  ██╗████████╗███╗   ███╗██╗     
- ██║  ██║╚══██╔══╝████╗ ████║██║     
- ███████║   ██║   ██╔████╔██║██║     
- ██╔══██║   ██║   ██║╚██╔╝██║██║     
- ██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
- ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
+ █████╗ ████████╗███╗   ███╗██╗     
+██╔══██╗╚══██╔══╝████╗ ████║██║     
+███████║   ██║   ██╔████╔██║██║     
+██╔══██║   ██║   ██║╚██╔╝██║██║     
+██║  ██║   ██║   ██║ ╚═╝ ██║███████╗
+╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
 ====================================================================================
 -->
 <!DOCTYPE html>
@@ -397,6 +397,7 @@
 ====================================================================================
 -->
 <script>
+    // --- START globalVariables ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -404,7 +405,14 @@
 
     let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
-    let trendChart = null, puttChart = null, driveChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
+    
+    // BUG FIX: hcpChart and radarChart globally declared
+    let trendChart = null, puttChart = null, driveChart = null, hcpChart = null, radarChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
+    // --- END globalVariables ---
+
+    // --- START testPatch ---
+    console.log("System Ready.");
+    // --- END testPatch ---
 
     // --- START initializeApp ---
     async function initializeApp() {
@@ -841,7 +849,6 @@
         
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
-        // --- PACE TRACKING CALCULATION ---
         let strokes = 0; let parSum = 0; let holesPlayed = 0;
         let totalCoursePar = currentCoursePars.slice(0, currentHoleCount).reduce((a,b) => a + (parseInt(b) || 4), 0);
         
@@ -864,7 +871,6 @@
             document.getElementById('pace-projected-display').innerText = `Pace: --`;
         }
 
-        // --- MISSING DATA CHECKER (INDEPENDENT FLAGS & NAV) ---
         let missingBanner = document.getElementById('play-warning-banner');
         let missingHtml = "";
         
@@ -886,7 +892,6 @@
             missingBanner.style.display = 'none';
         }
 
-        // --- ADVANCED OPTIONS VISIBILITY ---
         let dropsAdvOps = document.getElementById('adv-drops-options');
         if (dropsAdvOps) {
             if (dropsVal > 0) {
