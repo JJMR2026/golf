@@ -6,16 +6,19 @@
     <title>Golf Tracker Pro</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#050505">
+    <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <style>
+    <style id="dynamic-theme">
         :root { --bg-color: #050505; --card-bg: #121212; --border-color: #2a2a2a; --accent-green: #10b981; --accent-hover: #059669; --text-main: #f3f4f6; --text-muted: #9ca3af; --cell-bg: #1a1a1a; --cell-border: #333; }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+    </style>
+
+    <style>
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; transition: background-color 0.3s, color 0.3s; }
         .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: 100%; box-sizing: border-box; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: 100%; box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; }
         .view-container { width: 100%; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; box-sizing: border-box; }
         .view-container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -26,7 +29,7 @@
         .nav-buttons { display: flex; gap: 8px; margin-bottom: 5px; width: 100%; justify-content: space-between; }
         .nav-buttons button { flex: 1; padding: 12px 5px; font-size: 13px; text-align: center; border-radius: 8px; }
         button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        button:hover { background-color: #1f1f1f; }
+        button:hover { background-color: rgba(255,255,255,0.05); }
         button.primary, button.nav-btn.active { background-color: var(--accent-green); color: #000; border: none; }
         button.primary:hover, button.nav-btn.active:hover { background-color: var(--accent-hover); }
         button.danger-btn { color: #ef4444; border-color: #ef4444; background: transparent; }
@@ -34,14 +37,13 @@
         
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
-        input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea { flex: 1; background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; }
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea, select { flex: 1; background-color: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s, color 0.3s;}
         input:focus, select:focus, textarea:focus { border-color: var(--accent-green); }
-        select { background-color: #0a0a0a; border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; }
         
-        .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
+        .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
         .dropdown-list.active { display: block; }
-        .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; }
-        .dropdown-list li:hover { background-color: #2a2a2a; color: var(--accent-green); }
+        .dropdown-list li { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); }
+        .dropdown-list li:hover { background-color: rgba(255,255,255,0.05); color: var(--accent-green); }
         
         .setup-row { display: flex; gap: 10px; margin-top: 15px; }
         .setup-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
@@ -49,7 +51,7 @@
 
         .scorecard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
         .scorecard-header h3 { margin: 0; color: var(--accent-green); font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
-        .hole-toggle-wrapper { display: inline-flex; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; flex: 0 0 auto;}
+        .hole-toggle-wrapper { display: inline-flex; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; flex: 0 0 auto;}
         .hole-toggle-btn { background: transparent; color: var(--text-muted); border: none; padding: 8px 16px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; border-radius: 0; }
         .hole-toggle-btn.active { background: var(--accent-green); color: #000; }
         .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -58,11 +60,11 @@
         .matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
         .matrix-grid { display: grid; gap: 6px; min-width: 1000px; }
         .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
-        .cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
-        .cell.hole-header { background-color: #111; color: var(--text-muted); border: none; }
+        .cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; transition: background-color 0.3s, border-color 0.3s; }
+        .cell.hole-header { background-color: rgba(0,0,0,0.3); color: var(--text-muted); border: none; }
         .cell input, .play-input input { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; font-size: 14px; padding: 0;}
         .cell input::placeholder { font-size: 11px; font-weight: normal; color: #555; }
-        .cell.drive-cell input:disabled { color: #333; cursor: not-allowed; background-color: #141414; }
+        .cell.drive-cell input:disabled { color: #333; cursor: not-allowed; background-color: rgba(0,0,0,0.1); }
         .cell.drive-cell.disabled { opacity: 0.5; }
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
@@ -74,18 +76,18 @@
         .play-input { width: 80px; height: 50px; background: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
         .play-input input { font-size: 20px; padding: 0;}
         .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; flex-wrap: wrap; }
-        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: #1a1a1a; border: 1px solid #333; color: var(--text-muted); cursor: pointer; min-width: 60px; }
+        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; min-width: 60px; }
         .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
         #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; }
-        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
+        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
-        .history-item:hover { background-color: #1a1a1a; }
+        .history-item:hover { background-color: rgba(255,255,255,0.05); }
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
-        details.year-folder summary { padding: 15px; font-weight: bold; cursor: pointer; color: var(--text-main); outline: none; background: #1a1a1a; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        details.year-folder summary { padding: 15px; font-weight: bold; cursor: pointer; color: var(--text-main); outline: none; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         details.year-folder summary::after { content: '▼'; font-size: 12px; color: var(--text-muted); }
         details.year-folder[open] summary::after { content: '▲'; }
         details.year-folder summary::-webkit-details-marker { display: none; }
@@ -94,13 +96,13 @@
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; flex-direction: column; }
         .modal-content { max-width: 1400px; margin: 0 auto; width: 100%; position: relative; }
-        .close-modal-btn { position: absolute; right: 20px; top: 20px; background: #222; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: white; z-index: 2;}
+        .close-modal-btn { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.1); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: var(--text-main); z-index: 2;}
 
         .filter-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;}
-        .filter-select { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
+        .filter-select { background: rgba(0,0,0,0.2); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; outline: none; flex: 1; min-width: 130px; }
         .multi-select-container { position: relative; flex: 1; min-width: 150px; }
-        .multi-select-btn { background: #1f1f1f; color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
-        .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.8); }
+        .multi-select-btn { background: rgba(0,0,0,0.2); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; height: 100%; box-sizing: border-box; }
+        .multi-select-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; padding: 10px; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
         
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .stats-table th { padding: 12px 10px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 12px; text-transform: uppercase; text-align: right; }
@@ -109,7 +111,7 @@
         .stats-table td:first-child { font-weight: 600; color: var(--text-muted); text-align: left; }
         .stats-table td:nth-child(3) { color: var(--text-main); }
         .stats-table td:last-child { color: var(--accent-green); font-weight: normal; }
-        .stats-table tr:hover { background-color: #1a1a1a; }
+        .stats-table tr:hover { background-color: rgba(255,255,255,0.05); }
         
         .hcp-badge { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .hcp-value { font-size: 48px; font-weight: bold; color: var(--accent-green); }
@@ -117,17 +119,24 @@
         
         .charts-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         @media(min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
-        .chart-container { position: relative; height: 250px; width: 100%; background: #1a1a1a; border-radius: 8px; padding: 15px; box-sizing: border-box; }
-        .insights-card { background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 20px; }
+        .chart-container { position: relative; height: 250px; width: 100%; background: var(--cell-bg); border-radius: 8px; padding: 15px; box-sizing: border-box; border: 1px solid var(--border-color); }
+        
+        .insights-card { background: var(--cell-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 20px; }
         .insights-card h4 { margin: 0 0 15px 0; color: #3b82f6; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
+        
+        .insight-btn { display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-main); transition: 0.2s; text-align: left; line-height: 1.5; }
+        .insight-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--accent-green); }
 
-        #auth-overlay, #settings-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
+        #auth-overlay, #settings-overlay, #insight-modal { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
         .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto; position: relative;}
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
         
-        .login-option { background: #1a1a1a; border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
-        .login-option h4 { margin: 0 0 5px 0; color: var(--accent-green); font-size: 14px; }
-        .login-option p { margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+        .login-option { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
+        .login-option h4 { margin: 0 0 10px 0; color: var(--accent-green); font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
+        .login-option p { margin: 0 0 8px 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        
+        .checkbox-container { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-main); font-size: 14px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .checkbox-container input { width: auto; margin: 0; }
     </style>
 </head>
 <body>
@@ -137,9 +146,10 @@
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
         
         <div class="login-option">
-            <h4 style="color: var(--text-main);">Login / Sign Up</h4>
-            <p><strong>1. Real Email:</strong> Full tracking & secure password recovery.<br>
-            <strong>2. Nickname:</strong> Full tracking, but NO password recovery.</p>
+            <h4>Sign In Options</h4>
+            <p><strong>Option 1: Real Email (Recommended)</strong><br>Enables secure password recovery and full cloud syncing.</p>
+            <p><strong>Option 2: Nickname</strong><br>No email required, but password recovery is impossible if forgotten.</p>
+            <p style="margin-bottom: 0;"><strong>Option 3: Guest Mode</strong><br>No login needed. Tracks a single round locally, but does not save to History.</p>
         </div>
 
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
@@ -154,8 +164,7 @@
             <button class="primary" id="login-btn" onclick="handleAuth('login')">Log In</button>
         </div>
 
-        <div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color);">
-            <div class="login-option" style="margin-bottom: 10px; border-color: #ef4444; background: rgba(239, 68, 68, 0.05);"><h4 style="color: #ef4444;">Guest Mode</h4><p>Track a single round. No data is saved permanently.</p></div>
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
@@ -167,20 +176,43 @@
         <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('settings-overlay').style.display='none'">✕</button>
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
         
-        <div id="password-change-section">
-            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Update your password or sign out of your device.</p>
-            <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 15px;">
-            <div style="display: flex; gap: 10px; margin-top: 10px;"><button class="primary" style="width: 100%;" onclick="changePassword()">Update Password</button></div>
-            <div id="settings-msg" style="font-size: 12px; margin-top: 15px;"></div>
+        <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
+            <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
+                <option value="dark">Dark Mode (Default)</option>
+                <option value="light">Light Mode</option>
+                <option value="masters">Masters Green</option>
+                <option value="midnight">Midnight Blue</option>
+            </select>
         </div>
 
-        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left;">
+        <div id="password-change-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px; display: block; text-align: left;">SECURITY</label>
+            <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 10px;">
+            <button class="primary" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Password</button>
+            <div id="settings-msg" style="font-size: 12px; margin-top: 10px;"></div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
             <textarea id="feedback-text" rows="3" placeholder="Tell us what's broken or what you'd like to see added..." style="width: 100%; margin-bottom: 10px; resize: vertical;"></textarea>
-            <button class="view-toggle-btn" id="feedback-btn" style="width: 100%;" onclick="submitFeedback()">Send Feedback</button>
+            <button class="view-toggle-btn" id="feedback-btn" style="width: 100%; padding: 10px;" onclick="submitFeedback()">Send Feedback</button>
             <div id="feedback-msg" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
         </div>
-        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;"><button class="danger-btn" style="width: 100%;" onclick="logOut()">Sign Out completely</button></div>
+        
+        <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="danger-btn" style="width: 100%; padding: 10px;" onclick="logOut()">Sign Out completely</button>
+        </div>
+    </div>
+</div>
+
+<div id="insight-modal" style="display: none;">
+    <div class="auth-card" style="max-width: 500px; text-align: left;">
+        <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('insight-modal').style.display='none'">✕</button>
+        <h2 id="insight-detail-title" style="color: var(--accent-green); margin-top: 0; margin-bottom: 10px; font-size: 18px;">INSIGHT DETAIL</h2>
+        <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
+            Loading...
+        </div>
     </div>
 </div>
 
@@ -329,12 +361,12 @@
                 <div class="chart-container" style="grid-column: 1 / -1;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
-                        <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: #1f1f1f; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
+                        <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
                         <div id="chart-overlays" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
-                            <label style="cursor: pointer;"><input type="checkbox" value="putts" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #3b82f6;"> Putts</label>
-                            <label style="cursor: pointer;"><input type="checkbox" value="fir" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #8b5cf6;"> FIR %</label>
-                            <label style="cursor: pointer;"><input type="checkbox" value="gir" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #d946ef;"> GIR %</label>
-                            <label style="cursor: pointer;"><input type="checkbox" value="drops" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #ef4444;"> Drops</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="putts" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #3b82f6;"> Putts</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="fir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #8b5cf6;"> FIR %</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="gir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #d946ef;"> GIR %</label>
+                            <label style="cursor: pointer;"><input type="checkbox" value="drops" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #ef4444;"> Drops</label>
                         </div>
                     </div>
                     <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
@@ -372,6 +404,16 @@
     </form>
 </div>
 
+<!-- 
+====================================================================================
+      ██╗ █████╗ ██╗   ██╗ █████╗ ███████╗ ██████╗██████╗ ██████╗ ████████╗
+      ██║██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗╚══██╔══╝
+      ██║███████║██║   ██║███████║███████╗██║     ██████╔╝██████╔╝   ██║   
+ ██   ██║██╔══██║╚██╗ ██╔╝██╔══██║╚════██║██║     ██╔══██╗██╔═══╝    ██║   
+ ╚█████╔╝██║  ██║ ╚████╔╝ ██║  ██║███████║╚██████╗██║  ██║██║       ██║   
+  ╚════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝       ╚═╝   
+====================================================================================
+-->
 <script>
     // --- START globalVariables ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
@@ -412,18 +454,43 @@
             
             ctx.fillText(text, centerX, centerY - ((bottom - top) * 0.05));
             
-            ctx.font = "normal " + (fontSize * 0.3) + "em sans-serif";
+            ctx.font = "normal " + (fontSize * 0.25) + "em sans-serif";
             ctx.fillStyle = "#9ca3af";
-            ctx.fillText("Avg Putts", centerX, centerY + ((bottom - top) * 0.15));
+            ctx.fillText("Avg / Hole", centerX, centerY + ((bottom - top) * 0.15));
             ctx.save();
         }
     };
     Chart.register(centerTextPlugin);
-    // --- END globalVariables ---
 
-    // --- START testPatch ---
-    console.log("System Ready.");
-    // --- END testPatch ---
+    // Theme Engine Initializer
+    const themes = {
+        dark: { bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' },
+        light: { bg: '#f3f4f6', card: '#ffffff', border: '#d1d5db', accent: '#10b981', hover: '#059669', text: '#111827', muted: '#6b7280', cell: '#f9fafb', cellBorder: '#e5e7eb' },
+        masters: { bg: '#022c16', card: '#064e3b', border: '#065f46', accent: '#fde047', hover: '#eab308', text: '#f3f4f6', muted: '#9ca3af', cell: '#022c16', cellBorder: '#065f46' },
+        midnight: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' }
+    };
+
+    function applyTheme(themeName) {
+        if(!themes[themeName]) themeName = 'dark';
+        const t = themes[themeName];
+        const root = document.querySelector(':root');
+        root.style.setProperty('--bg-color', t.bg);
+        root.style.setProperty('--card-bg', t.card);
+        root.style.setProperty('--border-color', t.border);
+        root.style.setProperty('--accent-green', t.accent);
+        root.style.setProperty('--accent-hover', t.hover);
+        root.style.setProperty('--text-main', t.text);
+        root.style.setProperty('--text-muted', t.muted);
+        root.style.setProperty('--cell-bg', t.cell);
+        root.style.setProperty('--cell-border', t.cellBorder);
+        document.getElementById('meta-theme-color').setAttribute('content', t.bg);
+        localStorage.setItem('golf_theme', themeName);
+        document.getElementById('theme-selector').value = themeName;
+    }
+    
+    let savedTheme = localStorage.getItem('golf_theme');
+    if (savedTheme) applyTheme(savedTheme);
+    // --- END globalVariables ---
 
     // --- START initializeApp ---
     async function initializeApp() {
@@ -1151,6 +1218,12 @@
         document.getElementById('hole-btn-text').innerText = 'All Holes';
     }
 
+    window.openInsightDetail = function(type, rawData) {
+        document.getElementById('insight-detail-title').innerText = type.toUpperCase();
+        document.getElementById('insight-detail-content').innerHTML = `You clicked on the <b>${type}</b> insight.<br><br>We can populate this modal with deeper historical data, specific hole breakdowns, and practice recommendations for this exact stat in future builds.`;
+        document.getElementById('insight-modal').style.display = 'flex';
+    };
+
     async function loadAnalyticsData() {
         if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
@@ -1251,21 +1324,21 @@
         
         let averages = [];
         if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
-        if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`🔴 <b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.`); if (averages.length > 1 && best.val < worst.val) { insights.push(`🟢 <b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.`); } }
+        if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span>🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span>🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
         
-        if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`🔥 <b>Mental Toughness:</b> You successfully "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.`); else insights.push(`🧠 <b>Mental Toughness:</b> You "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.`); }
+        if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span>🔥</span><div><b>Mental Toughness:</b> You successfully "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span>🧠</span><div><b>Mental Toughness:</b> You "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); }
 
-        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`🔴 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); else insights.push(`🟢 <b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.`); if (threePuttRate > 10) insights.push(`⚠️ <b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.`); }
-        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`🔴 <b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.`); else insights.push(`🟢 <b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.`); if (rightPct >= 50) insights.push(`🏌️‍♂️ <b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.`); } }
-        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`🔴 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); else insights.push(`🟢 <b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`🎯 <b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.`); } }
+        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('3-Putts')"><span>⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
+        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
+        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span>🔴</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span>🟢</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Distance Control')"><span>🎯</span><div><b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.</div></div>`); } }
         if (drops > 0) { 
             let dropsPerRound = drops / fRounds.length; 
-            if (dropsPerRound >= 2) insights.push(`⚠️ <b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.`); 
+            if (dropsPerRound >= 2) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Course Management')"><span>⚠️</span><div><b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.</div></div>`); 
             let dType = []; if(dropsOB > 0) dType.push({t:'OB', v:dropsOB}); if(dropsWater > 0) dType.push({t:'Water', v:dropsWater}); if(dropsLost > 0) dType.push({t:'Lost Ball', v:dropsLost});
-            if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`🏌️‍♂️ <b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.`); }
+            if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span>🏌️‍♂️</span><div><b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.</div></div>`); }
         }
         
-        if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<ul style="margin:0; padding-left: 20px; line-height: 1.8;"><li>${insights.join('</li><li>')}</li></ul>`;
+        if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:flex; flex-direction:column; gap:8px;">${insights.join('')}</div>`;
     }
 
     function ensureNewChartsContainers() {
@@ -1290,27 +1363,61 @@
         }
     }
 
+    function getRelativeParString(score, par) {
+        if(par === 0 || score === 0) return "";
+        let diff = score - par;
+        return diff > 0 ? `(+${diff})` : (diff === 0 ? `(E)` : `(${diff})`);
+    }
+
     function updateTrophyRoom(fRounds) {
-        let lowScore = 999, lowScoreCourse = "", lowScoreDate = "";
-        let longDrive = 0, longDriveCourse = "", longDriveDate = "";
-        let lowPutts = 999, lowPuttsDate = "";
-        let mostFir = 0, mostFirDate = "";
+        let lowScores = []; let minScore = 999;
+        let longDrives = []; let maxDrive = 0;
+        let lowPuttsList = []; let minPutts = 999;
+        let mostFirsList = []; let maxFir = 0;
 
         fRounds.forEach(r => {
             let dStr = new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+            let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
             
-            if (r.total_score > 0 && r.total_score < lowScore) { lowScore = r.total_score; lowScoreCourse = r.course_name.trim(); lowScoreDate = dStr; }
-            if (r.total_putts > 0 && r.total_putts < lowPutts) { lowPutts = r.total_putts; lowPuttsDate = dStr; }
+            if (holesPlayed >= 18) {
+                let coursePar = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
+                
+                if (r.total_score > 0) {
+                    if (r.total_score < minScore) {
+                        minScore = r.total_score;
+                        lowScores = [{c: r.course_name.trim(), d: dStr, p: coursePar}];
+                    } else if (r.total_score === minScore) {
+                        lowScores.push({c: r.course_name.trim(), d: dStr, p: coursePar});
+                    }
+                }
+                
+                if (r.total_putts > 0) {
+                    if (r.total_putts < minPutts) {
+                        minPutts = r.total_putts;
+                        lowPuttsList = [{c: r.course_name.trim(), d: dStr}];
+                    } else if (r.total_putts === minPutts) {
+                        lowPuttsList.push({c: r.course_name.trim(), d: dStr});
+                    }
+                }
+                
+                let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
+                if (firs > maxFir) {
+                    maxFir = firs;
+                    mostFirsList = [{c: r.course_name.trim(), d: dStr}];
+                } else if (firs === maxFir && firs > 0) {
+                    mostFirsList.push({c: r.course_name.trim(), d: dStr});
+                }
+            }
             
             if (r.hole_scores) {
-                let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
-                if (firs > mostFir) { mostFir = firs; mostFirDate = dStr; }
-
                 r.hole_scores.forEach(h => {
-                    if (h.drive_distance > longDrive && (!h.drive_exception || h.drive_exception === "")) {
-                        longDrive = h.drive_distance;
-                        longDriveCourse = r.course_name.trim();
-                        longDriveDate = dStr;
+                    if (h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) {
+                        if (h.drive_distance > maxDrive) {
+                            maxDrive = h.drive_distance;
+                            longDrives = [{c: r.course_name.trim(), d: dStr}];
+                        } else if (h.drive_distance === maxDrive) {
+                            longDrives.push({c: r.course_name.trim(), d: dStr});
+                        }
                     }
                 });
             }
@@ -1319,17 +1426,28 @@
         const tBox = document.getElementById('trophy-room-box');
         if(!tBox) return;
         
-        const tStyle = "flex: 1; min-width: 120px; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
+        const tStyle = "flex: 1; min-width: 140px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
         const labelStyle = "font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;";
-        const valStyle = "font-size: 24px; color: #f59e0b; font-weight: bold;";
-        const subStyle = "font-size: 10px; color: #666; margin-top: 5px;";
+        const valStyle = "font-size: 24px; color: var(--accent-green); font-weight: bold;";
+        const subStyle = "font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;";
+
+        function formatList(arr) {
+            if(arr.length === 0) return "--";
+            let html = `<strong>${arr[0].c}</strong><br><span style="opacity:0.6">${arr[0].d}</span>`;
+            if (arr.length === 2) html += `<br><hr style="border:0; border-top:1px solid #333; margin:4px 0;"><strong>${arr[1].c}</strong><br><span style="opacity:0.6">${arr[1].d}</span>`;
+            else if (arr.length > 2) html += `<br><span style="color:var(--accent-green);">+ ${arr.length - 1} tied</span>`;
+            return html;
+        }
+
+        let lowScoreRel = (minScore !== 999 && lowScores.length > 0) ? getRelativeParString(minScore, lowScores[0].p) : "";
+        let displayScore = minScore === 999 ? '--' : `${minScore} <span style="font-size:14px; opacity:0.8;">${lowScoreRel}</span>`;
 
         tBox.innerHTML = `
-            <div style="width: 100%; font-size: 14px; font-weight: bold; color: #f59e0b; text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (Filtered)</div>
-            <div style="${tStyle}"><div style="${labelStyle}">Low Round</div><div style="${valStyle}">${lowScore === 999 ? '--' : lowScore}</div><div style="${subStyle}">${lowScoreCourse}<br><span style="opacity:0.6">${lowScoreDate}</span></div></div>
-            <div style="${tStyle}"><div style="${labelStyle}">Long Drive</div><div style="${valStyle}">${longDrive === 0 ? '--' : longDrive + 'y'}</div><div style="${subStyle}">${longDriveCourse}<br><span style="opacity:0.6">${longDriveDate}</span></div></div>
-            <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${lowPutts === 999 ? '--' : lowPutts}</div><div style="${subStyle}"><span style="opacity:0.6">${lowPuttsDate}</span></div></div>
-            <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${mostFir}</div><div style="${subStyle}"><span style="opacity:0.6">${mostFirDate}</span></div></div>
+            <div style="width: 100%; font-size: 14px; font-weight: bold; color: var(--accent-green); text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
+            <div style="${tStyle}"><div style="${labelStyle}">Low Round</div><div style="${valStyle}">${displayScore}</div><div style="${subStyle}">${formatList(lowScores)}</div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Long Drive</div><div style="${valStyle}">${maxDrive === 0 ? '--' : maxDrive + 'y'}</div><div style="${subStyle}">${formatList(longDrives)}</div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${minPutts === 999 ? '--' : minPutts}</div><div style="${subStyle}">${formatList(lowPuttsList)}</div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${maxFir}</div><div style="${subStyle}">${formatList(mostFirsList)}</div></div>
         `;
     }
 
@@ -1554,7 +1672,7 @@
         if(totalHolesCount === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
         const cA = (tot) => ((tot / totalHolesCount) * 18).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / 18-Holes</th><th>Hole %</th></tr></thead><tbody>
-            <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
+            <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
             <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
             <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
             <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
@@ -1564,11 +1682,11 @@
             <tr><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
             <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
             <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
-            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
+            <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
             <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-            <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
+            <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
             <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
             <tr><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
