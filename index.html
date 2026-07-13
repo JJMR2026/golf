@@ -26,8 +26,8 @@
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
-        .nav-buttons { display: flex; gap: 8px; margin-bottom: 5px; width: 100%; justify-content: space-between; }
-        .nav-buttons button { flex: 1; padding: 12px 5px; font-size: 13px; text-align: center; border-radius: 8px; }
+        .nav-buttons { display: flex; gap: 8px; margin-bottom: 5px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
+        .nav-buttons button { flex: 1; padding: 12px 5px; font-size: 13px; text-align: center; border-radius: 8px; min-width: 70px; }
         button { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer; font-weight: 600; transition: all 0.2s; }
         button:hover { background-color: rgba(255,255,255,0.05); }
         button.primary, button.nav-btn.active { background-color: var(--accent-green); color: #000; border: none; }
@@ -79,7 +79,7 @@
         .play-input input { font-size: 20px; padding: 0;}
         .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; flex-wrap: wrap; }
         .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; min-width: 60px; }
-        .adv-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .adv-btn.active { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
 
@@ -113,6 +113,7 @@
         .stats-table td:first-child { font-weight: 600; color: var(--text-muted); text-align: left; }
         .stats-table td:nth-child(3) { color: var(--text-main); }
         .stats-table td:last-child { color: var(--accent-green); font-weight: normal; }
+        .stats-table tr { cursor: pointer; }
         .stats-table tr:hover { background-color: rgba(255,255,255,0.05); }
         
         .hcp-badge { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
@@ -129,8 +130,12 @@
         .insight-btn { display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-main); transition: 0.2s; text-align: left; line-height: 1.5; }
         .insight-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--accent-green); }
 
-        #auth-overlay, #settings-overlay, #insight-modal { position: fixed; inset: 0; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
-        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 400px; text-align: center; margin: auto; position: relative;}
+        .analytics-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; overflow-x: auto; }
+        .analytics-tabs button { flex: 1; min-width: 100px; padding: 10px; background: transparent; border: none; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.2s; }
+        .analytics-tabs button.active { background: var(--accent-green); color: #000; }
+        
+        #auth-overlay, #settings-overlay, #insight-modal, #stat-graph-modal, #incomplete-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;}
+        .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 500px; text-align: center; margin: auto; position: relative;}
         .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
         
         .login-option { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
@@ -149,7 +154,7 @@
         
         <div class="login-option">
             <h4 style="color: var(--text-main);">Sign In / Register</h4>
-            <p>Enter an email or nickname to begin. <br><b>Emails are strictly for login and never shared or sold.</b></p>
+            <p>Enter an email or nickname to begin. <br><b style="color: var(--accent-green);">Emails are strictly for login and never shared or sold.</b></p>
         </div>
 
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
@@ -165,7 +170,7 @@
         </div>
 
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (No Cloud Save)</button>
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (Single Round Tracking Only)</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
     </div>
@@ -185,6 +190,13 @@
                 <option value="midnight">Midnight (Cyber Blue)</option>
                 <option value="crimson">Crimson (Blood Red)</option>
                 <option value="neon">Neon (Cyberpunk Pink)</option>
+                <option value="forest">Forest (Green/Brown)</option>
+                <option value="royal">Royal (Purple/Gold)</option>
+                <option value="stealth">Stealth (Black/Yellow)</option>
+                <option value="cyber">Matrix (Black/Lime)</option>
+                <option value="autumn">Autumn (Brown/Orange)</option>
+                <option value="slate">Slate (Blue-Grey/Silver)</option>
+                <option value="mint">Mint (Dark Gray/Mint)</option>
                 <option value="masters">Masters Green</option>
                 <option value="light">Light Mode</option>
             </select>
@@ -211,13 +223,37 @@
 </div>
 
 <div id="insight-modal" style="display: none;">
-    <div class="auth-card" style="max-width: 500px; text-align: left;">
+    <div class="auth-card" style="max-width: 600px; text-align: left;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
             <h2 id="insight-detail-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">INSIGHT DETAIL</h2>
         </div>
         <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('insight-modal').style.display='none'">✕</button>
         <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
             Loading...
+        </div>
+    </div>
+</div>
+
+<div id="stat-graph-modal" style="display: none;">
+    <div class="auth-card" style="max-width: 800px; text-align: left; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
+            <h2 id="stat-graph-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">STAT TREND</h2>
+        </div>
+        <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('stat-graph-modal').style.display='none'">✕</button>
+        <div style="height: 300px; width: 100%; position: relative;">
+            <canvas id="statDetailChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div id="incomplete-modal" style="display: none;">
+    <div class="auth-card" style="max-width: 400px; border-color: #ef4444;">
+        <h2 style="color: #ef4444; margin-top: 0;">⚠️ INCOMPLETE ROUND</h2>
+        <p style="font-size: 14px; color: var(--text-muted);">You are missing scores on the following holes:</p>
+        <div id="incomplete-holes-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="view-toggle-btn" style="flex:1;" onclick="document.getElementById('incomplete-modal').style.display='none'">Go Back</button>
+            <button class="danger-btn" style="flex:1;" onclick="forceSubmitRound()">Submit Anyway</button>
         </div>
     </div>
 </div>
@@ -253,7 +289,16 @@
             <div class="card">
                 <div class="scorecard-header">
                     <h3 id="current-course-display">NO COURSE</h3>
-                    <div class="hole-toggle-wrapper"><button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button><button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button></div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+                        <div class="hole-toggle-wrapper">
+                            <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button>
+                            <button type="button" id="btn-9-holes" class="hole-toggle-btn" onclick="setHoleCount(9)">9</button>
+                        </div>
+                        <div class="hole-toggle-wrapper" id="front-back-toggle" style="display:none;">
+                            <button type="button" id="btn-front-9" class="hole-toggle-btn active" onclick="setNineSide('front')">FRONT</button>
+                            <button type="button" id="btn-back-9" class="hole-toggle-btn" onclick="setNineSide('back')">BACK</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
@@ -272,57 +317,72 @@
                     <span id="play-hole-title" style="color: var(--accent-green); font-size: 24px; font-weight: bold;">HOLE 1</span>
                     <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold; display: block; margin-bottom: 15px;">PAR - • - YDS</span>
                     
+                    <!-- CORE INPUTS -->
                     <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
-                    
-                    <!-- NEW PUTT TRACKING UI -->
-                    <div class="play-row" style="flex-wrap: wrap; gap:10px;">
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <div class="play-label">PUTTS</div>
-                            <div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
-                            <div class="play-label" style="font-size:12px; color:var(--text-muted);">1st Putt Dist (ft)</div>
-                            <div class="play-input" style="height:35px; width:60px;"><input type="number" id="play-putt-dist" style="font-size:14px;" onchange="syncPlayToState('puttDist', this.value)"></div>
-                        </div>
-                    </div>
-
-                    <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
-                    
-                    <!-- NEW APPROACH TRACKING UI -->
-                    <div class="play-row" id="play-gir-block" style="flex-wrap: wrap; gap:10px;">
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <div class="play-label">GIR</div>
-                            <div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
-                            <select id="play-approach-club" style="flex:1; margin-right:10px; font-size: 12px; padding: 8px;" onchange="syncPlayToState('appClub', this.value)">
-                                <option value="">Appr. Club...</option>
-                                <option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Hybrid/Wood</option>
-                            </select>
-                            <div class="play-input" style="height:35px; width:60px;"><input type="number" id="play-approach-dist" placeholder="Yds" style="font-size:14px;" onchange="syncPlayToState('appDist', this.value)"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="play-row" id="play-drive-block" style="flex-wrap: wrap;">
-                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                            <div class="play-label">DRIVE (YDS)</div>
-                            <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div>
-                        </div>
-                        <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
-                            <select id="play-drive-club" style="flex:1; font-size: 12px; padding: 8px;" onchange="syncPlayToState('driveClub', this.value)">
-                                <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
-                            </select>
-                            <select id="play-drive-exception" style="flex:2; font-size: 12px; padding: 8px;" onchange="syncPlayToState('driveException', this.value)">
-                                <option value="">Normal Drive</option><option value="MISS">Chunk / Topped / OB</option>
-                            </select>
-                        </div>
-                    </div>
-
+                    <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
                     <div class="play-row"><div class="play-label">DROPS</div><div class="play-input"><button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:var(--cell-bg); border:1px solid var(--cell-border); border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button></div></div>
-                    <div class="play-row"><div class="play-label">SAND SAVE</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">YES</button><button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">NO</button></div></div>
+
+                    <!-- ADVANCED STATS TOGGLE -->
+                    <button type="button" class="view-toggle-btn" style="width: 100%; margin-top: 10px; background: rgba(0,0,0,0.2);" onclick="toggleAdvancedPlayStats()" id="btn-toggle-adv-stats">🎯 Add Shot Details (FIR, GIR, Sand, Clubs) ▼</button>
+                    
+                    <div id="advanced-play-stats" style="display:none; flex-direction: column;">
+                        
+                        <!-- PUTT DISTANCE -->
+                        <div class="play-row" style="border-top: none; padding-top: 0;">
+                            <div class="play-label" style="font-size:14px; color:var(--text-muted);">1st Putt Dist (ft)</div>
+                            <div class="play-input" style="height:40px; width:70px;"><input type="number" id="play-putt-dist" style="font-size:16px;" onchange="syncPlayToState('puttDist', this.value)"></div>
+                        </div>
+
+                        <!-- FIR / DRIVE -->
+                        <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
+                        <div class="play-row" id="play-drive-block" style="flex-wrap: wrap;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <div class="play-label">DRIVE (YDS)</div>
+                                <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div>
+                            </div>
+                            <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+                                <select id="play-drive-club" style="flex:1; font-size: 12px; padding: 8px;" onchange="syncPlayToState('driveClub', this.value)">
+                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
+                                </select>
+                                <select id="play-drive-exception" style="flex:2; font-size: 12px; padding: 8px;" onchange="syncPlayToState('driveException', this.value)">
+                                    <option value="">Normal Drive</option><option value="MISS">Chunk / Topped / OB</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- GIR / APPROACH -->
+                        <div class="play-row" id="play-gir-block" style="flex-wrap: wrap; gap:10px;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <div class="play-label">GIR</div>
+                                <div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
+                                <select id="play-approach-club" style="flex:1; margin-right:10px; font-size: 12px; padding: 8px;" onchange="syncPlayToState('appClub', this.value)">
+                                    <option value="">Appr. Club...</option>
+                                    <option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Hybrid/Wood</option>
+                                </select>
+                                <div class="play-input" style="height:40px; width:70px;"><input type="number" id="play-approach-dist" placeholder="Yds" style="font-size:16px;" onchange="syncPlayToState('appDist', this.value)"></div>
+                            </div>
+                        </div>
+
+                        <!-- SAND TRACKING -->
+                        <div class="play-row" style="flex-wrap: wrap;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <div class="play-label">SAND</div>
+                                <button type="button" class="adv-btn" id="sand-trigger-btn" style="flex:none; width:120px;" onclick="triggerSandOptions()">HIT SAND</button>
+                            </div>
+                            <div class="advanced-tracking" id="adv-sand-options" style="width: 100%; margin-top: 10px; justify-content: flex-end;">
+                                <button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">SAVED (1 Putt)</button>
+                                <button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">MISSED (2+ Putts)</button>
+                                <button type="button" class="adv-btn" id="sandSave-stuck-btn" onclick="setPlayToggle('sandSave', 'stuck')">STUCK (2+ Shots)</button>
+                            </div>
+                        </div>
+
+                    </div>
+
                     <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
                 </div>
-                <button type="button" id="submit-round-btn" class="primary" style="width: 100%; margin-top:20px;" onclick="submitRound()">COMPLETE ROUND</button>
+                <button type="button" id="submit-round-btn" class="primary" style="width: 100%; margin-top:20px;" onclick="attemptSubmitRound()">COMPLETE ROUND</button>
             </div>
         </form>
     </div>
@@ -343,7 +403,15 @@
     
     <div id="view-analytics" class="view-container">
         <div class="card">
+            
+            <div class="analytics-tabs">
+                <button class="active" onclick="switchAnalyticsTab('summary', this)">Summary</button>
+                <button onclick="switchAnalyticsTab('charts', this)">Charts</button>
+                <button onclick="switchAnalyticsTab('insights', this)">Insights</button>
+            </div>
+
             <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
+            
             <div class="filter-row">
                 <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
                     <option value="season" selected>This Season</option>
@@ -400,41 +468,57 @@
                 </div>
             </div>
             
-            <div class="charts-grid">
-                <div class="chart-container" style="grid-column: 1 / -1;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
-                        <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
-                        <div id="chart-overlays" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
-                            <label style="cursor: pointer;"><input type="checkbox" value="putts" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #3b82f6;"> Putts</label>
-                            <label style="cursor: pointer;"><input type="checkbox" value="fir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #8b5cf6;"> FIR %</label>
-                            <label style="cursor: pointer;"><input type="checkbox" value="gir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #d946ef;"> GIR %</label>
-                            <label style="cursor: pointer;"><input type="checkbox" value="drops" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #ef4444;"> Drops</label>
+            <!-- TAB 1: SUMMARY -->
+            <div id="analytics-tab-summary" style="display:block;">
+                <div id="trophy-room-box" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:20px;"></div>
+                <p style="font-size:12px; color:var(--text-muted); text-align:center;"><i>Tap any row below to view a detailed trend chart.</i></p>
+                <div style="overflow-x: auto;">
+                    <table class="stats-table" id="analytics-data-table"></table>
+                </div>
+            </div>
+
+            <!-- TAB 2: CHARTS -->
+            <div id="analytics-tab-charts" style="display:none;">
+                <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
+                    <div class="chart-container" style="grid-column: 1 / -1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
+                            <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
+                            <div id="chart-overlays" style="display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
+                                <label style="cursor: pointer;"><input type="checkbox" value="hcp" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #f59e0b;"> HCP</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="putts" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #3b82f6;"> Putts</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="fir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #8b5cf6;"> FIR %</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="gir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #d946ef;"> GIR %</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="scram" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #10b981;"> Scram %</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="drops" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #ef4444;"> Drops</label>
+                            </div>
                         </div>
+                        <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
                     </div>
-                    <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
-                </div>
-                
-                <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 10px;">
-                    <div style="flex:1; position:relative; min-height:180px;"><canvas id="puttChart"></canvas></div>
-                    <div id="best-putting-rounds" style="margin-top:15px; font-size:11px; color:var(--text-muted); text-align:center; padding-top:15px; border-top:1px solid var(--border-color); line-height: 1.4;"></div>
-                </div>
-                
-                <div class="chart-container"><canvas id="driveChart"></canvas></div>
+                    
+                    <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 10px;">
+                        <div style="flex:1; position:relative; min-height:180px;"><canvas id="puttChart"></canvas></div>
+                        <div id="best-putting-rounds" style="margin-top:15px; font-size:11px; color:var(--text-muted); text-align:center; padding-top:15px; border-top:1px solid var(--border-color); line-height: 1.4;"></div>
+                    </div>
+                    
+                    <div class="chart-container"><canvas id="driveChart"></canvas></div>
 
-                <!-- NEW WEATHER CHART -->
-                <div class="chart-container" style="grid-column: 1 / -1;">
-                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION</div>
-                    <div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>
+                    <div class="chart-container" style="grid-column: 1 / -1;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots your Relative Score against the Historical Temperature to map climate fatigue.</span></div>
+                        <div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="insights-card">
-                <h4>Performance Insights</h4>
-                <div id="ai-insights-box">⏳ Analyzing data...</div>
+
+            <!-- TAB 3: INSIGHTS -->
+            <div id="analytics-tab-insights" style="display:none;">
+                <div class="chart-container" style="border:none; padding:0; background:transparent; margin-bottom:20px;"><canvas id="missRadarChart"></canvas></div>
+                <div class="insights-card" style="margin-top:0;">
+                    <h4>AI Performance Insights</h4>
+                    <div id="ai-insights-box">⏳ Analyzing data...</div>
+                </div>
             </div>
 
-            <table class="stats-table" id="analytics-data-table"></table>
         </div>
     </div>
 </div>
@@ -449,6 +533,7 @@
         <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
+            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
         </div>
         <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
         <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
@@ -458,6 +543,40 @@
     </form>
 </div>
 
+<div id="stat-graph-modal" class="modal-overlay">
+    <div class="auth-card" style="max-width: 800px; text-align: left; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
+            <h2 id="stat-graph-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">STAT TREND</h2>
+        </div>
+        <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('stat-graph-modal').style.display='none'">✕</button>
+        <div style="height: 300px; width: 100%; position: relative;">
+            <canvas id="statDetailChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div id="incomplete-modal" class="modal-overlay">
+    <div class="auth-card" style="max-width: 400px; border-color: #ef4444;">
+        <h2 style="color: #ef4444; margin-top: 0;">⚠️ INCOMPLETE ROUND</h2>
+        <p style="font-size: 14px; color: var(--text-muted);">You are missing scores on the following holes:</p>
+        <div id="incomplete-holes-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="view-toggle-btn" style="flex:1;" onclick="document.getElementById('incomplete-modal').style.display='none'">Go Back</button>
+            <button class="danger-btn" style="flex:1;" onclick="forceSubmitRound()">Submit Anyway</button>
+        </div>
+    </div>
+</div>
+
+<!-- 
+====================================================================================
+      ██╗ █████╗ ██╗   ██╗ █████╗ ███████╗ ██████╗██████╗ ██████╗ ████████╗
+      ██║██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗╚══██╔══╝
+      ██║███████║██║   ██║███████║███████╗██║     ██████╔╝██████╔╝   ██║   
+ ██   ██║██╔══██║╚██╗ ██╔╝██╔══██║╚════██║██║     ██╔══██╗██╔═══╝    ██║   
+ ╚█████╔╝██║  ██║ ╚████╔╝ ██║  ██║███████║╚██████╗██║  ██║██║       ██║   
+  ╚════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝       ╚═╝   
+====================================================================================
+-->
 <script>
     // --- START globalVariables ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
@@ -465,10 +584,10 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#2a2a2a';
 
-    let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" })), masterAnalyticsData = [];
+    let currentUser = null, currentHoleCount = 18, currentHoleOffset = 0, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     
-    let trendChart = null, puttChart = null, driveChart = null, hcpChart = null, radarChart = null, weatherChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
+    let trendChart = null, puttChart = null, driveChart = null, radarChart = null, weatherChart = null, statDetailChartObj = null, currentFilteredRounds = [], roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
     
     const centerTextPlugin = {
         id: 'centerText',
@@ -484,9 +603,10 @@
             
             var centerX = left + (right - left) / 2;
             var centerY = top + (bottom - top) / 2;
+            var cWidth = right - left;
 
-            var fontSize = ((bottom - top) / 114).toFixed(2);
-            ctx.font = "bold " + (fontSize * 0.45) + "em sans-serif";
+            var fontSize = (cWidth / 250).toFixed(2);
+            ctx.font = "bold " + (fontSize * 3) + "em sans-serif";
             ctx.textBaseline = "middle";
             ctx.textAlign = "center";
             ctx.fillStyle = "#10b981";
@@ -496,11 +616,11 @@
             let putts = (data[1]*1) + (data[2]*2) + (data[3]*3.1); 
             let text = total > 0 ? (putts / total).toFixed(1) : "0.0";
             
-            ctx.fillText(text, centerX, centerY - ((bottom - top) * 0.05));
+            ctx.fillText(text, centerX, centerY - (cWidth * 0.05));
             
-            ctx.font = "normal " + (fontSize * 0.18) + "em sans-serif";
+            ctx.font = "normal " + (fontSize * 1.2) + "em sans-serif";
             ctx.fillStyle = "#9ca3af";
-            ctx.fillText("Avg / Hole", centerX, centerY + ((bottom - top) * 0.15));
+            ctx.fillText("Avg / Hole", centerX, centerY + (cWidth * 0.15));
             ctx.save();
         }
     };
@@ -514,7 +634,14 @@
         sunset: { bg: '#1a0b1c', card: '#2d1b30', border: '#4a2c4f', accent: '#f97316', hover: '#d97706', text: '#fff1f2', muted: '#e1adba', cell: '#1a0b1c', cellBorder: '#4a2c4f' },
         ocean: { bg: '#082f49', card: '#0f172a', border: '#0c4a6e', accent: '#06b6d4', hover: '#0284c7', text: '#e0f2fe', muted: '#7dd3fc', cell: '#082f49', cellBorder: '#0c4a6e' },
         crimson: { bg: '#1a0505', card: '#2a0a0a', border: '#4a1111', accent: '#ef4444', hover: '#dc2626', text: '#fee2e2', muted: '#fca5a5', cell: '#1a0505', cellBorder: '#4a1111' },
-        neon: { bg: '#0a0a1a', card: '#14142b', border: '#2d2d59', accent: '#d946ef', hover: '#c026d3', text: '#fdf4ff', muted: '#e879f9', cell: '#0a0a1a', cellBorder: '#2d2d59' }
+        neon: { bg: '#0a0a1a', card: '#14142b', border: '#2d2d59', accent: '#d946ef', hover: '#c026d3', text: '#fdf4ff', muted: '#e879f9', cell: '#0a0a1a', cellBorder: '#2d2d59' },
+        forest: { bg: '#1e2019', card: '#2c2e25', border: '#434738', accent: '#a3b18a', hover: '#8a9a5b', text: '#e0e2db', muted: '#a8aca1', cell: '#1e2019', cellBorder: '#434738' },
+        royal: { bg: '#1a1025', card: '#2a1b38', border: '#452b5e', accent: '#fbbf24', hover: '#d97706', text: '#f3e8ff', muted: '#d8b4fe', cell: '#1a1025', cellBorder: '#452b5e' },
+        stealth: { bg: '#000000', card: '#0a0a0a', border: '#1a1a1a', accent: '#eab308', hover: '#ca8a04', text: '#a3a3a3', muted: '#525252', cell: '#000000', cellBorder: '#1a1a1a' },
+        cyber: { bg: '#050505', card: '#09090b', border: '#171717', accent: '#84cc16', hover: '#65a30d', text: '#d4d4d8', muted: '#737373', cell: '#050505', cellBorder: '#171717' },
+        autumn: { bg: '#2b1b17', card: '#3d2620', border: '#5c3a31', accent: '#f97316', hover: '#ea580c', text: '#ffedd5', muted: '#fdba74', cell: '#2b1b17', cellBorder: '#5c3a31' },
+        slate: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#94a3b8', hover: '#cbd5e1', text: '#f8fafc', muted: '#64748b', cell: '#0f172a', cellBorder: '#334155' },
+        mint: { bg: '#111827', card: '#1f2937', border: '#374151', accent: '#6ee7b7', hover: '#34d399', text: '#f3f4f6', muted: '#9ca3af', cell: '#111827', cellBorder: '#374151' }
     };
 
     function applyTheme(themeName) {
@@ -566,48 +693,8 @@
             else if (event === 'SIGNED_IN' && session) { currentUser = session.user; localStorage.removeItem('golf_guest_mode'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); processOfflineQueue(); } 
             else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') { document.getElementById('auth-overlay').style.display = 'flex'; } }
         });
-        
-        injectMissingUI();
     }
     // --- END initializeApp ---
-
-    // --- START injectMissingUI ---
-    function injectMissingUI() {
-        const firBlock = document.getElementById('play-fir-block');
-        if(firBlock && !document.getElementById('adv-fir-options')) {
-            const advFir = document.createElement('div');
-            advFir.id = 'adv-fir-options'; advFir.className = 'advanced-tracking';
-            advFir.style.cssText = 'display: none; width: 100%; gap: 5px; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
-            advFir.innerHTML = `<button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'LEFT')">LEFT</button>
-                                <button type="button" class="adv-btn" onclick="setAdvToggle('fir', 'RIGHT')">RIGHT</button>`;
-            firBlock.parentNode.insertBefore(advFir, firBlock.nextSibling);
-        }
-        const girBtn = document.getElementById('gir-hit-btn');
-        if(girBtn && !document.getElementById('adv-gir-options')) {
-            const girBlock = girBtn.closest('.play-row');
-            const advGir = document.createElement('div');
-            advGir.id = 'adv-gir-options'; advGir.className = 'advanced-tracking';
-            advGir.style.cssText = 'display: none; width: 100%; gap: 5px; flex-wrap: wrap; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
-            advGir.innerHTML = `<button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'SHORT')">SHORT</button>
-                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LONG')">LONG</button>
-                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'LEFT')">LEFT</button>
-                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'RIGHT')">RIGHT</button>
-                                <button type="button" class="adv-btn" onclick="setAdvToggle('gir', 'BUNKER')">BUNKER</button>`;
-            girBlock.parentNode.insertBefore(advGir, girBlock.nextSibling);
-        }
-        const dropsBtn = document.getElementById('play-drops-btn');
-        if(dropsBtn && !document.getElementById('adv-drops-options')) {
-            const dropsBlock = dropsBtn.closest('.play-row');
-            const advDrops = document.createElement('div');
-            advDrops.id = 'adv-drops-options'; advDrops.className = 'advanced-tracking';
-            advDrops.style.cssText = 'display: none; width: 100%; gap: 5px; flex-wrap: wrap; padding: 0 15px 15px 15px; margin-top: -10px; box-sizing: border-box; justify-content: flex-end;';
-            advDrops.innerHTML = `<button type="button" class="adv-btn drop-type-btn" data-type="OB" onclick="setAdvToggle('drops', 'OB')">OB</button>
-                                  <button type="button" class="adv-btn drop-type-btn" data-type="WATER" onclick="setAdvToggle('drops', 'WATER')">WATER</button>
-                                  <button type="button" class="adv-btn drop-type-btn" data-type="LOST" onclick="setAdvToggle('drops', 'LOST')">LOST</button>`;
-            dropsBlock.parentNode.insertBefore(advDrops, dropsBlock.nextSibling);
-        }
-    }
-    // --- END injectMissingUI ---
 
     // --- START handleAuth ---
     async function handleAuth(type) {
@@ -666,6 +753,7 @@
     }
     function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
     function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); }
+    function switchAnalyticsTab(tab, btn) { document.querySelectorAll('#view-analytics > .card > div[id^="analytics-tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.analytics-tabs button').forEach(el => el.classList.remove('active')); document.getElementById('analytics-tab-' + tab).style.display = 'block'; btn.classList.add('active'); }
     // --- END authFunctions ---
 
     // --- START weatherLogic ---
@@ -744,6 +832,7 @@
         localStorage.setItem('golf_round_state', JSON.stringify({ 
             courseName: el.innerText.trim(), 
             holeCount: currentHoleCount, 
+            holeOffset: currentHoleOffset,
             pars: currentCoursePars, 
             yardages: currentYardages, 
             roundData: roundData, 
@@ -760,6 +849,7 @@
                 document.getElementById('current-course-display').innerText = s.courseName; 
                 document.getElementById('current-course-display').style.color = 'var(--accent-green)'; 
                 currentHoleCount = s.holeCount || 18; 
+                currentHoleOffset = s.holeOffset || 0;
                 currentCoursePars = s.pars || Array(18).fill(""); 
                 currentYardages = s.yardages || Array(18).fill(""); 
                 
@@ -768,8 +858,21 @@
                 roundWeather = s.weather || roundWeather; 
                 dismissedWarnings = s.dismissedWarnings || [];
                 if(roundWeather.temp) document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; 
+                
                 document.getElementById('btn-18-holes').classList.toggle('active', currentHoleCount === 18); 
                 document.getElementById('btn-9-holes').classList.toggle('active', currentHoleCount === 9); 
+                
+                let toggleBox = document.getElementById('front-back-toggle');
+                if (currentHoleCount === 9) {
+                    toggleBox.style.display = 'inline-flex';
+                    document.getElementById('btn-front-9').classList.toggle('active', currentHoleOffset === 0);
+                    document.getElementById('btn-back-9').classList.toggle('active', currentHoleOffset === 9);
+                } else {
+                    toggleBox.style.display = 'none';
+                }
+                
+                currentPlayHole = currentHoleOffset;
+
             } catch(e) {} 
         } 
     }
@@ -820,7 +923,7 @@
     });
 
     document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
-    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-putt-dist').focus(); }, 150); });
+    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-drops-btn').focus(); }, 150); });
     document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-club').focus(), 150); });
     // --- END inputListeners ---
 
@@ -910,7 +1013,39 @@
         buildGrid(); updatePlayModeUI(); saveLocalState();
     }
 
-    function setHoleCount(count) { currentHoleCount = count; document.getElementById('btn-18-holes').classList.toggle('active', count === 18); document.getElementById('btn-9-holes').classList.toggle('active', count === 9); if (currentPlayHole >= currentHoleCount) currentPlayHole = 0; buildGrid(); updatePlayModeUI(); saveLocalState(); }
+    function setHoleCount(count) { 
+        currentHoleCount = count; 
+        document.getElementById('btn-18-holes').classList.toggle('active', count === 18); 
+        document.getElementById('btn-9-holes').classList.toggle('active', count === 9); 
+        
+        let toggleBox = document.getElementById('front-back-toggle');
+        if (count === 9) {
+            toggleBox.style.display = 'inline-flex';
+            currentHoleOffset = 0;
+            document.getElementById('btn-front-9').classList.add('active');
+            document.getElementById('btn-back-9').classList.remove('active');
+        } else {
+            toggleBox.style.display = 'none';
+            currentHoleOffset = 0;
+        }
+        
+        currentPlayHole = currentHoleOffset; 
+        buildGrid(); updatePlayModeUI(); saveLocalState(); 
+    }
+    
+    function setNineSide(side) {
+        if (side === 'front') {
+            currentHoleOffset = 0;
+            document.getElementById('btn-front-9').classList.add('active');
+            document.getElementById('btn-back-9').classList.remove('active');
+        } else {
+            currentHoleOffset = 9;
+            document.getElementById('btn-front-9').classList.remove('active');
+            document.getElementById('btn-back-9').classList.add('active');
+        }
+        currentPlayHole = currentHoleOffset;
+        buildGrid(); updatePlayModeUI(); saveLocalState(); 
+    }
 
     window.jumpToPlayMode = function(index) { 
         currentPlayHole = index; 
@@ -919,17 +1054,20 @@
 
     function buildGrid() {
         const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `80px repeat(${currentHoleCount}, minmax(60px, 1fr))`;
-        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YDS', type: 'yardage' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }];
+        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YDS', type: 'yardage' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }];
+        
+        let endIndex = currentHoleOffset + currentHoleCount;
+        
         rows.forEach(row => {
             const labelCell = document.createElement('div'); labelCell.className = 'row-label'; labelCell.innerText = row.label; grid.appendChild(labelCell);
-            for (let i = 0; i < currentHoleCount; i++) {
+            for (let i = currentHoleOffset; i < endIndex; i++) {
                 const cell = document.createElement('div');
                 if (row.type === 'header') { cell.className = 'cell hole-header'; cell.innerHTML = `<button type="button" onclick="jumpToPlayMode(${i})" style="width:100%;height:100%;background:transparent;border:none;color:var(--text-muted);font-weight:bold;cursor:pointer;padding:0;">${i + 1}</button>`; } 
                 else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; } 
                 else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI(); saveLocalState();">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`; }
                 else if (row.type === 'drops') { cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0; cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-                else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'YES' : (cVal === 'no' ? 'NO' : '-')) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
+                else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'SAVE' : (cVal === 'no' ? 'MISS' : (cVal === 'stuck' ? 'STUCK' : '-'))) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
                 grid.appendChild(cell);
             }
         });
@@ -952,7 +1090,40 @@
         saveLocalState(); 
     }
     
-    function toggleGridHit(index, type) { const btn = document.getElementById(`grid-${type}-${index}`); let ns = type === 'sandSave' ? (btn.innerText === "NO" ? "yes" : (btn.innerText === "YES" ? "-" : "no")) : (btn.innerText === "MISS" ? "hit" : "miss"); btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); roundData[index][type] = ns === "-" ? "" : ns; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
+    function triggerSandOptions() {
+        let advOps = document.getElementById('adv-sand-options');
+        advOps.style.display = advOps.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function toggleGridHit(index, type) { 
+        const btn = document.getElementById(`grid-${type}-${index}`); 
+        let ns = type === 'sandSave' ? (btn.innerText === "MISS" ? "stuck" : (btn.innerText === "STUCK" ? "yes" : (btn.innerText === "SAVE" ? "-" : "no"))) : (btn.innerText === "MISS" ? "hit" : "miss"); 
+        
+        if (type === 'sandSave') {
+            btn.innerText = ns === "-" ? "-" : (ns === 'yes' ? 'SAVE' : (ns === 'no' ? 'MISS' : 'STUCK'));
+        } else {
+            btn.innerText = ns === "-" ? "-" : ns.toUpperCase(); 
+        }
+
+        if(ns === 'hit' || ns === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); 
+        roundData[index][type] = ns === "-" ? "" : ns; 
+        if(currentPlayHole === index) updatePlayModeUI(); 
+        saveLocalState(); 
+    }
+
+    function toggleAdvancedPlayStats() {
+        const advBlock = document.getElementById('advanced-play-stats');
+        const btn = document.getElementById('btn-toggle-adv-stats');
+        if (advBlock.style.display === 'none') {
+            advBlock.style.display = 'flex';
+            btn.innerText = "🎯 Hide Shot Details ▲";
+            btn.classList.add('active');
+        } else {
+            advBlock.style.display = 'none';
+            btn.innerText = "🎯 Add Shot Details (FIR, GIR, Sand, Clubs) ▼";
+            btn.classList.remove('active');
+        }
+    }
 
     function togglePlayMode(isPlayMode) { document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; if(isPlayMode) updatePlayModeUI(); }
 
@@ -984,11 +1155,14 @@
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
         let strokes = 0; let parSum = 0; let holesPlayed = 0;
-        let totalCoursePar = currentCoursePars.slice(0, currentHoleCount).reduce((a,b) => a + (parseInt(b) || 4), 0);
+        let totalCoursePar = 0;
         
-        for(let i=0; i<currentHoleCount; i++) {
+        let endIndex = currentHoleOffset + currentHoleCount;
+
+        for(let i=currentHoleOffset; i<endIndex; i++) {
             let s = parseInt(roundData[i].score);
             let p = parseInt(currentCoursePars[i]) || 4;
+            totalCoursePar += p;
             if(s > 0) { strokes += s; parSum += p; holesPlayed++; }
         }
         
@@ -1008,14 +1182,13 @@
         let missingBanner = document.getElementById('play-warning-banner');
         let missingHtml = "";
         
-        for(let i=0; i<currentHoleCount; i++) {
+        for(let i=currentHoleOffset; i<endIndex; i++) {
             let s = parseInt(roundData[i].score);
             let p = parseInt(currentCoursePars[i]) || 4;
             if (s > 0 && i !== currentPlayHole) {
                 if (roundData[i].putts === "" && !dismissedWarnings.includes(`${i}-putts`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-putts')">Hole ${i+1} Putts</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-putts')">✕</span></div>`;
                 if (roundData[i].gir === "" && !dismissedWarnings.includes(`${i}-gir`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-gir')">Hole ${i+1} GIR</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-gir')">✕</span></div>`;
                 if (p > 3 && roundData[i].fir === "" && !dismissedWarnings.includes(`${i}-fir`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-fir')">Hole ${i+1} FIR</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-fir')">✕</span></div>`;
-                if (p > 3 && roundData[i].drive === "" && (!roundData[i].driveException || roundData[i].driveException === "") && !dismissedWarnings.includes(`${i}-drive`)) missingHtml += `<div style="display:flex; align-items:center; background:#b45309; border-radius:4px; overflow:hidden;"><span style="padding: 4px 8px; color:#fff; cursor:pointer; font-size:11px;" onclick="goToHoleAndDismiss(${i}, '${i}-drive')">Hole ${i+1} Drive</span><span style="padding: 4px 8px; background:rgba(0,0,0,0.2); color:#fff; cursor:pointer; font-size:11px;" onclick="dismissMissingWarning('${i}-drive')">✕</span></div>`;
             }
         }
         
@@ -1047,9 +1220,10 @@
             
             let hb = document.getElementById(hBtn); if(hb) hb.classList.remove('active'); 
             let mb = document.getElementById(mBtn); if(mb) mb.classList.remove('active');
+            let sb = document.getElementById(`${type}-stuck-btn`); if(sb) sb.classList.remove('active');
             
             let advOps = document.getElementById(`adv-${type}-options`);
-            if (advOps) {
+            if (advOps && type !== 'sandSave') {
                 advOps.style.display = 'none'; 
                 document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
             }
@@ -1058,31 +1232,48 @@
                 if(hb) hb.classList.add('active');
             } else if(state[type] === (type === 'sandSave' ? 'no' : 'miss') && !(type === 'fir' && par === 3)) { 
                 if(mb) mb.classList.add('active'); 
-                if (advOps) {
+                if (advOps && type !== 'sandSave') {
                     advOps.style.display = 'flex'; 
                     if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { 
                         if(b.classList.contains('drop-type-btn')) return;
                         if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); 
                     }); 
                 }
+            } else if (state[type] === 'stuck') {
+                if(sb) sb.classList.add('active');
+            }
+            
+            if (type === 'sandSave') {
+                let sBox = document.getElementById('adv-sand-options');
+                if(state.sandSave !== "") sBox.style.display = 'flex';
+                else sBox.style.display = 'none';
             }
         });
         
         let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.display = par === 3 ? 'none' : 'flex'; 
         let fBlock = document.getElementById('play-fir-block'); if(fBlock) fBlock.style.display = par === 3 ? 'none' : 'flex'; 
         
-        document.getElementById('play-prev-btn').style.visibility = currentPlayHole === 0 ? 'hidden' : 'visible'; 
-        document.getElementById('play-next-btn').innerText = currentPlayHole === (currentHoleCount - 1) ? 'FINISH' : 'NEXT HOLE →';
+        document.getElementById('play-prev-btn').style.visibility = currentPlayHole === currentHoleOffset ? 'hidden' : 'visible'; 
+        document.getElementById('play-next-btn').innerText = currentPlayHole === (endIndex - 1) ? 'FINISH' : 'NEXT HOLE →';
     }
 
-    function changePlayHole(dir) { currentPlayHole = Math.max(0, Math.min((currentHoleCount - 1), currentPlayHole + dir)); updatePlayModeUI(); }
+    function changePlayHole(dir) { 
+        let endIndex = currentHoleOffset + currentHoleCount;
+        currentPlayHole = Math.max(currentHoleOffset, Math.min((endIndex - 1), currentPlayHole + dir)); 
+        updatePlayModeUI(); 
+    }
     
     function setPlayToggle(type, status) { 
         roundData[currentPlayHole][type] = (roundData[currentPlayHole][type] === status) ? "" : status; 
         if((status === 'hit' || status === 'yes') && type !== 'sandSave') roundData[currentPlayHole][type + 'Adv'] = []; 
         const btn = document.getElementById(`grid-${type}-${currentPlayHole}`); 
         if(btn) { 
-            btn.innerText = roundData[currentPlayHole][type] === "" ? "-" : roundData[currentPlayHole][type].toUpperCase(); 
+            let ns = roundData[currentPlayHole][type];
+            if (type === 'sandSave') {
+                btn.innerText = ns === "" ? "-" : (ns === 'yes' ? 'SAVE' : (ns === 'no' ? 'MISS' : 'STUCK'));
+            } else {
+                btn.innerText = ns === "" ? "-" : ns.toUpperCase(); 
+            }
             if(status === 'hit' || status === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); 
         } 
         updatePlayModeUI(); saveLocalState(); 
@@ -1108,11 +1299,32 @@
     }
 
     function updatePar(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(6, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
-    function updateDriveDistances() { for (let i = 0; i < currentHoleCount; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } }
+    function updateDriveDistances() { for (let i = 0; i < 18; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } }
     // --- END playModeLogic ---
 
     // --- START submitRound ---
-    async function submitRound() {
+    function attemptSubmitRound() {
+        let endIndex = currentHoleOffset + currentHoleCount;
+        let missingHoles = [];
+        
+        for (let i = currentHoleOffset; i < endIndex; i++) {
+            if (roundData[i].score === "") {
+                missingHoles.push(i + 1);
+            }
+        }
+
+        if (missingHoles.length > 0 && missingHoles.length < currentHoleCount) {
+            let mBox = document.getElementById('incomplete-holes-list');
+            mBox.innerHTML = missingHoles.map(h => `<button type="button" class="adv-btn" style="background:#b45309; color:#fff; border-color:#b45309;" onclick="document.getElementById('incomplete-modal').style.display='none'; jumpToPlayMode(${h-1});">Hole ${h}</button>`).join('');
+            document.getElementById('incomplete-modal').style.display = 'flex';
+        } else {
+            forceSubmitRound();
+        }
+    }
+
+    async function forceSubmitRound() {
+        document.getElementById('incomplete-modal').style.display='none';
+
         if (!currentUser) { if (confirm("Guest Round Complete!\n\nSince you are not logged in, this scorecard cannot be saved to the permanent History dashboard.\n\nClear your local scorecard to start a new round?")) { localStorage.removeItem('golf_round_state'); location.reload(); } return; }
         const courseName = document.getElementById('current-course-display').innerText.trim();
         if (!courseName || courseName === 'NO COURSE SELECTED' || courseName === '') return alert("⚠️ Please fetch a valid course.");
@@ -1121,8 +1333,9 @@
 
         let totalScore = 0; let totalPutts = 0; const holesPayload = [];
         let missingCheck = [];
+        let endIndex = currentHoleOffset + currentHoleCount;
 
-        for (let i = 0; i < currentHoleCount; i++) {
+        for (let i = currentHoleOffset; i < endIndex; i++) {
             const s = parseInt(roundData[i].score);
             let p = parseInt(currentCoursePars[i]) || 4;
             
@@ -1148,8 +1361,6 @@
                     drops: parseInt(roundData[i].drops) || 0, 
                     drops_adv: (roundData[i].dropsAdv || []).join(','),
                     sand_save: roundData[i].sandSave || null,
-                    
-                    // NEW COLUMNS - Make sure to run SQL first!
                     drive_club: roundData[i].driveClub || null,
                     approach_club: roundData[i].appClub || null,
                     approach_yd: parseInt(roundData[i].appDist) || null,
@@ -1213,29 +1424,47 @@
         document.getElementById('modal-course-title').innerText = name.trim(); 
         document.getElementById('modal-total-score').innerText = score; 
         
-        let wText = (temp && wind) ? `⛅ ${temp} | 💨 ${wind}` : '';
+        let wText = temp ? `⛅ ${temp}` : '';
         document.getElementById('modal-weather').innerText = wText;
+        document.getElementById('modal-wind-dir').innerText = wind ? `💨 ${wind}` : '';
 
         activeModalRoundId = id; document.getElementById('history-modal').classList.add('active'); document.getElementById('modal-scorecard-grid').innerHTML = '⏳ Loading...';
         if (holesPlayed === 0) { document.getElementById('modal-scorecard-grid').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Bulk imported rounds do not contain hole-by-hole data.</div>'; return; }
-        let viewHoles = holesPlayed > 9 ? 18 : 9; modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
+        
         const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
-        if(data) data.forEach(h => { const i = h.hole_number - 1; if(i>=0 && i<viewHoles){ modalCoursePars[i]=h.par||""; modalRoundData[i]={id:h.id,score:h.score||"",putts:h.putts!==null?h.putts:"",fir:h.fir||"",firAdv:h.fir_adv?h.fir_adv.split(','):[],gir:h.gir||"",girAdv:h.gir_adv?h.gir_adv.split(','):[],drive:h.drive_distance||"",drops:h.drops||0,dropsAdv:h.drops_adv?h.drops_adv.split(','):[],sandSave:h.sand_save||""}; }});
-        buildModalGrid(viewHoles);
+        
+        let startHole = 0, endHole = 18;
+        if(data && data.length > 0 && data.length < 18) {
+            let firstHole = data[0].hole_number;
+            if(firstHole > 9) { startHole = 9; endHole = 18; }
+            else { startHole = 0; endHole = 9; }
+        }
+        let viewHoles = endHole - startHole;
+        
+        modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
+        
+        if(data) data.forEach(h => { 
+            const i = h.hole_number - 1 - startHole; 
+            if(i>=0 && i<viewHoles){ 
+                modalCoursePars[i]=h.par||""; 
+                modalRoundData[i]={id:h.id,score:h.score||"",putts:h.putts!==null?h.putts:"",fir:h.fir||"",firAdv:h.fir_adv?h.fir_adv.split(','):[],gir:h.gir||"",girAdv:h.gir_adv?h.gir_adv.split(','):[],drive:h.drive_distance||"",drops:h.drops||0,dropsAdv:h.drops_adv?h.drops_adv.split(','):[],sandSave:h.sand_save||""}; 
+            }
+        });
+        buildModalGrid(viewHoles, startHole);
     }
 
-    function buildModalGrid(holesCount) {
+    function buildModalGrid(holesCount, startOffset) {
         const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `80px repeat(${holesCount}, minmax(60px, 1fr))`;
-        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND SAVE', type: 'sandSave' }];
+        const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }];
         rows.forEach(r => {
             const lc = document.createElement('div'); lc.className = 'row-label'; lc.innerText = r.label; grid.appendChild(lc);
             for(let i=0; i<holesCount; i++) {
                 const c = document.createElement('div'); c.className = 'cell';
-                if(r.type === 'header') { c.className = 'cell hole-header'; c.innerText = i+1; }
+                if(r.type === 'header') { c.className = 'cell hole-header'; c.innerText = i+1+startOffset; }
                 else if(r.type === 'par') c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
                 else if(['score','putts','drive'].includes(r.type)) c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
                 else if(r.type === 'drops') { let cVal = parseInt(modalRoundData[i].drops) || 0; c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-                else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'YES':(v==='no'?'NO':'-')):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
+                else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':(v==='stuck'?'STUCK':'-'))):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
                 grid.appendChild(c);
             }
         });
@@ -1243,7 +1472,7 @@
     }
     
     function toggleModalDrops(btn, i) { let cVal = parseInt(modalRoundData[i].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; modalRoundData[i].drops = newVal; btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; }
-    function toggleModalHit(b, i, t) { let ns = t==='sandSave'?(b.innerText==="NO"?"yes":(b.innerText==="YES"?"-":"no")):(b.innerText==="MISS"?"hit":"miss"); b.innerText=ns==="-"?"-":ns.toUpperCase(); if(ns==='hit'||ns==='yes')b.classList.add('hit'); else b.classList.remove('hit'); modalRoundData[i][t] = ns==="-"?"":ns; }
+    function toggleModalHit(b, i, t) { let ns = t==='sandSave'?(b.innerText==="MISS"?"stuck":(b.innerText==="STUCK"?"yes":(b.innerText==="SAVE"?"-":"no"))):(b.innerText==="MISS"?"hit":"miss"); b.innerText=ns==="-"?"-":(ns==='yes'?'SAVE':(ns==='no'?'MISS':(ns==='stuck'?'STUCK':ns.toUpperCase()))); if(ns==='hit'||ns==='yes')b.classList.add('hit'); else b.classList.remove('hit'); modalRoundData[i][t] = ns==="-"?"":ns; }
     function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); activeModalRoundId = null; }
     
     async function saveModalChanges(id, holesCount) {
@@ -1282,8 +1511,69 @@
 
     window.openInsightDetail = function(type) {
         document.getElementById('insight-detail-title').innerText = type.toUpperCase();
-        document.getElementById('insight-detail-content').innerHTML = `You clicked on the <b>${type}</b> insight.<br><br>We can populate this modal with deeper historical data, specific hole breakdowns, and practice recommendations for this exact stat in future builds.`;
+        let contentHtml = "";
+
+        if (type === "Scoring Leak" || type === "Scoring Strength") {
+            let p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0;
+            currentFilteredRounds.forEach(r => { r.hole_scores && r.hole_scores.forEach(h => { if(h.score && h.par) { let d=h.score-h.par; if(h.par===3){p3+=d; p3c++;} if(h.par===4){p4+=d; p4c++;} if(h.par===5){p5+=d; p5c++;} } }); });
+            contentHtml = `<b>Par 3 Avg:</b> ${p3c>0 ? (p3/p3c>0?'+':'')+(p3/p3c).toFixed(2) : '-'}<br><br><b>Par 4 Avg:</b> ${p4c>0 ? (p4/p4c>0?'+':'')+(p4/p4c).toFixed(2) : '-'}<br><br><b>Par 5 Avg:</b> ${p5c>0 ? (p5/p5c>0?'+':'')+(p5/p5c).toFixed(2) : '-'}`;
+        } 
+        else if (type === "Mental Toughness") {
+            let bbO=0, bbH=0, bbmO=0, bbmH=0;
+            currentFilteredRounds.forEach(r => { 
+                let hs = (r.hole_scores||[]).slice().sort((a,b)=>a.hole_number-b.hole_number);
+                for(let i=0; i<hs.length-1; i++) { let c=hs[i], n=hs[i+1]; if(c.score && c.par && n.score && n.par) { let d=c.score-c.par; let nd=n.score-n.par; if(d===1){bbO++; if(nd<=0)bbH++;} if(d>=2){bbmO++; if(nd<=1)bbmH++;} } }
+            });
+            contentHtml = `<b>After a Bogey (+1):</b><br>You scored Par or better ${bbH} times out of ${bbO} chances (${bbO>0 ? (bbH/bbO*100).toFixed(0) : 0}%).<br><br><b>After a Double Bogey or Worse (+2+):</b><br>You successfully stopped the bleeding and scored Bogey or better ${bbmH} times out of ${bbmO} chances (${bbmO>0 ? (bbmH/bbmO*100).toFixed(0) : 0}%).`;
+        }
+        else if (type === "Fatigue") {
+            let f9s=0, f9p=0, b9s=0, b9p=0;
+            currentFilteredRounds.forEach(r => { r.hole_scores && r.hole_scores.forEach(h => { if(h.score && h.par) { if(h.hole_number<=9){f9s+=h.score; f9p+=h.par;} else{b9s+=h.score; b9p+=h.par;} } }); });
+            let e1 = f9p>0 ? (f9s-f9p)/(f9p/6) : 0; let e2 = b9p>0 ? (b9s-b9p)/(b9p/6) : 0;
+            contentHtml = `<b>Front 9 Pace:</b> ${e1>0?'+':''}${e1.toFixed(1)} over par.<br><br><b>Back 9 Pace:</b> ${e2>0?'+':''}${e2.toFixed(1)} over par.<br><br><i>This stat measures your strokes over par normalized to an identical pacing window to expose physical or mental fatigue.</i>`;
+        }
+        else if (type === "Putting") {
+            let p0=0, p1=0, p2=0, p3=0;
+            currentFilteredRounds.forEach(r => { r.hole_scores && r.hole_scores.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }); });
+            let tot = p0+p1+p2+p3;
+            contentHtml = `<b>Total Holes Putted:</b> ${tot}<br><br><b>0-Putts:</b> ${p0} (${tot>0?(p0/tot*100).toFixed(1):0}%)<br><b>1-Putts:</b> ${p1} (${tot>0?(p1/tot*100).toFixed(1):0}%)<br><b>2-Putts:</b> ${p2} (${tot>0?(p2/tot*100).toFixed(1):0}%)<br><b>3+ Putts:</b> ${p3} (${tot>0?(p3/tot*100).toFixed(1):0}%)`;
+        }
+        else {
+            contentHtml = `Deeper historical context mapping for this metric is actively being recorded in your database and will be unlocked in the next analytics update.`;
+        }
+
+        document.getElementById('insight-detail-content').innerHTML = contentHtml;
         document.getElementById('insight-modal').style.display = 'flex';
+    };
+
+    window.openStatGraph = function(title, statKey) {
+        document.getElementById('stat-graph-title').innerText = title.toUpperCase();
+        document.getElementById('stat-graph-modal').style.display = 'flex';
+        
+        let plotData = [];
+        let rList = [...currentFilteredRounds].reverse();
+        
+        rList.forEach(r => {
+            let val = 0; let valid = false;
+            let targetHoles = r.hole_scores || [];
+            
+            if(statKey === 'score') { val = targetHoles.reduce((sum,h)=>sum+(h.score||0),0); valid=true; }
+            if(statKey === 'putts') { let th=0, tp=0; targetHoles.forEach(h=>{if(h.putts!==null){tp+=h.putts; th++;}}); if(th>0) { val=(tp/th)*18; valid=true;} }
+            if(statKey === 'fir') { let th=0, tf=0; targetHoles.forEach(h=>{if(h.fir==='hit'||h.fir==='miss'){tf++; if(h.fir==='hit')th++;}}); if(tf>0) { val=(th/tf)*100; valid=true;} }
+            if(statKey === 'gir') { let th=0, tg=0; targetHoles.forEach(h=>{if(h.gir==='hit'||h.gir==='miss'){tg++; if(h.gir==='hit')th++;}}); if(tg>0) { val=(th/tg)*100; valid=true;} }
+            if(statKey === 'drops') { val = targetHoles.reduce((sum,h)=>sum+(h.drops||0),0); valid=true; }
+            if(statKey === 'scram') { let th=0, ts=0; targetHoles.forEach(h=>{if(h.gir==='miss'){ts++; if(h.score<=h.par)th++;}}); if(ts>0) { val=(th/ts)*100; valid=true;} }
+            
+            if(valid) plotData.push({x: new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}), y: val});
+        });
+
+        if(statDetailChartObj) statDetailChartObj.destroy();
+        let ctx = document.getElementById('statDetailChart').getContext('2d');
+        statDetailChartObj = new Chart(ctx, {
+            type: 'line',
+            data: { labels: plotData.map(d=>d.x), datasets: [{ label: title, data: plotData.map(d=>d.y), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 2, fill: true, pointBackgroundColor: '#121212' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } }
+        });
     };
 
     async function loadAnalyticsData() {
@@ -1406,32 +1696,35 @@
         
         let averages = [];
         if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
-        if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span>🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span>🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
+        if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
         
         let dHole = {num:0, val:-99};
         for(let i=1; i<=18; i++) { if(hAvg[i] && hAvg[i].cnt > 0) { let avg = hAvg[i].tot / hAvg[i].cnt; if(avg > dHole.val) { dHole.val = avg; dHole.num = i; } } }
-        if (dHole.num > 0 && dHole.val > 0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Danger Holes')"><span>🏴‍☠️</span><div><b>Danger Hole:</b> Historically, <b>Hole ${dHole.num}</b> costs you the most strokes (+${dHole.val.toFixed(1)} to par).</div></div>`);
+        if (dHole.num > 0 && dHole.val > 0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Danger Holes')"><span style="font-size:18px;">🏴‍☠️</span><div><b>Danger Hole:</b> Historically, <b>Hole ${dHole.num}</b> costs you the most strokes (+${dHole.val.toFixed(1)} to par).</div></div>`);
 
         if(f9.p > 0 && late.p > 0) {
             let e1 = (f9.s - f9.p) / (f9.p / 6); 
             let e3 = (late.s - late.p) / (late.p / 6); 
-            if(e3 > e1 + 0.3) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Late Round Fatigue')"><span>📉</span><div><b>Late Round Fatigue:</b> You bleed strokes late, scoring significantly worse on holes 13-18 compared to holes 1-6.</div></div>`);
+            if(e3 > e1 + 0.3) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Fatigue')"><span style="font-size:18px;">📉</span><div><b>Late Round Fatigue:</b> You bleed strokes late, scoring significantly worse on holes 13-18 compared to holes 1-6.</div></div>`);
         }
 
-        if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Bogey Bounce Back')"><span>🔥</span><div><b>Bogey Bounce-Back:</b> You score Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Bogey Bounce Back')"><span>🧠</span><div><b>Bogey Bounce-Back:</b> You score Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); }
-        if (bbMajorOpp > 0) { let bbMPct = (bbMajorHit / bbMajorOpp) * 100; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Major Error Bounce Back')"><span>🥊</span><div><b>Mental Toughness:</b> You successfully salvage Bogey or better immediately following a Double Bogey+ ${bbMPct.toFixed(0)}% of the time.</div></div>`); }
+        if (bbOpp > 0 || bbMajorOpp > 0) { 
+            let bbPct = bbOpp > 0 ? (bbHit / bbOpp) * 100 : 0; 
+            let icon = bbPct >= 30 ? '🔥' : '🧠';
+            insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span style="font-size:18px;">${icon}</span><div><b>Mental Toughness:</b> You successfully salvage Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); 
+        }
 
-        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('3-Putts')"><span>⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
-        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
-        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span>🔴</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span>🟢</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Distance Control')"><span>🎯</span><div><b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.</div></div>`); } }
+        if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
+        if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
+        if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🔴</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🟢</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🎯</span><div><b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.</div></div>`); } }
         if (drops > 0) { 
             let dropsPerRound = drops / fRounds.length; 
-            if (dropsPerRound >= 2) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Course Management')"><span>⚠️</span><div><b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.</div></div>`); 
+            if (dropsPerRound >= 2) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span style="font-size:18px;">⚠️</span><div><b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.</div></div>`); 
             let dType = []; if(dropsOB > 0) dType.push({t:'OB', v:dropsOB}); if(dropsWater > 0) dType.push({t:'Water', v:dropsWater}); if(dropsLost > 0) dType.push({t:'Lost Ball', v:dropsLost});
-            if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span>🏌️‍♂️</span><div><b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.</div></div>`); }
+            if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.</div></div>`); }
         }
         
-        if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:10px;">${insights.join('')}</div>`;
+        if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
     }
 
     function ensureNewChartsContainers() {
@@ -1448,7 +1741,7 @@
         }
         if(!document.getElementById('weatherScoreChart')) {
             let weatherCont = document.createElement('div'); weatherCont.className = 'chart-container'; weatherCont.style.gridColumn = '1 / -1';
-            weatherCont.innerHTML = '<div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION</div><div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>';
+            weatherCont.innerHTML = '<div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots your Relative Score against the Historical Temperature to map climate fatigue.</span></div><div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>';
             chartsGrid.appendChild(weatherCont);
         }
         
@@ -1456,7 +1749,7 @@
         if(!document.getElementById('trophy-room-box')) {
             let trophyBox = document.createElement('div');
             trophyBox.id = 'trophy-room-box';
-            trophyBox.style.cssText = 'display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;';
+            trophyBox.style.cssText = 'display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:20px;';
             insightsCard.parentNode.insertBefore(trophyBox, insightsCard.nextSibling);
         }
     }
@@ -1610,11 +1903,21 @@
             else { badge.style.display = 'none'; }
         } else { badge.style.display = 'none'; }
 
-        const oColors = { putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', drops: '#ef4444' }, oLabels = { putts: 'Putts', fir: 'FIR %', gir: 'GIR %', drops: 'Drops' };
+        const oColors = { hcp: '#f59e0b', putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', drops: '#ef4444' };
+        const oLabels = { hcp: 'Handicap', putts: 'Putts', fir: 'FIR %', gir: 'GIR %', scram: 'Scram %', drops: 'Drops' };
+        
+        let hcpData = [];
+        if (activeOverlays.includes('hcp')) {
+            let hcpHist = calculateHcpHistory(filteredRounds);
+            hcpData = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
+            trendDatasets.push({ label: oLabels['hcp'], data: hcpData, borderColor: oColors['hcp'], backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: oColors['hcp'], yAxisID: 'y1' });
+        }
+
         activeOverlays.forEach(overlay => {
+            if (overlay === 'hcp') return;
             let oData = [];
             chartData.forEach(r => {
-                let p=0, fH=0, fT=0, gH=0, gT=0, dr=0; 
+                let p=0, fH=0, fT=0, gH=0, gT=0, sH=0, sT=0, dr=0; 
                 let targetHoles = r.hole_scores || []; 
                 if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
                 if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
@@ -1622,10 +1925,15 @@
                 if (targetHoles.length === 0 && (!r.hole_scores || r.hole_scores.length === 0)) {
                     if (overlay === 'putts') p = r.total_putts || 0;
                 } else {
-                    targetHoles.forEach(h => { if (h.putts) p += h.putts; if (h.drops) dr += h.drops; if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; } if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; } });
+                    targetHoles.forEach(h => { 
+                        if (h.putts) p += h.putts; 
+                        if (h.drops) dr += h.drops; 
+                        if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; } 
+                        if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; if(h.gir === 'miss') { sT++; if(h.score <= h.par) sH++; } } 
+                    });
                 }
                 
-                if (overlay === 'putts') oData.push(p); if (overlay === 'drops') oData.push(dr); if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0); if (overlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0);
+                if (overlay === 'putts') oData.push(p); if (overlay === 'drops') oData.push(dr); if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0); if (overlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0); if (overlay === 'scram') oData.push(sT > 0 ? (sH/sT*100).toFixed(0) : 0);
             });
             trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1' });
         });
@@ -1656,25 +1964,7 @@
         })});
         driveChart = new Chart(dCtx.getContext('2d'), { type: 'scatter', data: { datasets: [{ label: 'Par 4 Drives', data: p4Drives, backgroundColor: '#3b82f6', pointRadius: 4 }, { label: 'Par 5 Drives', data: p5Drives, backgroundColor: '#f59e0b', pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#9ca3af', font: {size: 10} } }, title: { display: true, text: 'Drive Distances (Excluding Exceptions)', color: '#f3f4f6' }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: ${c.raw.y} yds` } } }, scales: { x: { display: false }, y: { title: { display: true, text: 'Yards', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } } });
 
-        // Render HCP Chart
-        let hcpHist = calculateHcpHistory(filteredRounds);
-        let validHcp = hcpHist.filter(h => h.hcp !== "--.-");
-        let hcCtx = document.getElementById('hcpTrendChart').getContext('2d');
-        hcpChart = new Chart(hcCtx, {
-            type: 'line',
-            data: {
-                labels: validHcp.map(h => new Date(h.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})),
-                datasets: [{
-                    label: 'Handicap Index',
-                    data: validHcp.map(h => parseFloat(h.hcp)),
-                    borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: '#121212'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Handicap Trend (Last 20)', color: '#f3f4f6' } }, scales: { x: { display: false }, y: { grid: { color: '#2a2a2a' } } } }
-        });
-
-        // Render Radar Chart with Independent Datasets and Proper Alignment
+        // Render Radar Chart
         let fL=0, fR=0, gL=0, gR=0, gS=0, gLg=0;
         chartData.forEach(r => {
             let th = r.hole_scores || [];
@@ -1714,7 +2004,7 @@
             }
         });
 
-        // NEW: Render Weather Correlation Engine
+        // Render Weather Correlation Engine
         let weatherPlotData = [];
         chartData.forEach(r => {
             if(r.weather_temp && r.total_score > 0) {
@@ -1736,7 +2026,7 @@
             data: { datasets: [{ label: 'Score vs. Temperature', data: weatherPlotData, backgroundColor: '#06b6d4', pointRadius: 5 }] },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: Score ${c.raw.y > 0 ? '+'+c.raw.y : c.raw.y}` } } }, 
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: Score ${c.raw.y > 0 ? '+'+c.raw.y : (c.raw.y===0?'E':c.raw.y)}` } } }, 
                 scales: { 
                     x: { title: { display: true, text: 'Temperature (°C)', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } },
                     y: { title: { display: true, text: 'Score vs Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }
@@ -1776,6 +2066,8 @@
             return true; 
         });
         
+        currentFilteredRounds = fRounds;
+
         const t = document.getElementById('analytics-data-table');
         if(fRounds.length === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
 
@@ -1826,7 +2118,7 @@
         const cA = (tot) => ((tot / totalHolesCount) * 18).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / 18-Holes</th><th>Hole %</th></tr></thead><tbody>
             <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
-            <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
+            <tr onclick="openStatGraph('Hole Score', 'score')"><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
             <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
             <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
             <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
@@ -1842,14 +2134,14 @@
             <tr><td>Front 9 Scoring (+/- Par)</td><td>-</td><td>${f9Par > 0 ? getRelativeParString(f9Strokes, f9Par) : '-'}</td><td>-</td></tr>
             <tr><td>Back 9 Scoring (+/- Par)</td><td>-</td><td>${b9Par > 0 ? getRelativeParString(b9Strokes, b9Par) : '-'}</td><td>-</td></tr>
             <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
-            <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
+            <tr onclick="openStatGraph('Putts', 'putts')"><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
             <tr><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? ((s.fH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? ((s.gH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Scrambling (Missed GIR)</td><td>${s.scramHit} / ${s.scramOpp}</td><td>-</td><td>${s.scramOpp > 0 ? ((s.scramHit / s.scramOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr onclick="openStatGraph('FIR %', 'fir')"><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? ((s.fH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr onclick="openStatGraph('GIR %', 'gir')"><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? ((s.gH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr onclick="openStatGraph('Scrambling %', 'scram')"><td>Scrambling (Missed GIR)</td><td>${s.scramHit} / ${s.scramOpp}</td><td>-</td><td>${s.scramOpp > 0 ? ((s.scramHit / s.scramOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? ((s.ssH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
+            <tr onclick="openStatGraph('Drops', 'drops')"><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
         </tbody>`;
     }
     // --- END analyticsLogic ---
