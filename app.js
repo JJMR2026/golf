@@ -465,7 +465,7 @@ const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
                 else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI(); saveLocalState();">`; }
                 else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`; }
                 else if (row.type === 'drops') { cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0; cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-                else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'SAVE' : (cVal === 'no' ? 'MISS' : (cVal === 'stuck' ? 'STUCK' : '-'))) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
+                else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === 'yes' ? 'SAVE' : (cVal === 'no' ? 'MISS' : '-')) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === 'yes' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
                 grid.appendChild(cell);
             }
         });
@@ -535,6 +535,13 @@ const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
 
     function updatePlayModeUI() {
         const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-';
+        
+        // AUTO DEFAULTS 
+        if (state.score === "") {
+            if ((par == 4 || par == 5) && state.driveClub === "") state.driveClub = "Driver";
+            if (par == 3 && state.appClub === "") state.appClub = "Iron";
+        }
+
         document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`; document.getElementById('play-par-title').innerText = `PAR ${par || '-'} • ${yds} YDS`;
         
         document.getElementById('play-score').value = state.score; 
@@ -605,8 +612,18 @@ const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
             else if(state[type] === 'miss' && !(type === 'fir' && par === 3)) { if(mb) mb.classList.add('active'); }
         });
         
-        let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.opacity = par === 3 ? '0.3' : '1'; 
-        let fBlock = document.getElementById('play-fir-block'); if(fBlock) fBlock.style.opacity = par === 3 ? '0.3' : '1'; 
+        let dBlock = document.getElementById('play-fir-block'); 
+        if(dBlock) {
+            if(par == 3) {
+                dBlock.style.opacity = '0.3';
+                document.getElementById('fir-hit-btn').disabled = true;
+                document.getElementById('fir-miss-btn').disabled = true;
+            } else {
+                dBlock.style.opacity = '1';
+                document.getElementById('fir-hit-btn').disabled = false;
+                document.getElementById('fir-miss-btn').disabled = false;
+            }
+        }
         
         document.getElementById('play-prev-btn').style.visibility = currentPlayHole === currentHoleOffset ? 'hidden' : 'visible'; 
         document.getElementById('play-next-btn').innerText = currentPlayHole === (endIndex - 1) ? 'FINISH' : 'NEXT HOLE →';
@@ -1096,8 +1113,6 @@ const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
         if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
     }
 
-    function ensureNewChartsContainers() {}
-
     function getRelativeParString(score, par) {
         if(par === 0 || score === 0) return "";
         let diff = score - par;
@@ -1458,4 +1473,3 @@ const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
     }
 
     initializeApp();
-</script>
