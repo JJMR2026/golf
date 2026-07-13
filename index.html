@@ -279,6 +279,13 @@
             <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
             <div class="filter-row">
                 <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()"><option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option></select>
+                
+                <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
+                    <option value="18" selected>18-Holes Only</option>
+                    <option value="9">9-Holes Only</option>
+                    <option value="all">All Rounds</option>
+                </select>
+
                 <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
                 <div class="multi-select-container">
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
@@ -316,7 +323,6 @@
                         <label class="checkbox-container"><input type="checkbox" class="hole-cb" value="1" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 1</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="2" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 2</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 3</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 4</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 5</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 6</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="7" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 7</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="8" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 8</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="9" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 9</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="10" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 10</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="11" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 11</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="12" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 12</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="13" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 13</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="14" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 14</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="15" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 15</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="16" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 16</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="17" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 17</label><label class="checkbox-container"><input type="checkbox" class="hole-cb" value="18" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole 18</label>
                     </div>
                 </div>
-                <label class="checkbox-container"><input type="checkbox" id="filter-18-only" autocomplete="off" checked onchange="updateAnalytics()"> 18-Holes Only</label>
             </div>
             
             <div class="charts-grid">
@@ -382,11 +388,21 @@
         id: 'centerText',
         beforeDraw: function(chart) {
             if (chart.config.type !== 'doughnut') return;
-            var width = chart.width, height = chart.height, ctx = chart.ctx;
+            var ctx = chart.ctx;
             ctx.restore();
-            var fontSize = (height / 114).toFixed(2);
+
+            var left = chart.chartArea.left;
+            var right = chart.chartArea.right;
+            var top = chart.chartArea.top;
+            var bottom = chart.chartArea.bottom;
+            
+            var centerX = left + (right - left) / 2;
+            var centerY = top + (bottom - top) / 2;
+
+            var fontSize = ((bottom - top) / 114).toFixed(2);
             ctx.font = "bold " + fontSize + "em sans-serif";
             ctx.textBaseline = "middle";
+            ctx.textAlign = "center";
             ctx.fillStyle = "#10b981";
             
             let data = chart.data.datasets[0].data;
@@ -394,15 +410,11 @@
             let putts = (data[1]*1) + (data[2]*2) + (data[3]*3.1); 
             let text = total > 0 ? (putts / total).toFixed(1) : "0.0";
             
-            var textX = Math.round((width - ctx.measureText(text).width) / 2);
-            var textY = height / 2;
-            ctx.fillText(text, textX, textY);
+            ctx.fillText(text, centerX, centerY - ((bottom - top) * 0.05));
             
             ctx.font = "normal " + (fontSize * 0.3) + "em sans-serif";
             ctx.fillStyle = "#9ca3af";
-            var subText = "Avg Putts";
-            var subX = Math.round((width - ctx.measureText(subText).width) / 2);
-            ctx.fillText(subText, subX, textY + (height * 0.15));
+            ctx.fillText("Avg Putts", centerX, centerY + ((bottom - top) * 0.15));
             ctx.save();
         }
     };
@@ -1131,7 +1143,7 @@
     // --- START analyticsLogic ---
     function forceSyncFilters() {
         document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
-        const e18 = document.getElementById('filter-18-only'); if(e18) e18.checked = true;
+        const eHoleSelect = document.getElementById('filter-hole-count'); if(eHoleSelect) eHoleSelect.value = "18";
         document.getElementById('month-btn-text').innerText = 'All Months';
         document.getElementById('year-btn-text').innerText = 'All Years';
         document.getElementById('course-btn-text').innerText = 'All Courses';
@@ -1279,27 +1291,26 @@
     }
 
     function updateTrophyRoom(fRounds) {
-        let lowScore = 999, lowScoreCourse = "";
-        let longDrive = 0, longDriveCourse = "";
-        let lowPutts = 999;
-        let mostFir = 0;
+        let lowScore = 999, lowScoreCourse = "", lowScoreDate = "";
+        let longDrive = 0, longDriveCourse = "", longDriveDate = "";
+        let lowPutts = 999, lowPuttsDate = "";
+        let mostFir = 0, mostFirDate = "";
 
         fRounds.forEach(r => {
-            let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
+            let dStr = new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
             
-            if (holesPlayed >= 18) {
-                if (r.total_score > 0 && r.total_score < lowScore) { lowScore = r.total_score; lowScoreCourse = r.course_name.trim(); }
-                if (r.total_putts > 0 && r.total_putts < lowPutts) lowPutts = r.total_putts;
-                
-                let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
-                if (firs > mostFir) mostFir = firs;
-            }
+            if (r.total_score > 0 && r.total_score < lowScore) { lowScore = r.total_score; lowScoreCourse = r.course_name.trim(); lowScoreDate = dStr; }
+            if (r.total_putts > 0 && r.total_putts < lowPutts) { lowPutts = r.total_putts; lowPuttsDate = dStr; }
             
             if (r.hole_scores) {
+                let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
+                if (firs > mostFir) { mostFir = firs; mostFirDate = dStr; }
+
                 r.hole_scores.forEach(h => {
                     if (h.drive_distance > longDrive && (!h.drive_exception || h.drive_exception === "")) {
                         longDrive = h.drive_distance;
                         longDriveCourse = r.course_name.trim();
+                        longDriveDate = dStr;
                     }
                 });
             }
@@ -1314,11 +1325,11 @@
         const subStyle = "font-size: 10px; color: #666; margin-top: 5px;";
 
         tBox.innerHTML = `
-            <div style="width: 100%; font-size: 14px; font-weight: bold; color: #f59e0b; text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
-            <div style="${tStyle}"><div style="${labelStyle}">Low Round</div><div style="${valStyle}">${lowScore === 999 ? '--' : lowScore}</div><div style="${subStyle}">${lowScoreCourse}</div></div>
-            <div style="${tStyle}"><div style="${labelStyle}">Long Drive</div><div style="${valStyle}">${longDrive === 0 ? '--' : longDrive + 'y'}</div><div style="${subStyle}">${longDriveCourse}</div></div>
-            <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${lowPutts === 999 ? '--' : lowPutts}</div></div>
-            <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${mostFir}</div></div>
+            <div style="width: 100%; font-size: 14px; font-weight: bold; color: #f59e0b; text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (Filtered)</div>
+            <div style="${tStyle}"><div style="${labelStyle}">Low Round</div><div style="${valStyle}">${lowScore === 999 ? '--' : lowScore}</div><div style="${subStyle}">${lowScoreCourse}<br><span style="opacity:0.6">${lowScoreDate}</span></div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Long Drive</div><div style="${valStyle}">${longDrive === 0 ? '--' : longDrive + 'y'}</div><div style="${subStyle}">${longDriveCourse}<br><span style="opacity:0.6">${longDriveDate}</span></div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${lowPutts === 999 ? '--' : lowPutts}</div><div style="${subStyle}"><span style="opacity:0.6">${lowPuttsDate}</span></div></div>
+            <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${mostFir}</div><div style="${subStyle}"><span style="opacity:0.6">${mostFirDate}</span></div></div>
         `;
     }
 
@@ -1474,17 +1485,21 @@
     }
 
     window.updateAnalytics = function() {
-        const timeframe = document.getElementById('filter-timeframe').value; const only18 = document.getElementById('filter-18-only').checked; const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        const timeframe = document.getElementById('filter-timeframe').value; 
+        const holeFilter = document.getElementById('filter-hole-count').value; 
+        const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        
         let fRounds = masterAnalyticsData.filter(r => { 
             if (!actCrs.includes(r.course_name.trim())) return false; 
             const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
             
-            if (only18) { 
-                if(r.hole_scores && r.hole_scores.length > 0) {
-                    const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
-                    if (playedHoles < 18) return false; 
-                } 
-            } 
+            if(r.hole_scores && r.hole_scores.length > 0) {
+                const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
+                if (holeFilter === '18' && playedHoles < 18) return false;
+                if (holeFilter === '9' && (playedHoles < 9 || playedHoles >= 18)) return false; 
+            } else if (holeFilter === '9') {
+                return false; 
+            }
             
             let isFullyFiltered = actHoles.length < 18 || actPars.length < 4;
             if (isFullyFiltered && (!r.hole_scores || r.hole_scores.length === 0)) return false;
@@ -1537,8 +1552,8 @@
         });
         
         if(totalHolesCount === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
-        const cA = (tot) => (tot / fRounds.length).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
-        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / Rd</th><th>Hole %</th></tr></thead><tbody>
+        const cA = (tot) => ((tot / totalHolesCount) * 18).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
+        t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / 18-Holes</th><th>Hole %</th></tr></thead><tbody>
             <tr style="background:#1a1a1a; color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
             <tr><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
             <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
@@ -1554,13 +1569,13 @@
             <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr style="background:#1a1a1a; color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
-            <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(1) + ' / Hole' : '0.0'}</td><td>-</td></tr>
+            <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
             <tr><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? (s.fH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? (s.gH / (fRounds.length)).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? ((s.fH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? ((s.gH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr><td>Scrambling (Missed GIR)</td><td>${s.scramHit} / ${s.scramOpp}</td><td>-</td><td>${s.scramOpp > 0 ? ((s.scramHit / s.scramOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? (s.ssH / fRounds.length).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? ((s.ssH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
         </tbody>`;
     }
