@@ -71,20 +71,13 @@
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
         
-        #play-mode-container { display: none; flex-direction: column; gap: 12px; }
-        .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
-        .play-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); flex-wrap: wrap;}
-        .play-label { font-size: 14px; font-weight: 600; min-width: 100px; text-transform: uppercase; color: var(--text-muted);}
-        .play-input { width: 70px; height: 45px; background: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .play-input input { font-size: 18px; padding: 0;}
-        .advanced-tracking { display: flex; gap: 5px; margin-top: 10px; display: none; flex-wrap: wrap; }
-        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; min-width: 60px; font-weight: bold; transition: 0.2s;}
+        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;}
+        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+
+        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; min-width: 40px; font-weight: bold; transition: 0.2s;}
         .adv-btn.active { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
         .play-nav { display: flex; gap: 15px; margin-top: 20px; }
         .play-nav button { padding: 16px; font-size: 16px; }
-
-        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 5px;}
-        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
         .history-item:hover { background-color: rgba(255,255,255,0.05); }
@@ -321,8 +314,10 @@
                 </div>
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
                 <div class="view-toggle-row"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
+                
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
-                <div id="play-mode-container">
+                
+                <div id="play-mode-container" style="display:none;">
                     
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
@@ -338,67 +333,65 @@
                         <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
                     </div>
                     
-                    <!-- CORE INPUTS -->
-                    <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
-                    <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
-                    <div class="play-row"><div class="play-label">DROPS</div><div class="play-input"><button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:transparent; border:none; border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button></div></div>
+                    <!-- ULTRA COMPACT PLAY UI -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">SCORE</div>
+                            <input type="number" id="play-score" onchange="syncPlayToState('score', this.value)" style="width:100%; text-align:center; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; outline:none;">
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">PUTTS</div>
+                            <input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)" style="width:100%; text-align:center; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; outline:none;">
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">1ST PUTT (FT)</div>
+                            <input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" style="width:100%; text-align:center; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; outline:none;">
+                        </div>
+                    </div>
 
-                    <!-- ADVANCED STATS TOGGLE -->
-                    <button type="button" class="view-toggle-btn" style="width: 100%; margin-top: 10px; background: rgba(0,0,0,0.2);" onclick="toggleAdvancedPlayStats()" id="btn-toggle-adv-stats">🎯 Add Shot Details (FIR, GIR, Sand, Clubs) ▼</button>
-                    
-                    <div id="advanced-play-stats" style="display:none; flex-direction: column;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <div id="play-fir-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; font-weight:bold;">FIR</div>
+                            <div style="display:flex; gap:5px; width:100%;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div>
+                        </div>
+                        <div id="play-gir-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; font-weight:bold;">GIR</div>
+                            <div style="display:flex; gap:5px; width:100%;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <div id="play-drive-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:5px;">
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:bold; text-align:center;">DRIVE YDS</div>
+                            <input type="number" id="play-drive" onchange="syncPlayToState('drive', this.value)" style="width:100%; text-align:center; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:4px; color:white; font-size:16px; padding:4px;">
+                            <select id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)" style="width:100%; font-size:12px; padding:4px;"><option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option></select>
+                            <select id="play-drive-exception" onchange="syncPlayToState('driveException', this.value)" style="width:100%; font-size:12px; padding:4px;"><option value="">Normal</option><option value="MISS">Penalty/Chunk</option></select>
+                        </div>
                         
-                        <!-- PUTT DISTANCE -->
-                        <div class="play-row" style="border-top: none; padding-top: 15px;">
-                            <div class="play-label" style="font-size:14px;">1st Putt Dist (ft)</div>
-                            <div class="play-input" style="height:40px; width:70px;"><input type="number" id="play-putt-dist" style="font-size:16px;" onchange="syncPlayToState('puttDist', this.value)"></div>
+                        <div id="play-app-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:5px;">
+                            <div style="font-size:10px; color:var(--text-muted); font-weight:bold; text-align:center;">APPROACH YDS</div>
+                            <input type="number" id="play-approach-dist" onchange="syncPlayToState('appDist', this.value)" style="width:100%; text-align:center; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:4px; color:white; font-size:16px; padding:4px;">
+                            <select id="play-approach-club" onchange="syncPlayToState('appClub', this.value)" style="width:100%; font-size:12px; padding:4px;">
+                                <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
+                            </select>
                         </div>
+                    </div>
 
-                        <!-- FIR / DRIVE -->
-                        <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 140px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
-                        <div class="play-row" id="play-drive-block" style="flex-wrap: wrap;">
-                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                                <div class="play-label">DRIVE (YDS)</div>
-                                <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div>
-                            </div>
-                            <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
-                                <select id="play-drive-club" style="flex:1; font-size: 13px; padding: 8px;" onchange="syncPlayToState('driveClub', this.value)">
-                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
-                                </select>
-                                <select id="play-drive-exception" style="flex:2; font-size: 13px; padding: 8px;" onchange="syncPlayToState('driveException', this.value)">
-                                    <option value="">Normal Drive</option><option value="MISS">Chunk / Topped / OB</option>
-                                </select>
-                            </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; font-weight:bold;">SAND</div>
+                            <button type="button" class="adv-btn" id="sand-trigger-btn" onclick="triggerSandOptions()" style="width:100%;">IN BUNKER</button>
                         </div>
-
-                        <!-- GIR / APPROACH -->
-                        <div class="play-row" id="play-gir-block" style="flex-wrap: wrap; gap:10px;">
-                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                                <div class="play-label">GIR</div>
-                                <div style="display: flex; gap: 10px; width: 140px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
-                                <select id="play-approach-club" style="flex:1; margin-right:10px; font-size: 13px; padding: 8px;" onchange="syncPlayToState('appClub', this.value)">
-                                    <option value="">Appr. Club...</option>
-                                    <option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Hybrid/Wood</option>
-                                </select>
-                                <div class="play-input" style="height:40px; width:70px;"><input type="number" id="play-approach-dist" placeholder="Yds" style="font-size:16px;" onchange="syncPlayToState('appDist', this.value)"></div>
-                            </div>
+                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">PENALTY DROPS</div>
+                            <button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0;">-</button>
                         </div>
+                    </div>
 
-                        <!-- SAND TRACKING -->
-                        <div class="play-row" style="flex-wrap: wrap;">
-                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                                <div class="play-label">SAND</div>
-                                <button type="button" class="adv-btn" id="sand-trigger-btn" style="flex:none; width:140px; background:var(--cell-bg);" onclick="triggerSandOptions()">HIT SAND</button>
-                            </div>
-                            <div class="advanced-tracking" id="adv-sand-options" style="width: 100%; margin-top: 10px; justify-content: flex-end;">
-                                <button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">SAVED (1 Putt)</button>
-                                <button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">MISSED (2+ Putts)</button>
-                                <button type="button" class="adv-btn" id="sandSave-stuck-btn" onclick="setPlayToggle('sandSave', 'stuck')">STUCK (2+ Shots)</button>
-                            </div>
-                        </div>
-
+                    <div class="advanced-tracking" id="adv-sand-options" style="width: 100%; justify-content: center; display:none; margin-top: 0; margin-bottom: 10px;">
+                        <button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">SAVED (1 Putt)</button>
+                        <button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">MISSED (2+ Putts)</button>
+                        <button type="button" class="adv-btn" id="sandSave-stuck-btn" onclick="setPlayToggle('sandSave', 'stuck')">STUCK (2+ Shots)</button>
                     </div>
 
                     <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
@@ -554,7 +547,7 @@
     let currentUser = null, currentHoleCount = 18, currentHoleOffset = 0, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     
-    let trendChart = null, puttChart = null, driveChart = null, radarChart = null, weatherChart = null, statDetailChartObj = null, currentFilteredRounds = [], roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
+    let trendChart = null, puttChart = null, driveChart = null, hcpChart = null, radarChart = null, weatherChart = null, statDetailChartObj = null, currentFilteredRounds = [], roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
     
     const centerTextPlugin = {
         id: 'centerText',
@@ -890,7 +883,7 @@
     });
 
     document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
-    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-drops-btn').focus(); }, 150); });
+    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-putt-dist').focus(); }, 150); });
     document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-club').focus(), 150); });
     // --- END inputListeners ---
 
@@ -1076,20 +1069,6 @@
         roundData[index][type] = ns === "-" ? "" : ns; 
         if(currentPlayHole === index) updatePlayModeUI(); 
         saveLocalState(); 
-    }
-
-    function toggleAdvancedPlayStats() {
-        const advBlock = document.getElementById('advanced-play-stats');
-        const btn = document.getElementById('btn-toggle-adv-stats');
-        if (advBlock.style.display === 'none') {
-            advBlock.style.display = 'flex';
-            btn.innerText = "🎯 Hide Shot Details ▲";
-            btn.classList.add('active');
-        } else {
-            advBlock.style.display = 'none';
-            btn.innerText = "🎯 Add Shot Details (FIR, GIR, Sand, Clubs) ▼";
-            btn.classList.remove('active');
-        }
     }
 
     function togglePlayMode(isPlayMode) { document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; if(isPlayMode) updatePlayModeUI(); }
