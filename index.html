@@ -38,6 +38,7 @@
         .search-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
         input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea, select { flex: 1; background-color: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s, color 0.3s;}
+        select { background-color: var(--cell-bg); cursor: pointer; }
         input:focus, select:focus, textarea:focus { border-color: var(--accent-green); }
         select option { background-color: var(--card-bg); color: var(--text-main); }
         
@@ -147,10 +148,8 @@
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
         
         <div class="login-option">
-            <h4 style="color: var(--text-main);">Sign In Options</h4>
-            <p><strong>1. Real Email:</strong> Full tracking & secure recovery. (Emails are strictly for login and never shared or sold).</p>
-            <p><strong>2. Nickname:</strong> Full tracking, but NO password recovery.</p>
-            <p><strong>3. Guest Mode:</strong> Track a single round locally. No data is saved to history.</p>
+            <h4 style="color: var(--text-main);">Sign In / Register</h4>
+            <p>Enter an email or nickname to begin. <br><b>Emails are strictly for login and never shared or sold.</b></p>
         </div>
 
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
@@ -161,12 +160,12 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')">Sign Up</button>
-            <button class="primary" id="login-btn" onclick="handleAuth('login')">Log In</button>
+            <button class="primary" id="login-btn" onclick="handleAuth('login')" style="flex:2;">Log In</button>
+            <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')" style="flex:1;">Register</button>
         </div>
 
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (No Cloud Save)</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
     </div>
@@ -184,6 +183,8 @@
                 <option value="sunset">Sunset (Orange/Purple)</option>
                 <option value="ocean">Ocean (Deep Blue)</option>
                 <option value="midnight">Midnight (Cyber Blue)</option>
+                <option value="crimson">Crimson (Blood Red)</option>
+                <option value="neon">Neon (Cyberpunk Pink)</option>
                 <option value="masters">Masters Green</option>
                 <option value="light">Light Mode</option>
             </select>
@@ -211,8 +212,8 @@
 
 <div id="insight-modal" style="display: none;">
     <div class="auth-card" style="max-width: 500px; text-align: left;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 30px;">
-            <h2 id="insight-detail-title" style="color: var(--accent-green); margin: 0; font-size: 18px;">INSIGHT DETAIL</h2>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
+            <h2 id="insight-detail-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">INSIGHT DETAIL</h2>
         </div>
         <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('insight-modal').style.display='none'">✕</button>
         <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
@@ -272,20 +273,49 @@
                     <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold; display: block; margin-bottom: 15px;">PAR - • - YDS</span>
                     
                     <div class="play-row"><div class="play-label">SCORE</div><div class="play-input"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div></div>
-                    <div class="play-row"><div class="play-label">PUTTS</div><div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div></div>
+                    
+                    <!-- NEW PUTT TRACKING UI -->
+                    <div class="play-row" style="flex-wrap: wrap; gap:10px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <div class="play-label">PUTTS</div>
+                            <div class="play-input"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
+                            <div class="play-label" style="font-size:12px; color:var(--text-muted);">1st Putt Dist (ft)</div>
+                            <div class="play-input" style="height:35px; width:60px;"><input type="number" id="play-putt-dist" style="font-size:14px;" onchange="syncPlayToState('puttDist', this.value)"></div>
+                        </div>
+                    </div>
+
                     <div class="play-row" id="play-fir-block"><div class="play-label">FIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div></div>
-                    <div class="play-row"><div class="play-label">GIR</div><div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div></div>
+                    
+                    <!-- NEW APPROACH TRACKING UI -->
+                    <div class="play-row" id="play-gir-block" style="flex-wrap: wrap; gap:10px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                            <div class="play-label">GIR</div>
+                            <div style="display: flex; gap: 10px; width: 120px;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
+                            <select id="play-approach-club" style="flex:1; margin-right:10px; font-size: 12px; padding: 8px;" onchange="syncPlayToState('appClub', this.value)">
+                                <option value="">Appr. Club...</option>
+                                <option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Hybrid/Wood</option>
+                            </select>
+                            <div class="play-input" style="height:35px; width:60px;"><input type="number" id="play-approach-dist" placeholder="Yds" style="font-size:14px;" onchange="syncPlayToState('appDist', this.value)"></div>
+                        </div>
+                    </div>
                     
                     <div class="play-row" id="play-drive-block" style="flex-wrap: wrap;">
                         <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                             <div class="play-label">DRIVE (YDS)</div>
                             <div class="play-input"><input type="number" id="play-drive" inputmode="numeric" onchange="syncPlayToState('drive', this.value)"></div>
                         </div>
-                        <select id="play-drive-exception" style="width: 100%; margin-top: 10px; font-size: 14px; padding: 8px;" onchange="syncPlayToState('driveException', this.value)">
-                            <option value="">Normal Drive</option>
-                            <option value="IRON">Positional / Iron</option>
-                            <option value="MISS">Chunk / Topped / OB</option>
-                        </select>
+                        <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+                            <select id="play-drive-club" style="flex:1; font-size: 12px; padding: 8px;" onchange="syncPlayToState('driveClub', this.value)">
+                                <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
+                            </select>
+                            <select id="play-drive-exception" style="flex:2; font-size: 12px; padding: 8px;" onchange="syncPlayToState('driveException', this.value)">
+                                <option value="">Normal Drive</option><option value="MISS">Chunk / Topped / OB</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="play-row"><div class="play-label">DROPS</div><div class="play-input"><button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:var(--cell-bg); border:1px solid var(--cell-border); border-radius:8px; font-size:20px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button></div></div>
@@ -391,6 +421,12 @@
                 </div>
                 
                 <div class="chart-container"><canvas id="driveChart"></canvas></div>
+
+                <!-- NEW WEATHER CHART -->
+                <div class="chart-container" style="grid-column: 1 / -1;">
+                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION</div>
+                    <div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>
+                </div>
             </div>
             
             <div class="insights-card">
@@ -406,8 +442,8 @@
 <div id="history-modal" class="modal-overlay">
     <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 40px;">
-            <h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3>
+        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
+            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
             <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
         </div>
         <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
@@ -422,16 +458,6 @@
     </form>
 </div>
 
-<!-- 
-====================================================================================
-      ██╗ █████╗ ██╗   ██╗ █████╗ ███████╗ ██████╗██████╗ ██████╗ ████████╗
-      ██║██╔══██╗██║   ██║██╔══██╗██╔════╝██╔════╝██╔══██╗██╔══██╗╚══██╔══╝
-      ██║███████║██║   ██║███████║███████╗██║     ██████╔╝██████╔╝   ██║   
- ██   ██║██╔══██║╚██╗ ██╔╝██╔══██║╚════██║██║     ██╔══██╗██╔═══╝    ██║   
- ╚█████╔╝██║  ██║ ╚████╔╝ ██║  ██║███████║╚██████╗██║  ██║██║       ██║   
-  ╚════╝ ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝       ╚═╝   
-====================================================================================
--->
 <script>
     // --- START globalVariables ---
     const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
@@ -439,10 +465,10 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#2a2a2a';
 
-    let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" })), masterAnalyticsData = [];
+    let currentUser = null, currentHoleCount = 18, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     
-    let trendChart = null, puttChart = null, driveChart = null, hcpChart = null, radarChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
+    let trendChart = null, puttChart = null, driveChart = null, hcpChart = null, radarChart = null, weatherChart = null, roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
     
     const centerTextPlugin = {
         id: 'centerText',
@@ -486,7 +512,9 @@
         masters: { bg: '#022c16', card: '#064e3b', border: '#065f46', accent: '#fde047', hover: '#eab308', text: '#f3f4f6', muted: '#9ca3af', cell: '#022c16', cellBorder: '#065f46' },
         midnight: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' },
         sunset: { bg: '#1a0b1c', card: '#2d1b30', border: '#4a2c4f', accent: '#f97316', hover: '#d97706', text: '#fff1f2', muted: '#e1adba', cell: '#1a0b1c', cellBorder: '#4a2c4f' },
-        ocean: { bg: '#082f49', card: '#0f172a', border: '#0c4a6e', accent: '#06b6d4', hover: '#0284c7', text: '#e0f2fe', muted: '#7dd3fc', cell: '#082f49', cellBorder: '#0c4a6e' }
+        ocean: { bg: '#082f49', card: '#0f172a', border: '#0c4a6e', accent: '#06b6d4', hover: '#0284c7', text: '#e0f2fe', muted: '#7dd3fc', cell: '#082f49', cellBorder: '#0c4a6e' },
+        crimson: { bg: '#1a0505', card: '#2a0a0a', border: '#4a1111', accent: '#ef4444', hover: '#dc2626', text: '#fee2e2', muted: '#fca5a5', cell: '#1a0505', cellBorder: '#4a1111' },
+        neon: { bg: '#0a0a1a', card: '#14142b', border: '#2d2d59', accent: '#d946ef', hover: '#c026d3', text: '#fdf4ff', muted: '#e879f9', cell: '#0a0a1a', cellBorder: '#2d2d59' }
     };
 
     function applyTheme(themeName) {
@@ -734,7 +762,9 @@
                 currentHoleCount = s.holeCount || 18; 
                 currentCoursePars = s.pars || Array(18).fill(""); 
                 currentYardages = s.yardages || Array(18).fill(""); 
-                roundData = s.roundData || Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" })); 
+                
+                roundData = s.roundData || Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" })); 
+                
                 roundWeather = s.weather || roundWeather; 
                 dismissedWarnings = s.dismissedWarnings || [];
                 if(roundWeather.temp) document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; 
@@ -790,8 +820,8 @@
     });
 
     document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
-    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { if (currentCoursePars[currentPlayHole] === 3) document.getElementById('play-drops-btn').focus(); else document.getElementById('play-drive').focus(); }, 150); });
-    document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-exception').focus(), 150); });
+    document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-putt-dist').focus(); }, 150); });
+    document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-club').focus(), 150); });
     // --- END inputListeners ---
 
     // --- START fetchCourseDetails ---
@@ -820,7 +850,7 @@
                     
                     let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
                     currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); currentYardages = Array(18).fill(""); 
-                    roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "" }));
+                    roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" }));
                     dismissedWarnings = [];
                     document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); document.getElementById('current-course-display').style.color = 'var(--accent-green)';
                     
@@ -941,8 +971,15 @@
     function updatePlayModeUI() {
         const par = currentCoursePars[currentPlayHole]; const state = roundData[currentPlayHole]; const yds = currentYardages[currentPlayHole] || '-';
         document.getElementById('play-hole-title').innerText = `HOLE ${currentPlayHole + 1}`; document.getElementById('play-par-title').innerText = `PAR ${par || '-'} • ${yds} YDS`;
-        document.getElementById('play-score').value = state.score; document.getElementById('play-putts').value = state.putts; document.getElementById('play-drive').value = state.drive;
+        
+        document.getElementById('play-score').value = state.score; 
+        document.getElementById('play-putts').value = state.putts; 
+        document.getElementById('play-putt-dist').value = state.puttDist || ""; 
+        document.getElementById('play-drive').value = state.drive;
+        document.getElementById('play-drive-club').value = state.driveClub || "";
         document.getElementById('play-drive-exception').value = state.driveException || "";
+        document.getElementById('play-approach-club').value = state.appClub || "";
+        document.getElementById('play-approach-dist').value = state.appDist || "";
         
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
@@ -1110,7 +1147,13 @@
                     drive_exception: roundData[i].driveException || null,
                     drops: parseInt(roundData[i].drops) || 0, 
                     drops_adv: (roundData[i].dropsAdv || []).join(','),
-                    sand_save: roundData[i].sandSave || null 
+                    sand_save: roundData[i].sandSave || null,
+                    
+                    // NEW COLUMNS - Make sure to run SQL first!
+                    drive_club: roundData[i].driveClub || null,
+                    approach_club: roundData[i].appClub || null,
+                    approach_yd: parseInt(roundData[i].appDist) || null,
+                    putt_1_ft: parseInt(roundData[i].puttDist) || null
                 });
             }
         }
@@ -1245,6 +1288,12 @@
 
     async function loadAnalyticsData() {
         if(!currentUser) { document.getElementById('analytics-data-table').innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; return; }
+        
+        let savedTime = localStorage.getItem('golf_filter_timeframe');
+        if(savedTime) document.getElementById('filter-timeframe').value = savedTime;
+        let savedHole = localStorage.getItem('golf_filter_hole_count');
+        if(savedHole) document.getElementById('filter-hole-count').value = savedHole;
+
         const table = document.getElementById('analytics-data-table'); table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
         try {
             const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
@@ -1289,7 +1338,7 @@
     
     function generateInsights(fRounds) {
         let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0, bbOpp=0, bbHit=0, bbMajorOpp=0, bbMajorHit=0;
-        let hAvg = {};
+        let hAvg = {}, f9 = {s:0, p:0}, late = {s:0, p:0};
         
         fRounds.forEach(r => { 
             if(!r.hole_scores || r.hole_scores.length === 0) {
@@ -1300,9 +1349,10 @@
             for(let i=0; i<hs.length - 1; i++) {
                 let curr = hs[i], next = hs[i+1];
                 if(curr.score && curr.par && next.score && next.par) {
-                    let diff = curr.score - curr.par;
-                    if(diff === 1) { bbOpp++; if(next.score <= next.par) bbHit++; }
-                    if(diff >= 2) { bbMajorOpp++; if(next.score <= next.par) bbMajorHit++; }
+                    let prevDiff = curr.score - curr.par;
+                    let nextDiff = next.score - next.par;
+                    if(prevDiff === 1) { bbOpp++; if(nextDiff <= 0) bbHit++; }
+                    if(prevDiff >= 2) { bbMajorOpp++; if(nextDiff <= 1) bbMajorHit++; }
                 }
             }
 
@@ -1313,6 +1363,9 @@
                     
                     if(!hAvg[h.hole_number]) hAvg[h.hole_number] = {tot:0, cnt:0};
                     hAvg[h.hole_number].tot += diff; hAvg[h.hole_number].cnt++;
+
+                    if(h.hole_number >= 1 && h.hole_number <= 6) { f9.s += h.score; f9.p += h.par; }
+                    if(h.hole_number >= 13 && h.hole_number <= 18) { late.s += h.score; late.p += h.par; }
                 }
                 if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
                 
@@ -1359,8 +1412,14 @@
         for(let i=1; i<=18; i++) { if(hAvg[i] && hAvg[i].cnt > 0) { let avg = hAvg[i].tot / hAvg[i].cnt; if(avg > dHole.val) { dHole.val = avg; dHole.num = i; } } }
         if (dHole.num > 0 && dHole.val > 0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Danger Holes')"><span>🏴‍☠️</span><div><b>Danger Hole:</b> Historically, <b>Hole ${dHole.num}</b> costs you the most strokes (+${dHole.val.toFixed(1)} to par).</div></div>`);
 
+        if(f9.p > 0 && late.p > 0) {
+            let e1 = (f9.s - f9.p) / (f9.p / 6); 
+            let e3 = (late.s - late.p) / (late.p / 6); 
+            if(e3 > e1 + 0.3) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Late Round Fatigue')"><span>📉</span><div><b>Late Round Fatigue:</b> You bleed strokes late, scoring significantly worse on holes 13-18 compared to holes 1-6.</div></div>`);
+        }
+
         if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Bogey Bounce Back')"><span>🔥</span><div><b>Bogey Bounce-Back:</b> You score Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Bogey Bounce Back')"><span>🧠</span><div><b>Bogey Bounce-Back:</b> You score Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); }
-        if (bbMajorOpp > 0) { let bbMPct = (bbMajorHit / bbMajorOpp) * 100; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Major Error Bounce Back')"><span>🥊</span><div><b>Mental Toughness:</b> You successfully salvage Par or better immediately following a Double Bogey+ ${bbMPct.toFixed(0)}% of the time.</div></div>`); }
+        if (bbMajorOpp > 0) { let bbMPct = (bbMajorHit / bbMajorOpp) * 100; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Major Error Bounce Back')"><span>🥊</span><div><b>Mental Toughness:</b> You successfully salvage Bogey or better immediately following a Double Bogey+ ${bbMPct.toFixed(0)}% of the time.</div></div>`); }
 
         if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('3-Putts')"><span>⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
         if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
@@ -1372,7 +1431,7 @@
             if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span>🏌️‍♂️</span><div><b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.</div></div>`); }
         }
         
-        if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:flex; flex-direction:column; gap:8px;">${insights.join('')}</div>`;
+        if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:10px;">${insights.join('')}</div>`;
     }
 
     function ensureNewChartsContainers() {
@@ -1386,6 +1445,11 @@
             let radarCont = document.createElement('div'); radarCont.className = 'chart-container';
             radarCont.innerHTML = '<canvas id="missRadarChart"></canvas>';
             chartsGrid.appendChild(radarCont);
+        }
+        if(!document.getElementById('weatherScoreChart')) {
+            let weatherCont = document.createElement('div'); weatherCont.className = 'chart-container'; weatherCont.style.gridColumn = '1 / -1';
+            weatherCont.innerHTML = '<div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION</div><div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>';
+            chartsGrid.appendChild(weatherCont);
         }
         
         let insightsCard = document.querySelector('.insights-card');
@@ -1468,7 +1532,7 @@
         function formatList(arr) {
             if(arr.length === 0) return "--";
             let html = `<strong>${arr[0].c}</strong><br><span style="opacity:0.6">${arr[0].d}</span>`;
-            if (arr.length === 2) html += `<br><hr style="border:0; border-top:1px solid #333; margin:4px 0;"><strong>${arr[1].c}</strong><br><span style="opacity:0.6">${arr[1].d}</span>`;
+            if (arr.length === 2) html += `<br><hr style="border:0; border-top:1px solid var(--border-color); margin:4px 0;"><strong>${arr[1].c}</strong><br><span style="opacity:0.6">${arr[1].d}</span>`;
             else if (arr.length > 2) html += `<br><span style="color:var(--accent-green);">+ ${arr.length - 1} tied</span>`;
             return html;
         }
@@ -1486,7 +1550,15 @@
         
         const bestPuttBox = document.getElementById('best-putting-rounds');
         if (bestPuttBox) {
-            bestPuttBox.innerHTML = minPutts === 999 ? "" : `<b>Best Putting Round:</b><br>${minPutts} Putts at ${lowPuttsList[0].c} <span style="opacity:0.6">(${lowPuttsList[0].d})</span>`;
+            if (minPutts === 999) {
+                bestPuttBox.innerHTML = "";
+            } else {
+                let html = `<b>Best Putting Rounds:</b><br>`;
+                for(let i=0; i<Math.min(3, lowPuttsList.length); i++) {
+                    html += `${minPutts} Putts at ${lowPuttsList[i].c} <span style="opacity:0.6">(${lowPuttsList[i].d})</span><br>`;
+                }
+                bestPuttBox.innerHTML = html;
+            }
         }
     }
 
@@ -1495,15 +1567,17 @@
 
         const tCtx = document.getElementById('scoringTrendChart'); const pCtx = document.getElementById('puttChart'); const dCtx = document.getElementById('driveChart');
         if (trendChart) trendChart.destroy(); if (puttChart) puttChart.destroy(); if (driveChart) driveChart.destroy();
-        if (hcpChart) hcpChart.destroy(); if (radarChart) radarChart.destroy();
+        if (hcpChart) hcpChart.destroy(); if (radarChart) radarChart.destroy(); if (weatherChart) weatherChart.destroy();
         
         if (filteredRounds.length === 0) { 
             tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; 
             document.getElementById('hcpTrendChart').parentElement.style.display = 'none'; document.getElementById('missRadarChart').parentElement.style.display = 'none';
+            document.getElementById('weatherScoreChart').parentElement.style.display = 'none';
             return; 
         }
         tCtx.parentElement.style.display = 'block'; pCtx.parentElement.style.display = 'block'; dCtx.parentElement.style.display = 'block';
         document.getElementById('hcpTrendChart').parentElement.style.display = 'block'; document.getElementById('missRadarChart').parentElement.style.display = 'block';
+        document.getElementById('weatherScoreChart').parentElement.style.display = 'block';
         
         const chartData = [...filteredRounds].reverse(); const activeOverlays = Array.from(document.querySelectorAll('#chart-overlays input:checked')).map(cb => cb.value);
         let baseScores = [];
@@ -1639,17 +1713,48 @@
                 plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: {size: 11} } }, title: { display: true, text: 'Directional Miss Bias', color: '#f3f4f6' } }
             }
         });
+
+        // NEW: Render Weather Correlation Engine
+        let weatherPlotData = [];
+        chartData.forEach(r => {
+            if(r.weather_temp && r.total_score > 0) {
+                let tempNum = parseInt(r.weather_temp.replace('°C', ''));
+                let par = 72;
+                if (r.hole_scores && r.hole_scores.length >= 18) {
+                    par = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
+                }
+                let relScore = r.total_score - par;
+                if(!isNaN(tempNum)) {
+                    weatherPlotData.push({x: tempNum, y: relScore, rawLabel: `${r.course_name.trim()} (${r.weather_temp})`});
+                }
+            }
+        });
+
+        let wCtx = document.getElementById('weatherScoreChart').getContext('2d');
+        weatherChart = new Chart(wCtx, {
+            type: 'scatter',
+            data: { datasets: [{ label: 'Score vs. Temperature', data: weatherPlotData, backgroundColor: '#06b6d4', pointRadius: 5 }] },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: Score ${c.raw.y > 0 ? '+'+c.raw.y : c.raw.y}` } } }, 
+                scales: { 
+                    x: { title: { display: true, text: 'Temperature (°C)', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } },
+                    y: { title: { display: true, text: 'Score vs Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }
+                } 
+            }
+        });
     }
 
     window.updateAnalytics = function() {
         const timeframe = document.getElementById('filter-timeframe').value; 
         const holeFilter = document.getElementById('filter-hole-count').value; 
+        localStorage.setItem('golf_filter_timeframe', timeframe);
+        localStorage.setItem('golf_filter_hole_count', holeFilter);
         const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
         
         let fRounds = masterAnalyticsData.filter(r => { 
             if (!actCrs.includes(r.course_name.trim())) return false; 
             
-            // Season Check
             const d = new Date(r.date_played); 
             if (timeframe === 'season' && d.getUTCFullYear().toString() !== new Date().getUTCFullYear().toString()) return false;
             if (timeframe !== 'season' && !actYrs.includes(d.getUTCFullYear().toString())) return false; 
