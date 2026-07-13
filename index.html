@@ -71,13 +71,23 @@
         .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .toggle-btn.hit { color: var(--accent-green); }
         
-        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;}
-        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); }
-
-        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 4px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; min-width: 40px; font-weight: bold; transition: 0.2s;}
+        #play-mode-container { display: none; flex-direction: column; gap: 12px; }
+        .play-header { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-weight: bold; }
+        
+        /* ULTRA COMPACT PLAY UI */
+        .compact-box { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;}
+        .compact-label { font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;}
+        .compact-input { width: 100%; text-align: center; background: transparent; border: none; color: var(--text-main); font-size: 22px; font-weight: bold; outline: none; padding: 0;}
+        .compact-input::placeholder { color: #444; font-size: 14px; font-weight: normal; }
+        .compact-select { width: 100%; background: var(--cell-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; padding: 6px; outline: none; }
+        .adv-btn { padding: 8px; font-size: 11px; flex: 1; border-radius: 6px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; min-width: 40px; font-weight: bold; transition: 0.2s;}
         .adv-btn.active { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
-        .play-nav { display: flex; gap: 15px; margin-top: 20px; }
+        
+        .play-nav { display: flex; gap: 15px; margin-top: 10px; }
         .play-nav button { padding: 16px; font-size: 16px; }
+
+        #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 5px;}
+        #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
         .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
         .history-item:hover { background-color: rgba(255,255,255,0.05); }
@@ -106,8 +116,8 @@
         .stats-table td:first-child { font-weight: 600; color: var(--text-muted); text-align: left; }
         .stats-table td:nth-child(3) { color: var(--text-main); }
         .stats-table td:last-child { color: var(--accent-green); font-weight: normal; }
-        .stats-table tr { cursor: pointer; }
-        .stats-table tr:hover { background-color: rgba(255,255,255,0.05); }
+        .stats-table tr { cursor: pointer; transition: 0.2s; }
+        .stats-table tbody tr:hover td { background-color: rgba(255,255,255,0.05); color: var(--accent-green); }
         
         .hcp-badge { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
         .hcp-value { font-size: 48px; font-weight: bold; color: var(--accent-green); }
@@ -202,10 +212,8 @@
         </div>
 
         <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px;">
-            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
-            <textarea id="feedback-text" rows="3" placeholder="Tell us what's broken or what you'd like to see added..." style="width: 100%; margin-bottom: 10px; resize: vertical;"></textarea>
-            <button class="view-toggle-btn" id="feedback-btn" style="width: 100%; padding: 10px;" onclick="submitFeedback()">Send Feedback</button>
-            <div id="feedback-msg" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DATABASE ADMIN</label>
+            <button class="view-toggle-btn" style="width: 100%; padding: 10px;" onclick="checkHarvesterStatus()">📡 Harvester Status</button>
         </div>
         
         <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
@@ -248,26 +256,6 @@
             <button class="danger-btn" style="flex:1;" onclick="forceSubmitRound()">Submit Anyway</button>
         </div>
     </div>
-</div>
-
-<div id="history-modal" class="modal-overlay" style="display: none;">
-    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
-        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
-            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
-            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
-        </div>
-        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
-            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
-        </div>
-        <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
-        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
-            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
-            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
-        </div>
-    </form>
 </div>
 
 <div class="container">
@@ -318,16 +306,13 @@
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 
                 <div id="play-mode-container" style="display:none;">
-                    
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
                         <span id="pace-projected-display">Pace: --</span>
                     </div>
-
                     <div id="play-warning-banner" style="display: none;">
                         <span id="play-warning-text" style="width: 100%;">⚠️ Missing Stats</span>
                     </div>
-
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px;">
                         <span id="play-hole-title" style="color: var(--accent-green); font-size: 24px; font-weight: bold;">HOLE 1</span>
                         <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
@@ -335,63 +320,63 @@
                     
                     <!-- ULTRA COMPACT PLAY UI -->
                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">SCORE</div>
-                            <input type="number" id="play-score" onchange="syncPlayToState('score', this.value)" style="width:100%; text-align:center; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; outline:none;">
+                        <div class="compact-box">
+                            <div class="compact-label">SCORE</div>
+                            <input type="number" class="compact-input" id="play-score" onchange="syncPlayToState('score', this.value)">
                         </div>
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">PUTTS</div>
-                            <input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)" style="width:100%; text-align:center; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; outline:none;">
+                        <div class="compact-box">
+                            <div class="compact-label">PUTTS</div>
+                            <input type="number" class="compact-input" id="play-putts" onchange="syncPlayToState('putts', this.value)">
                         </div>
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">1ST PUTT (FT)</div>
-                            <input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" style="width:100%; text-align:center; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; outline:none;">
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <div id="play-fir-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; font-weight:bold;">FIR</div>
-                            <div style="display:flex; gap:5px; width:100%;"><button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button><button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button></div>
-                        </div>
-                        <div id="play-gir-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; font-weight:bold;">GIR</div>
-                            <div style="display:flex; gap:5px; width:100%;"><button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button><button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button></div>
+                        <div class="compact-box">
+                            <div class="compact-label">1ST PUTT (FT)</div>
+                            <input type="number" class="compact-input" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)">
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <div id="play-drive-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:5px;">
-                            <div style="font-size:10px; color:var(--text-muted); font-weight:bold; text-align:center;">DRIVE YDS</div>
-                            <input type="number" id="play-drive" onchange="syncPlayToState('drive', this.value)" style="width:100%; text-align:center; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:4px; color:white; font-size:16px; padding:4px;">
-                            <select id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)" style="width:100%; font-size:12px; padding:4px;"><option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option></select>
-                            <select id="play-drive-exception" onchange="syncPlayToState('driveException', this.value)" style="width:100%; font-size:12px; padding:4px;"><option value="">Normal</option><option value="MISS">Penalty/Chunk</option></select>
+                        <div class="compact-box" id="play-fir-block">
+                            <div class="compact-label">DRIVE (FIR)</div>
+                            <div style="display:flex; gap:4px; width:100%;">
+                                <button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button>
+                                <button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
+                            </div>
+                            <div style="display:flex; gap:4px; width:100%; margin-top:5px;">
+                                <input type="number" class="compact-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="flex:1;">
+                                <select class="compact-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)" style="flex:1;">
+                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
+                                </select>
+                            </div>
                         </div>
-                        
-                        <div id="play-app-block" style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:5px;">
-                            <div style="font-size:10px; color:var(--text-muted); font-weight:bold; text-align:center;">APPROACH YDS</div>
-                            <input type="number" id="play-approach-dist" onchange="syncPlayToState('appDist', this.value)" style="width:100%; text-align:center; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:4px; color:white; font-size:16px; padding:4px;">
-                            <select id="play-approach-club" onchange="syncPlayToState('appClub', this.value)" style="width:100%; font-size:12px; padding:4px;">
-                                <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
+                        <div class="compact-box" id="play-gir-block">
+                            <div class="compact-label">APPROACH (GIR)</div>
+                            <div style="display:flex; gap:4px; width:100%;">
+                                <button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button>
+                                <button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button>
+                            </div>
+                            <div style="display:flex; gap:4px; width:100%; margin-top:5px;">
+                                <input type="number" class="compact-select" id="play-approach-dist" placeholder="Yds" onchange="syncPlayToState('appDist', this.value)" style="flex:1;">
+                                <select class="compact-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)" style="flex:1;">
+                                    <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <div class="compact-box">
+                            <div class="compact-label">SAND TRACKING</div>
+                            <select class="compact-select" id="play-sand-select" onchange="setPlayToggle('sandSave', this.value)" style="height: 35px; font-weight: bold; text-align: center;">
+                                <option value="">No Sand Hit</option>
+                                <option value="yes">Saved (Out in 1, 1 Putt)</option>
+                                <option value="no">Missed (Out in 1, 2+ Putts)</option>
+                                <option value="stuck">Stuck (2+ Swings in Sand)</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px; font-weight:bold;">SAND</div>
-                            <button type="button" class="adv-btn" id="sand-trigger-btn" onclick="triggerSandOptions()" style="width:100%;">IN BUNKER</button>
+                        <div class="compact-box">
+                            <div class="compact-label">PENALTY DROPS</div>
+                            <button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0; height: 35px;">-</button>
                         </div>
-                        <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">PENALTY DROPS</div>
-                            <button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; background:transparent; border:none; color:white; font-size:24px; font-weight:bold; padding:0;">-</button>
-                        </div>
-                    </div>
-
-                    <div class="advanced-tracking" id="adv-sand-options" style="width: 100%; justify-content: center; display:none; margin-top: 0; margin-bottom: 10px;">
-                        <button type="button" class="adv-btn" id="sandSave-yes-btn" onclick="setPlayToggle('sandSave', 'yes')">SAVED (1 Putt)</button>
-                        <button type="button" class="adv-btn" id="sandSave-no-btn" onclick="setPlayToggle('sandSave', 'no')">MISSED (2+ Putts)</button>
-                        <button type="button" class="adv-btn" id="sandSave-stuck-btn" onclick="setPlayToggle('sandSave', 'stuck')">STUCK (2+ Shots)</button>
                     </div>
 
                     <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
@@ -494,7 +479,7 @@
             <!-- TAB 2: CHARTS -->
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
-                    <div class="chart-container" style="grid-column: 1 / -1;">
+                    <div class="chart-container" style="grid-column: 1 / -1; height:300px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                             <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
                             <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
@@ -504,29 +489,32 @@
                                 <label style="cursor: pointer;"><input type="checkbox" value="fir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #8b5cf6;"> FIR %</label>
                                 <label style="cursor: pointer;"><input type="checkbox" value="gir" autocomplete="off" onchange="updateAnalytics()" checked style="accent-color: #d946ef;"> GIR %</label>
                                 <label style="cursor: pointer;"><input type="checkbox" value="scram" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #10b981;"> Scram %</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="p3" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #f43f5e;"> P3 Avg</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="p4" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #14b8a6;"> P4 Avg</label>
+                                <label style="cursor: pointer;"><input type="checkbox" value="p5" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #eab308;"> P5 Avg</label>
                                 <label style="cursor: pointer;"><input type="checkbox" value="drops" autocomplete="off" onchange="updateAnalytics()" style="accent-color: #ef4444;"> Drops</label>
                             </div>
                         </div>
-                        <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
+                        <div style="position: relative; height: 230px;"><canvas id="scoringTrendChart"></canvas></div>
                     </div>
                     
                     <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 10px;">
-                        <div style="flex:1; position:relative; min-height:180px;"><canvas id="puttChart"></canvas></div>
-                        <div id="best-putting-rounds" style="margin-top:15px; font-size:11px; color:var(--text-muted); text-align:center; padding-top:15px; border-top:1px solid var(--border-color); line-height: 1.4;"></div>
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Club Distances (Avg Yds)</div>
+                        <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
                     </div>
                     
                     <div class="chart-container"><canvas id="driveChart"></canvas></div>
+                    <div class="chart-container"><canvas id="missRadarChart"></canvas></div>
 
-                    <div class="chart-container" style="grid-column: 1 / -1;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots your Relative Score against the Historical Temperature to map climate fatigue.</span></div>
-                        <div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>
+                    <div class="chart-container">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots Relative Score against Temperature. Need 5+ rounds to form trend.</span></div>
+                        <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
             <!-- TAB 3: INSIGHTS -->
             <div id="analytics-tab-insights" style="display:none;">
-                <div class="chart-container" style="border:none; padding:0; background:transparent; margin-bottom:20px;"><canvas id="missRadarChart"></canvas></div>
                 <div class="insights-card" style="margin-top:0;">
                     <h4>AI Performance Insights</h4>
                     <div id="ai-insights-box">⏳ Analyzing data...</div>
@@ -535,6 +523,26 @@
 
         </div>
     </div>
+</div>
+
+<div id="history-modal" class="modal-overlay" style="display: none;">
+    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
+        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
+        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
+            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
+        </div>
+        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
+            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
+        </div>
+        <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
+            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
+            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
+        </div>
+    </form>
 </div>
 
 <script>
@@ -547,83 +555,7 @@
     let currentUser = null, currentHoleCount = 18, currentHoleOffset = 0, currentCoursePars = Array(18).fill(""), currentYardages = Array(18).fill(""), currentPlayHole = 0, roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" })), masterAnalyticsData = [];
     let availableTees = [], selectedTee = null, activeModalRoundId = null, modalCoursePars = Array(18).fill(""), modalRoundData = Array.from({length: 18}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
     
-    let trendChart = null, puttChart = null, driveChart = null, hcpChart = null, radarChart = null, weatherChart = null, statDetailChartObj = null, currentFilteredRounds = [], roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
-    
-    const centerTextPlugin = {
-        id: 'centerText',
-        beforeDraw: function(chart) {
-            if (chart.config.type !== 'doughnut') return;
-            var ctx = chart.ctx;
-            ctx.restore();
-
-            var left = chart.chartArea.left;
-            var right = chart.chartArea.right;
-            var top = chart.chartArea.top;
-            var bottom = chart.chartArea.bottom;
-            
-            var centerX = left + (right - left) / 2;
-            var centerY = top + (bottom - top) / 2;
-            var cWidth = right - left;
-
-            var fontSize = (cWidth / 250).toFixed(2);
-            ctx.font = "bold " + (fontSize * 3) + "em sans-serif";
-            ctx.textBaseline = "middle";
-            ctx.textAlign = "center";
-            ctx.fillStyle = "#10b981";
-            
-            let data = chart.data.datasets[0].data;
-            let total = data.reduce((a,b) => a+b, 0);
-            let putts = (data[1]*1) + (data[2]*2) + (data[3]*3.1); 
-            let text = total > 0 ? (putts / total).toFixed(1) : "0.0";
-            
-            ctx.fillText(text, centerX, centerY - (cWidth * 0.05));
-            
-            ctx.font = "normal " + (fontSize * 1.2) + "em sans-serif";
-            ctx.fillStyle = "#9ca3af";
-            ctx.fillText("Avg / Hole", centerX, centerY + (cWidth * 0.15));
-            ctx.save();
-        }
-    };
-    Chart.register(centerTextPlugin);
-
-    const themes = {
-        dark: { bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' },
-        light: { bg: '#f3f4f6', card: '#ffffff', border: '#d1d5db', accent: '#10b981', hover: '#059669', text: '#111827', muted: '#6b7280', cell: '#f9fafb', cellBorder: '#e5e7eb' },
-        masters: { bg: '#022c16', card: '#064e3b', border: '#065f46', accent: '#fde047', hover: '#eab308', text: '#f3f4f6', muted: '#9ca3af', cell: '#022c16', cellBorder: '#065f46' },
-        midnight: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' },
-        sunset: { bg: '#1a0b1c', card: '#2d1b30', border: '#4a2c4f', accent: '#f97316', hover: '#d97706', text: '#fff1f2', muted: '#e1adba', cell: '#1a0b1c', cellBorder: '#4a2c4f' },
-        ocean: { bg: '#082f49', card: '#0f172a', border: '#0c4a6e', accent: '#06b6d4', hover: '#0284c7', text: '#e0f2fe', muted: '#7dd3fc', cell: '#082f49', cellBorder: '#0c4a6e' },
-        crimson: { bg: '#1a0505', card: '#2a0a0a', border: '#4a1111', accent: '#ef4444', hover: '#dc2626', text: '#fee2e2', muted: '#fca5a5', cell: '#1a0505', cellBorder: '#4a1111' },
-        neon: { bg: '#0a0a1a', card: '#14142b', border: '#2d2d59', accent: '#d946ef', hover: '#c026d3', text: '#fdf4ff', muted: '#e879f9', cell: '#0a0a1a', cellBorder: '#2d2d59' },
-        forest: { bg: '#1e2019', card: '#2c2e25', border: '#434738', accent: '#a3b18a', hover: '#8a9a5b', text: '#e0e2db', muted: '#a8aca1', cell: '#1e2019', cellBorder: '#434738' },
-        royal: { bg: '#1a1025', card: '#2a1b38', border: '#452b5e', accent: '#fbbf24', hover: '#d97706', text: '#f3e8ff', muted: '#d8b4fe', cell: '#1a1025', cellBorder: '#452b5e' },
-        stealth: { bg: '#000000', card: '#0a0a0a', border: '#1a1a1a', accent: '#eab308', hover: '#ca8a04', text: '#a3a3a3', muted: '#525252', cell: '#000000', cellBorder: '#1a1a1a' },
-        cyber: { bg: '#050505', card: '#09090b', border: '#171717', accent: '#84cc16', hover: '#65a30d', text: '#d4d4d8', muted: '#737373', cell: '#050505', cellBorder: '#171717' },
-        autumn: { bg: '#2b1b17', card: '#3d2620', border: '#5c3a31', accent: '#f97316', hover: '#ea580c', text: '#ffedd5', muted: '#fdba74', cell: '#2b1b17', cellBorder: '#5c3a31' },
-        slate: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#94a3b8', hover: '#cbd5e1', text: '#f8fafc', muted: '#64748b', cell: '#0f172a', cellBorder: '#334155' },
-        mint: { bg: '#111827', card: '#1f2937', border: '#374151', accent: '#6ee7b7', hover: '#34d399', text: '#f3f4f6', muted: '#9ca3af', cell: '#111827', cellBorder: '#374151' }
-    };
-
-    function applyTheme(themeName) {
-        if(!themes[themeName]) themeName = 'dark';
-        const t = themes[themeName];
-        const root = document.querySelector(':root');
-        root.style.setProperty('--bg-color', t.bg);
-        root.style.setProperty('--card-bg', t.card);
-        root.style.setProperty('--border-color', t.border);
-        root.style.setProperty('--accent-green', t.accent);
-        root.style.setProperty('--accent-hover', t.hover);
-        root.style.setProperty('--text-main', t.text);
-        root.style.setProperty('--text-muted', t.muted);
-        root.style.setProperty('--cell-bg', t.cell);
-        root.style.setProperty('--cell-border', t.cellBorder);
-        document.getElementById('meta-theme-color').setAttribute('content', t.bg);
-        localStorage.setItem('golf_theme', themeName);
-        document.getElementById('theme-selector').value = themeName;
-    }
-    
-    let savedTheme = localStorage.getItem('golf_theme');
-    if (savedTheme) applyTheme(savedTheme);
+    let trendChart = null, clubChart = null, driveChart = null, hcpChart = null, radarChart = null, weatherChart = null, statDetailChartObj = null, currentFilteredRounds = [], roundWeather = { temp: null, wind: null }, dismissedWarnings = [];
     // --- END globalVariables ---
 
     // --- START initializeApp ---
@@ -711,6 +643,29 @@
         }
         document.getElementById('settings-overlay').style.display = 'flex';
     }
+    
+    async function checkHarvesterStatus() {
+        try {
+            const { data, error } = await supabaseClient.from('course_tees').select('course_name');
+            if(error) throw error;
+            
+            let grouped = {};
+            data.forEach(t => { let c = t.course_name.trim().toUpperCase(); grouped[c] = (grouped[c] || 0) + 1; });
+            
+            let html = `<b>Total Tee Boxes Indexed:</b> ${data.length}<br><b>Unique Courses Indexed:</b> ${Object.keys(grouped).length}<br><br>`;
+            let sorted = Object.keys(grouped).sort((a,b) => grouped[b] - grouped[a]);
+            sorted.slice(0, 15).forEach(c => { html += `${c}: ${grouped[c]} Tees<br>`; });
+            if(sorted.length > 15) html += `<br><i>...and ${sorted.length - 15} more courses.</i>`;
+            
+            document.getElementById('insight-detail-title').innerText = "HARVESTER DB STATUS";
+            document.getElementById('insight-detail-content').innerHTML = html;
+            document.getElementById('settings-overlay').style.display = 'none';
+            document.getElementById('insight-modal').style.display = 'flex';
+        } catch(e) {
+            alert("Error fetching database status.");
+        }
+    }
+
     function continueAsGuest() { currentUser = null; localStorage.setItem('golf_guest_mode', 'true'); document.getElementById('auth-overlay').style.display = 'none'; loadLocalState(); buildGrid(); }
     function switchView(viewId, btn) { document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById(viewId).classList.add('active'); btn.classList.add('active'); if(viewId==='view-history') fetchHistory(); if(viewId==='view-analytics') loadAnalyticsData(); }
     function switchAnalyticsTab(tab, btn) { document.querySelectorAll('#view-analytics > .card > div[id^="analytics-tab-"]').forEach(el => el.style.display = 'none'); document.querySelectorAll('.analytics-tabs button').forEach(el => el.classList.remove('active')); document.getElementById('analytics-tab-' + tab).style.display = 'block'; btn.classList.add('active'); }
@@ -885,6 +840,7 @@
     document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
     document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-putt-dist').focus(); }, 150); });
     document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-club').focus(), 150); });
+    document.getElementById('play-approach-dist').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-approach-club').focus(), 150); });
     // --- END inputListeners ---
 
     // --- START fetchCourseDetails ---
@@ -1050,11 +1006,6 @@
         saveLocalState(); 
     }
     
-    function triggerSandOptions() {
-        let advOps = document.getElementById('adv-sand-options');
-        advOps.style.display = advOps.style.display === 'flex' ? 'none' : 'flex';
-    }
-
     function toggleGridHit(index, type) { 
         const btn = document.getElementById(`grid-${type}-${index}`); 
         let ns = type === 'sandSave' ? (btn.innerText === "MISS" ? "stuck" : (btn.innerText === "STUCK" ? "yes" : (btn.innerText === "SAVE" ? "-" : "no"))) : (btn.innerText === "MISS" ? "hit" : "miss"); 
@@ -1097,6 +1048,7 @@
         document.getElementById('play-drive-exception').value = state.driveException || "";
         document.getElementById('play-approach-club').value = state.appClub || "";
         document.getElementById('play-approach-dist').value = state.appDist || "";
+        document.getElementById('play-sand-select').value = state.sandSave || "";
         
         let dropsVal = parseInt(state.drops) || 0; let dBtn = document.getElementById('play-drops-btn'); dBtn.innerText = dropsVal === 0 ? "-" : dropsVal; dBtn.style.color = dropsVal > 0 ? "#ef4444" : "var(--text-main)";
 
@@ -1145,59 +1097,15 @@
             missingBanner.style.display = 'none';
         }
 
-        let dropsAdvOps = document.getElementById('adv-drops-options');
-        if (dropsAdvOps) {
-            if (dropsVal > 0) {
-                dropsAdvOps.style.display = 'flex';
-                document.querySelectorAll('#adv-drops-options .drop-type-btn').forEach(b => {
-                    let dType = b.getAttribute('data-type');
-                    let count = state.dropsAdv ? state.dropsAdv.filter(v => v === dType).length : 0;
-                    b.innerText = count > 0 ? `${dType} (${count})` : dType;
-                    if (count > 0) b.classList.add('active');
-                    else b.classList.remove('active');
-                });
-            } else {
-                dropsAdvOps.style.display = 'none';
-            }
-        }
-
-        ['fir', 'gir', 'sandSave'].forEach(type => {
-            let hBtn = type === 'sandSave' ? `${type}-yes-btn` : `${type}-hit-btn`; let mBtn = type === 'sandSave' ? `${type}-no-btn` : `${type}-miss-btn`;
-            let sb = document.getElementById(`${type}-stuck-btn`); if(sb) sb.classList.remove('active');
-            
-            let hb = document.getElementById(hBtn); if(hb) hb.classList.remove('active'); 
-            let mb = document.getElementById(mBtn); if(mb) mb.classList.remove('active');
-            
-            let advOps = document.getElementById(`adv-${type}-options`);
-            if (advOps && type !== 'sandSave') {
-                advOps.style.display = 'none'; 
-                document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => b.classList.remove('active'));
-            }
-            
-            if(state[type] === (type === 'sandSave' ? 'yes' : 'hit')) {
-                if(hb) hb.classList.add('active');
-            } else if(state[type] === (type === 'sandSave' ? 'no' : 'miss') && !(type === 'fir' && par === 3)) { 
-                if(mb) mb.classList.add('active'); 
-                if (advOps && type !== 'sandSave') {
-                    advOps.style.display = 'flex'; 
-                    if(state[type + 'Adv'] && Array.isArray(state[type + 'Adv'])) document.querySelectorAll(`#adv-${type}-options .adv-btn`).forEach(b => { 
-                        if(b.classList.contains('drop-type-btn')) return;
-                        if(state[type + 'Adv'].includes(b.innerText)) b.classList.add('active'); 
-                    }); 
-                }
-            } else if (state[type] === 'stuck') {
-                if(sb) sb.classList.add('active');
-            }
-            
-            if (type === 'sandSave') {
-                let sBox = document.getElementById('adv-sand-options');
-                if(state.sandSave !== "") sBox.style.display = 'flex';
-                else sBox.style.display = 'none';
-            }
+        ['fir', 'gir'].forEach(type => {
+            let hb = document.getElementById(`${type}-hit-btn`); if(hb) hb.classList.remove('active'); 
+            let mb = document.getElementById(`${type}-miss-btn`); if(mb) mb.classList.remove('active');
+            if(state[type] === 'hit') { if(hb) hb.classList.add('active'); } 
+            else if(state[type] === 'miss' && !(type === 'fir' && par === 3)) { if(mb) mb.classList.add('active'); }
         });
         
-        let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.display = par === 3 ? 'none' : 'flex'; 
-        let fBlock = document.getElementById('play-fir-block'); if(fBlock) fBlock.style.display = par === 3 ? 'none' : 'flex'; 
+        let dBlock = document.getElementById('play-drive-block'); if(dBlock) dBlock.style.opacity = par === 3 ? '0.3' : '1'; 
+        let fBlock = document.getElementById('play-fir-block'); if(fBlock) fBlock.style.opacity = par === 3 ? '0.3' : '1'; 
         
         document.getElementById('play-prev-btn').style.visibility = currentPlayHole === currentHoleOffset ? 'hidden' : 'visible'; 
         document.getElementById('play-next-btn').innerText = currentPlayHole === (endIndex - 1) ? 'FINISH' : 'NEXT HOLE →';
@@ -1211,36 +1119,6 @@
     
     function setPlayToggle(type, status) { 
         roundData[currentPlayHole][type] = (roundData[currentPlayHole][type] === status) ? "" : status; 
-        if((status === 'hit' || status === 'yes') && type !== 'sandSave') roundData[currentPlayHole][type + 'Adv'] = []; 
-        const btn = document.getElementById(`grid-${type}-${currentPlayHole}`); 
-        if(btn) { 
-            let ns = roundData[currentPlayHole][type];
-            if (type === 'sandSave') {
-                btn.innerText = ns === "" ? "-" : (ns === 'yes' ? 'SAVE' : (ns === 'no' ? 'MISS' : 'STUCK'));
-            } else {
-                btn.innerText = ns === "" ? "-" : ns.toUpperCase(); 
-            }
-            if(status === 'hit' || status === 'yes') btn.classList.add('hit'); else btn.classList.remove('hit'); 
-        } 
-        updatePlayModeUI(); saveLocalState(); 
-    }
-    
-    function setAdvToggle(type, value) { 
-        let arr = roundData[currentPlayHole][type + 'Adv']; 
-        if (!Array.isArray(arr)) arr = []; 
-        
-        if (type === 'fir') {
-            if (arr.includes(value)) arr = []; else arr = [value];
-        } else if (type === 'drops') {
-            let currentCount = arr.filter(v => v === value).length;
-            arr = arr.filter(v => v !== value);
-            let newCount = currentCount >= 4 ? 0 : currentCount + 1;
-            for(let i=0; i<newCount; i++) arr.push(value);
-        } else {
-            if (arr.includes(value)) arr = arr.filter(v => v !== value); else arr.push(value); 
-        }
-        
-        roundData[currentPlayHole][type + 'Adv'] = arr; 
         updatePlayModeUI(); saveLocalState(); 
     }
 
@@ -1517,7 +1395,7 @@
         let ctx = document.getElementById('statDetailChart').getContext('2d');
         statDetailChartObj = new Chart(ctx, {
             type: 'line',
-            data: { labels: plotData.map(d=>d.x), datasets: [{ label: title, data: plotData.map(d=>d.y), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 2, fill: true, pointBackgroundColor: '#121212' }] },
+            data: { labels: plotData.map(d=>d.x), datasets: [{ label: title, data: plotData.map(d=>d.y), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 2, fill: true, pointBackgroundColor: '#121212', tension: 0.3 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } }
         });
     };
@@ -1673,32 +1551,7 @@
         if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
     }
 
-    function ensureNewChartsContainers() {
-        let chartsGrid = document.querySelector('.charts-grid');
-        if(!document.getElementById('hcpTrendChart')) {
-            let hcCont = document.createElement('div'); hcCont.className = 'chart-container';
-            hcCont.innerHTML = '<canvas id="hcpTrendChart"></canvas>';
-            chartsGrid.appendChild(hcCont);
-        }
-        if(!document.getElementById('missRadarChart')) {
-            let radarCont = document.createElement('div'); radarCont.className = 'chart-container';
-            radarCont.innerHTML = '<canvas id="missRadarChart"></canvas>';
-            chartsGrid.appendChild(radarCont);
-        }
-        if(!document.getElementById('weatherScoreChart')) {
-            let weatherCont = document.createElement('div'); weatherCont.className = 'chart-container'; weatherCont.style.gridColumn = '1 / -1';
-            weatherCont.innerHTML = '<div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots your Relative Score against the Historical Temperature to map climate fatigue.</span></div><div style="position: relative; height: 190px;"><canvas id="weatherScoreChart"></canvas></div>';
-            chartsGrid.appendChild(weatherCont);
-        }
-        
-        let insightsCard = document.querySelector('.insights-card');
-        if(!document.getElementById('trophy-room-box')) {
-            let trophyBox = document.createElement('div');
-            trophyBox.id = 'trophy-room-box';
-            trophyBox.style.cssText = 'display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;';
-            insightsCard.parentNode.insertBefore(trophyBox, insightsCard.nextSibling);
-        }
-    }
+    function ensureNewChartsContainers() {} // Disabled: All charts are hardcoded into HTML to prevent duplicate mounting bugs
 
     function getRelativeParString(score, par) {
         if(par === 0 || score === 0) return "";
@@ -1786,37 +1639,12 @@
             <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${minPutts === 999 ? '--' : minPutts}</div><div style="${subStyle}">${formatList(lowPuttsList)}</div></div>
             <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${maxFir}</div><div style="${subStyle}">${formatList(mostFirsList)}</div></div>
         `;
-        
-        const bestPuttBox = document.getElementById('best-putting-rounds');
-        if (bestPuttBox) {
-            if (minPutts === 999) {
-                bestPuttBox.innerHTML = "";
-            } else {
-                let html = `<b>Best Putting Rounds:</b><br>`;
-                for(let i=0; i<Math.min(3, lowPuttsList.length); i++) {
-                    html += `${minPutts} Putts at ${lowPuttsList[i].c} <span style="opacity:0.6">(${lowPuttsList[i].d})</span><br>`;
-                }
-                bestPuttBox.innerHTML = html;
-            }
-        }
     }
 
     function renderCharts(filteredRounds, actHoles, actPars) {
-        ensureNewChartsContainers();
-
-        const tCtx = document.getElementById('scoringTrendChart'); const pCtx = document.getElementById('puttChart'); const dCtx = document.getElementById('driveChart');
-        if (trendChart) trendChart.destroy(); if (puttChart) puttChart.destroy(); if (driveChart) driveChart.destroy();
+        const tCtx = document.getElementById('scoringTrendChart'); const cCtx = document.getElementById('clubChart'); const dCtx = document.getElementById('driveChart');
+        if (trendChart) trendChart.destroy(); if (clubChart) clubChart.destroy(); if (driveChart) driveChart.destroy();
         if (hcpChart) hcpChart.destroy(); if (radarChart) radarChart.destroy(); if (weatherChart) weatherChart.destroy();
-        
-        if (filteredRounds.length === 0) { 
-            tCtx.parentElement.style.display = 'none'; pCtx.parentElement.style.display = 'none'; dCtx.parentElement.style.display = 'none'; 
-            document.getElementById('hcpTrendChart').parentElement.style.display = 'none'; document.getElementById('missRadarChart').parentElement.style.display = 'none';
-            document.getElementById('weatherScoreChart').parentElement.style.display = 'none';
-            return; 
-        }
-        tCtx.parentElement.style.display = 'block'; pCtx.parentElement.style.display = 'block'; dCtx.parentElement.style.display = 'block';
-        document.getElementById('hcpTrendChart').parentElement.style.display = 'block'; document.getElementById('missRadarChart').parentElement.style.display = 'block';
-        document.getElementById('weatherScoreChart').parentElement.style.display = 'block';
         
         const chartData = [...filteredRounds].reverse(); const activeOverlays = Array.from(document.querySelectorAll('#chart-overlays input:checked')).map(cb => cb.value);
         let baseScores = [];
@@ -1832,7 +1660,7 @@
             baseScores.push(rs); 
         });
         
-        let trendDatasets = [{ label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y' }];
+        let trendDatasets = [{ label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y', tension: 0.3 }];
         
         const badge = document.getElementById('trend-badge');
         if (baseScores.length > 1) {
@@ -1849,21 +1677,21 @@
             else { badge.style.display = 'none'; }
         } else { badge.style.display = 'none'; }
 
-        const oColors = { hcp: '#f59e0b', putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', drops: '#ef4444' };
-        const oLabels = { hcp: 'Handicap', putts: 'Putts', fir: 'FIR %', gir: 'GIR %', scram: 'Scram %', drops: 'Drops' };
+        const oColors = { hcp: '#f59e0b', putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308' };
+        const oLabels = { hcp: 'Handicap', putts: 'Putts', fir: 'FIR %', gir: 'GIR %', scram: 'Scram %', drops: 'Drops', p3: 'Par 3 Avg', p4: 'Par 4 Avg', p5: 'Par 5 Avg' };
         
         let hcpData = [];
         if (activeOverlays.includes('hcp')) {
             let hcpHist = calculateHcpHistory(filteredRounds);
             hcpData = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
-            trendDatasets.push({ label: oLabels['hcp'], data: hcpData, borderColor: oColors['hcp'], backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: oColors['hcp'], yAxisID: 'y1' });
+            trendDatasets.push({ label: oLabels['hcp'], data: hcpData, borderColor: oColors['hcp'], backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: oColors['hcp'], yAxisID: 'y1', tension: 0.3 });
         }
 
         activeOverlays.forEach(overlay => {
             if (overlay === 'hcp') return;
             let oData = [];
             chartData.forEach(r => {
-                let p=0, fH=0, fT=0, gH=0, gT=0, sH=0, sT=0, dr=0; 
+                let p=0, fH=0, fT=0, gH=0, gT=0, sH=0, sT=0, dr=0, p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0; 
                 let targetHoles = r.hole_scores || []; 
                 if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
                 if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
@@ -1876,29 +1704,43 @@
                         if (h.drops) dr += h.drops; 
                         if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; } 
                         if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; if(h.gir === 'miss') { sT++; if(h.score <= h.par) sH++; } } 
+                        if (h.score && h.par) { let d=h.score-h.par; if(h.par===3){p3+=d; p3c++;} if(h.par===4){p4+=d; p4c++;} if(h.par===5){p5+=d; p5c++;} }
                     });
                 }
                 
-                if (overlay === 'putts') oData.push(p); if (overlay === 'drops') oData.push(dr); if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : 0); if (overlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : 0); if (overlay === 'scram') oData.push(sT > 0 ? (sH/sT*100).toFixed(0) : 0);
+                if (overlay === 'putts') oData.push(p); if (overlay === 'drops') oData.push(dr); if (overlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : null); if (overlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : null); if (overlay === 'scram') oData.push(sT > 0 ? (sH/sT*100).toFixed(0) : null);
+                if (overlay === 'p3') oData.push(p3c>0 ? (p3/p3c).toFixed(2) : null); if (overlay === 'p4') oData.push(p4c>0 ? (p4/p4c).toFixed(2) : null); if (overlay === 'p5') oData.push(p5c>0 ? (p5/p5c).toFixed(2) : null);
             });
-            trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1' });
+            trendDatasets.push({ label: oLabels[overlay], data: oData, borderColor: oColors[overlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[overlay], yAxisID: 'y1', tension: 0.3 });
         });
         
         trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlays.length > 0 || baseScores.length > 1, labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlays.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } });
 
-        let p0=0, p1=0, p2=0, p3=0;
-        chartData.forEach(r => { let targetHoles = r.hole_scores || []; if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); targetHoles.forEach(h => { if(h.putts===0)p0++; else if(h.putts===1)p1++; else if(h.putts===2)p2++; else if(h.putts>=3)p3++; }); });
+        // CLUB DISTANCE BAR CHART
+        let clubStats = {};
+        chartData.forEach(r => {
+            let targetHoles = r.hole_scores || []; 
+            if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
+            if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
+            targetHoles.forEach(h => {
+                if (h.drive_club && h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) {
+                    if(!clubStats[h.drive_club]) clubStats[h.drive_club] = {tot:0, cnt:0};
+                    clubStats[h.drive_club].tot += h.drive_distance; clubStats[h.drive_club].cnt++;
+                }
+                if (h.approach_club && h.approach_yd > 0) {
+                    if(!clubStats[h.approach_club]) clubStats[h.approach_club] = {tot:0, cnt:0};
+                    clubStats[h.approach_club].tot += h.approach_yd; clubStats[h.approach_club].cnt++;
+                }
+            });
+        });
         
-        let puttsTotal = p0 + p1 + p2 + p3;
-        let pct = (val) => puttsTotal > 0 ? Math.round((val/puttsTotal)*100) + '%' : '0%';
+        let cLabels = Object.keys(clubStats).sort((a,b) => (clubStats[b].tot/clubStats[b].cnt) - (clubStats[a].tot/clubStats[a].cnt));
+        let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
 
-        puttChart = new Chart(pCtx.getContext('2d'), { 
-            type: 'doughnut', 
-            data: { 
-                labels: [`0-Putt (${pct(p0)})`, `1-Putt (${pct(p1)})`, `2-Putt (${pct(p2)})`, `3+ Putt (${pct(p3)})`], 
-                datasets: [{ data: [p0, p1, p2, p3], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], borderColor: '#1a1a1a', borderWidth: 2 }] 
-            }, 
-            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { color: '#9ca3af', font: {size: 11} } }, title: { display: true, text: 'Putting Breakdown', color: '#f3f4f6' } } }
+        clubChart = new Chart(cCtx.getContext('2d'), { 
+            type: 'bar', 
+            data: { labels: cLabels, datasets: [{ label: 'Avg Yards', data: cData, backgroundColor: '#3b82f6', borderRadius: 4 }] }, 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } }
         });
 
         let p4Drives = [], p5Drives = [];
@@ -1955,13 +1797,14 @@
         chartData.forEach(r => {
             if(r.weather_temp && r.total_score > 0) {
                 let tempNum = parseInt(r.weather_temp.replace('°C', ''));
+                let windStr = r.weather_wind || "";
                 let par = 72;
                 if (r.hole_scores && r.hole_scores.length >= 18) {
                     par = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
                 }
                 let relScore = r.total_score - par;
                 if(!isNaN(tempNum)) {
-                    weatherPlotData.push({x: tempNum, y: relScore, rawLabel: `${r.course_name.trim()} (${r.weather_temp})`});
+                    weatherPlotData.push({x: tempNum, y: relScore, rawLabel: `${r.course_name.trim()} (${r.weather_temp}, ${windStr})`});
                 }
             }
         });
@@ -2065,28 +1908,28 @@
         t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / 18-Holes</th><th>Hole %</th></tr></thead><tbody>
             <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
             <tr onclick="openStatGraph('Hole Score', 'score')"><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
-            <tr><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
-            <tr><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
-            <tr><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
-            <tr><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
-            <tr><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
-            <tr><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
-            <tr><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
-            <tr><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
+            <tr onclick="openStatGraph('Hole in One', 'hio')"><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
+            <tr onclick="openStatGraph('Eagle', 'egl')"><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
+            <tr onclick="openStatGraph('Birdie', 'brd')"><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
+            <tr onclick="openStatGraph('Par', 'par')"><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
+            <tr onclick="openStatGraph('Bogey', 'bog')"><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
+            <tr onclick="openStatGraph('Double Bogey', 'dbl')"><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
+            <tr onclick="openStatGraph('Triple Bogey', 'tpl')"><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
+            <tr onclick="openStatGraph('Quad+ Bogey', 'qd')"><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
             <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
-            <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-            <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-            <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr onclick="openStatGraph('Par 3 Avg', 'p3')"><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr onclick="openStatGraph('Par 4 Avg', 'p4')"><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr onclick="openStatGraph('Par 5 Avg', 'p5')"><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr><td>Front 9 Scoring (+/- Par)</td><td>-</td><td>${f9Par > 0 ? getRelativeParString(f9Strokes, f9Par) : '-'}</td><td>-</td></tr>
             <tr><td>Back 9 Scoring (+/- Par)</td><td>-</td><td>${b9Par > 0 ? getRelativeParString(b9Strokes, b9Par) : '-'}</td><td>-</td></tr>
             <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
             <tr onclick="openStatGraph('Putts', 'putts')"><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
-            <tr><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr onclick="openStatGraph('3-Putt Avoidance %', 'tpAvoid')"><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr onclick="openStatGraph('Accuracy (FIR + GIR)', 'acc')"><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr onclick="openStatGraph('FIR %', 'fir')"><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? ((s.fH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr onclick="openStatGraph('GIR %', 'gir')"><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? ((s.gH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr onclick="openStatGraph('Scrambling %', 'scram')"><td>Scrambling (Missed GIR)</td><td>${s.scramHit} / ${s.scramOpp}</td><td>-</td><td>${s.scramOpp > 0 ? ((s.scramHit / s.scramOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-            <tr><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? ((s.ssH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
+            <tr onclick="openStatGraph('Sand Save %', 'ss')"><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? ((s.ssH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
             <tr onclick="openStatGraph('Drops', 'drops')"><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
         </tbody>`;
     }
