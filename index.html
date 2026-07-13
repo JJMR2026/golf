@@ -39,6 +39,7 @@
         .search-row { display: flex; gap: 10px; margin-top: 15px; position: relative; }
         input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea, select { flex: 1; background-color: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px 16px; border-radius: 8px; font-size: 16px; outline: none; box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s, color 0.3s;}
         input:focus, select:focus, textarea:focus { border-color: var(--accent-green); }
+        select option { background-color: var(--card-bg); color: var(--text-main); }
         
         .dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin: 4px 0 0 0; padding: 0; list-style: none; max-height: 250px; overflow-y: auto; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
         .dropdown-list.active { display: block; }
@@ -146,10 +147,10 @@
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
         
         <div class="login-option">
-            <h4>Sign In Options</h4>
-            <p><strong>Option 1: Real Email (Recommended)</strong><br>Enables secure password recovery and full cloud syncing.</p>
-            <p><strong>Option 2: Nickname</strong><br>No email required, but password recovery is impossible if forgotten.</p>
-            <p style="margin-bottom: 0;"><strong>Option 3: Guest Mode</strong><br>No login needed. Tracks a single round locally, but does not save to History.</p>
+            <h4 style="color: var(--text-main);">Sign In Options</h4>
+            <p><strong>1. Real Email:</strong> Full tracking & secure recovery. (Emails are strictly for login and never shared or sold).</p>
+            <p><strong>2. Nickname:</strong> Full tracking, but NO password recovery.</p>
+            <p><strong>3. Guest Mode:</strong> Track a single round locally. No data is saved to history.</p>
         </div>
 
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
@@ -164,7 +165,7 @@
             <button class="primary" id="login-btn" onclick="handleAuth('login')">Log In</button>
         </div>
 
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
             <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
@@ -180,9 +181,11 @@
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
             <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
                 <option value="dark">Dark Mode (Default)</option>
-                <option value="light">Light Mode</option>
+                <option value="sunset">Sunset (Orange/Purple)</option>
+                <option value="ocean">Ocean (Deep Blue)</option>
+                <option value="midnight">Midnight (Cyber Blue)</option>
                 <option value="masters">Masters Green</option>
-                <option value="midnight">Midnight Blue</option>
+                <option value="light">Light Mode</option>
             </select>
         </div>
 
@@ -208,8 +211,10 @@
 
 <div id="insight-modal" style="display: none;">
     <div class="auth-card" style="max-width: 500px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 30px;">
+            <h2 id="insight-detail-title" style="color: var(--accent-green); margin: 0; font-size: 18px;">INSIGHT DETAIL</h2>
+        </div>
         <button type="button" class="close-modal-btn" style="position: absolute; top: 15px; right: 15px;" onclick="document.getElementById('insight-modal').style.display='none'">✕</button>
-        <h2 id="insight-detail-title" style="color: var(--accent-green); margin-top: 0; margin-bottom: 10px; font-size: 18px;">INSIGHT DETAIL</h2>
         <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
             Loading...
         </div>
@@ -310,7 +315,15 @@
         <div class="card">
             <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
             <div class="filter-row">
-                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()"><option value="last1">Last Round</option><option value="last2">Last 2 Rounds</option><option value="last3">Last 3 Rounds</option><option value="last4">Last 4 Rounds</option><option value="last5">Last 5 Rounds</option><option value="full" selected>All Time</option></select>
+                <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                    <option value="season" selected>This Season</option>
+                    <option value="last1">Last Round</option>
+                    <option value="last2">Last 2 Rounds</option>
+                    <option value="last3">Last 3 Rounds</option>
+                    <option value="last4">Last 4 Rounds</option>
+                    <option value="last5">Last 5 Rounds</option>
+                    <option value="full">All Time</option>
+                </select>
                 
                 <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
                     <option value="18" selected>18-Holes Only</option>
@@ -371,7 +384,12 @@
                     </div>
                     <div style="position: relative; height: 190px;"><canvas id="scoringTrendChart"></canvas></div>
                 </div>
-                <div class="chart-container"><canvas id="puttChart"></canvas></div>
+                
+                <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 10px;">
+                    <div style="flex:1; position:relative; min-height:180px;"><canvas id="puttChart"></canvas></div>
+                    <div id="best-putting-rounds" style="margin-top:15px; font-size:11px; color:var(--text-muted); text-align:center; padding-top:15px; border-top:1px solid var(--border-color); line-height: 1.4;"></div>
+                </div>
+                
                 <div class="chart-container"><canvas id="driveChart"></canvas></div>
             </div>
             
@@ -388,9 +406,9 @@
 <div id="history-modal" class="modal-overlay">
     <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px;">
+        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 40px;">
             <h3 id="modal-course-title" style="color: var(--accent-green);">COURSE NAME</h3>
-            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted);">Date</div>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
         </div>
         <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
@@ -442,7 +460,7 @@
             var centerY = top + (bottom - top) / 2;
 
             var fontSize = ((bottom - top) / 114).toFixed(2);
-            ctx.font = "bold " + fontSize + "em sans-serif";
+            ctx.font = "bold " + (fontSize * 0.45) + "em sans-serif";
             ctx.textBaseline = "middle";
             ctx.textAlign = "center";
             ctx.fillStyle = "#10b981";
@@ -454,7 +472,7 @@
             
             ctx.fillText(text, centerX, centerY - ((bottom - top) * 0.05));
             
-            ctx.font = "normal " + (fontSize * 0.25) + "em sans-serif";
+            ctx.font = "normal " + (fontSize * 0.18) + "em sans-serif";
             ctx.fillStyle = "#9ca3af";
             ctx.fillText("Avg / Hole", centerX, centerY + ((bottom - top) * 0.15));
             ctx.save();
@@ -462,12 +480,13 @@
     };
     Chart.register(centerTextPlugin);
 
-    // Theme Engine Initializer
     const themes = {
         dark: { bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' },
         light: { bg: '#f3f4f6', card: '#ffffff', border: '#d1d5db', accent: '#10b981', hover: '#059669', text: '#111827', muted: '#6b7280', cell: '#f9fafb', cellBorder: '#e5e7eb' },
         masters: { bg: '#022c16', card: '#064e3b', border: '#065f46', accent: '#fde047', hover: '#eab308', text: '#f3f4f6', muted: '#9ca3af', cell: '#022c16', cellBorder: '#065f46' },
-        midnight: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' }
+        midnight: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' },
+        sunset: { bg: '#1a0b1c', card: '#2d1b30', border: '#4a2c4f', accent: '#f97316', hover: '#d97706', text: '#fff1f2', muted: '#e1adba', cell: '#1a0b1c', cellBorder: '#4a2c4f' },
+        ocean: { bg: '#082f49', card: '#0f172a', border: '#0c4a6e', accent: '#06b6d4', hover: '#0284c7', text: '#e0f2fe', muted: '#7dd3fc', cell: '#082f49', cellBorder: '#0c4a6e' }
     };
 
     function applyTheme(themeName) {
@@ -1218,7 +1237,7 @@
         document.getElementById('hole-btn-text').innerText = 'All Holes';
     }
 
-    window.openInsightDetail = function(type, rawData) {
+    window.openInsightDetail = function(type) {
         document.getElementById('insight-detail-title').innerText = type.toUpperCase();
         document.getElementById('insight-detail-content').innerHTML = `You clicked on the <b>${type}</b> insight.<br><br>We can populate this modal with deeper historical data, specific hole breakdowns, and practice recommendations for this exact stat in future builds.`;
         document.getElementById('insight-modal').style.display = 'flex';
@@ -1269,7 +1288,9 @@
     }
     
     function generateInsights(fRounds) {
-        let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0, bbOpp=0, bbHit=0;
+        let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0, bbOpp=0, bbHit=0, bbMajorOpp=0, bbMajorHit=0;
+        let hAvg = {};
+        
         fRounds.forEach(r => { 
             if(!r.hole_scores || r.hole_scores.length === 0) {
                 if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return;
@@ -1279,12 +1300,20 @@
             for(let i=0; i<hs.length - 1; i++) {
                 let curr = hs[i], next = hs[i+1];
                 if(curr.score && curr.par && next.score && next.par) {
-                    if(curr.score > curr.par) { bbOpp++; if(next.score <= next.par) bbHit++; }
+                    let diff = curr.score - curr.par;
+                    if(diff === 1) { bbOpp++; if(next.score <= next.par) bbHit++; }
+                    if(diff >= 2) { bbMajorOpp++; if(next.score <= next.par) bbMajorHit++; }
                 }
             }
 
             hs.forEach(h => {
-                if(h.score && h.par) { let diff = h.score - h.par; if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} }
+                if(h.score && h.par) { 
+                    let diff = h.score - h.par; 
+                    if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} 
+                    
+                    if(!hAvg[h.hole_number]) hAvg[h.hole_number] = {tot:0, cnt:0};
+                    hAvg[h.hole_number].tot += diff; hAvg[h.hole_number].cnt++;
+                }
                 if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
                 
                 if(h.drops && h.drops_adv) {
@@ -1326,7 +1355,12 @@
         if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
         if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span>🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span>🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
         
-        if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span>🔥</span><div><b>Mental Toughness:</b> You successfully "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span>🧠</span><div><b>Mental Toughness:</b> You "Bounce Back" (Par or better) after a bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); }
+        let dHole = {num:0, val:-99};
+        for(let i=1; i<=18; i++) { if(hAvg[i] && hAvg[i].cnt > 0) { let avg = hAvg[i].tot / hAvg[i].cnt; if(avg > dHole.val) { dHole.val = avg; dHole.num = i; } } }
+        if (dHole.num > 0 && dHole.val > 0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Danger Holes')"><span>🏴‍☠️</span><div><b>Danger Hole:</b> Historically, <b>Hole ${dHole.num}</b> costs you the most strokes (+${dHole.val.toFixed(1)} to par).</div></div>`);
+
+        if (bbOpp > 0) { let bbPct = (bbHit / bbOpp) * 100; if (bbPct >= 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Bogey Bounce Back')"><span>🔥</span><div><b>Bogey Bounce-Back:</b> You score Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Bogey Bounce Back')"><span>🧠</span><div><b>Bogey Bounce-Back:</b> You score Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); }
+        if (bbMajorOpp > 0) { let bbMPct = (bbMajorHit / bbMajorOpp) * 100; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Major Error Bounce Back')"><span>🥊</span><div><b>Mental Toughness:</b> You successfully salvage Par or better immediately following a Double Bogey+ ${bbMPct.toFixed(0)}% of the time.</div></div>`); }
 
         if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span>🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('3-Putts')"><span>⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
         if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span>🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Drive Direction')"><span>🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
@@ -1449,6 +1483,11 @@
             <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${minPutts === 999 ? '--' : minPutts}</div><div style="${subStyle}">${formatList(lowPuttsList)}</div></div>
             <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${maxFir}</div><div style="${subStyle}">${formatList(mostFirsList)}</div></div>
         `;
+        
+        const bestPuttBox = document.getElementById('best-putting-rounds');
+        if (bestPuttBox) {
+            bestPuttBox.innerHTML = minPutts === 999 ? "" : `<b>Best Putting Round:</b><br>${minPutts} Putts at ${lowPuttsList[0].c} <span style="opacity:0.6">(${lowPuttsList[0].d})</span>`;
+        }
     }
 
     function renderCharts(filteredRounds, actHoles, actPars) {
@@ -1609,7 +1648,12 @@
         
         let fRounds = masterAnalyticsData.filter(r => { 
             if (!actCrs.includes(r.course_name.trim())) return false; 
-            const d = new Date(r.date_played); if (!actYrs.includes(d.getUTCFullYear().toString())) return false; if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
+            
+            // Season Check
+            const d = new Date(r.date_played); 
+            if (timeframe === 'season' && d.getUTCFullYear().toString() !== new Date().getUTCFullYear().toString()) return false;
+            if (timeframe !== 'season' && !actYrs.includes(d.getUTCFullYear().toString())) return false; 
+            if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
             
             if(r.hole_scores && r.hole_scores.length > 0) {
                 const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
@@ -1636,6 +1680,8 @@
         updateTrophyRoom(fRounds);
         
         let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0, scramOpp:0, scramHit:0, tpOpp:0, tpHit:0 }; let totalStrokes = 0; let totalHolesCount = 0; let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
+        let f9Strokes=0, f9Par=0, b9Strokes=0, b9Par=0;
+
         fRounds.forEach(r => { 
             let targetHoles = r.hole_scores || []; 
             if (targetHoles.length === 0) { totalStrokes += r.total_score; totalHolesCount += 18; s.putts += r.total_putts || 0; s.pHP += 18; return; }
@@ -1652,6 +1698,8 @@
                     const d = h.score - h.par; 
                     if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
                     if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
+                    
+                    if(h.hole_number <= 9) { f9Strokes += h.score; f9Par += h.par; } else { b9Strokes += h.score; b9Par += h.par; }
                 }
                 
                 if(h.putts !== null && h.putts !== "") {
@@ -1686,6 +1734,8 @@
             <tr><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
             <tr><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
+            <tr><td>Front 9 Scoring (+/- Par)</td><td>-</td><td>${f9Par > 0 ? getRelativeParString(f9Strokes, f9Par) : '-'}</td><td>-</td></tr>
+            <tr><td>Back 9 Scoring (+/- Par)</td><td>-</td><td>${b9Par > 0 ? getRelativeParString(b9Strokes, b9Par) : '-'}</td><td>-</td></tr>
             <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
             <tr><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
             <tr><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
