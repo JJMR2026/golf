@@ -192,7 +192,7 @@
                 
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 
-                <div id="play-mode-container" style="display:none; max-width: 500px; margin: 0 auto; width: 100%;">
+                <div id="play-mode-container" style="display:none; max-width: 600px; margin: 0 auto; width: 100%;">
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
                         <span id="pace-projected-display">Pace: --</span>
@@ -205,7 +205,8 @@
                         <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
                     </div>
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <!-- ULTRA COMPACT PLAY UI -->
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px;">
                         <div class="compact-box">
                             <div class="compact-label">SCORE</div>
                             <input type="number" class="compact-input" id="play-score" onchange="syncPlayToState('score', this.value)">
@@ -220,18 +221,12 @@
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
                         <div class="compact-box" id="play-fir-block">
                             <div class="compact-label">DRIVE (FIR)</div>
                             <div style="display:flex; gap:4px; width:100%;">
                                 <button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button>
                                 <button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
-                            </div>
-                            <div style="display:flex; gap:4px; width:100%; margin-top:5px;">
-                                <input type="number" class="compact-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="flex:1;">
-                                <select class="compact-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)" style="flex:1;">
-                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
-                                </select>
                             </div>
                         </div>
                         <div class="compact-box" id="play-gir-block">
@@ -240,8 +235,21 @@
                                 <button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button>
                                 <button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button>
                             </div>
-                            <div style="display:flex; gap:4px; width:100%; margin-top:5px;">
-                                <input type="number" class="compact-select" id="play-approach-dist" placeholder="Yds" onchange="syncPlayToState('appDist', this.value)" style="flex:1;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                        <div class="compact-box">
+                            <div style="display:flex; gap:4px; width:100%; align-items: center;">
+                                <input type="number" class="compact-select" id="play-drive" placeholder="Drive Yds" onchange="syncPlayToState('drive', this.value)" style="flex:1;">
+                                <select class="compact-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)" style="flex:1;">
+                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="compact-box">
+                            <div style="display:flex; gap:4px; width:100%; align-items: center;">
+                                <input type="number" class="compact-select" id="play-approach-dist" placeholder="Appr. Yds" onchange="syncPlayToState('appDist', this.value)" style="flex:1;">
                                 <select class="compact-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)" style="flex:1;">
                                     <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
                                 </select>
@@ -249,7 +257,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
                         <div class="compact-box">
                             <div class="compact-label">SAND TRACKING</div>
                             <button type="button" id="sand-cycle-btn" class="adv-btn" style="width:100%; height:35px; margin:0;" onclick="cycleSand()">SAND: NONE</button>
@@ -389,7 +397,7 @@
                     <div class="chart-container"><canvas id="missRadarChart"></canvas></div>
 
                     <div class="chart-container">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots Score against Temperature. (Requires 5+ rounds in different climates to form a valid trendline).</span></div>
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots Relative Score against Temperature. Need 5+ rounds to form trend.</span></div>
                         <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
                     </div>
                 </div>
