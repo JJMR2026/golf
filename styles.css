@@ -66,7 +66,7 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
 .toggle-btn.hit { color: var(--accent-green); }
 
 /* CLASSIC SCROLLING PLAY UI */
-#play-mode-container { display: none; flex-direction: column; gap: 10px; }
+#play-mode-container { display: none; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto; width: 100%; }
 .play-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-color); flex-wrap: wrap;}
 .play-label { font-size: 14px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; min-width: 100px;}
 
@@ -92,7 +92,11 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
 #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;}
 #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
-/* MOBILE BOTTOM NAV FIXES */
+/* MOBILE NAVIGATION AND HIDING RULES */
+@media(min-width: 1000px) {
+    .desktop-hide { display: none !important; }
+}
+
 @media(max-width: 768px) {
     .nav-buttons { display: none !important; }
     .desktop-hide { display: block !important; }
