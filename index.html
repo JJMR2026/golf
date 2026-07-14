@@ -9,9 +9,19 @@
     <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     
-    <!-- CACHE BUSTING: The ?v=2.0 forces browsers to download the fresh file -->
-    <link rel="stylesheet" href="styles.css?v=2.0">
-    
+    <!-- PWA CACHE BUSTER: Forces mobile browsers to drop broken old caches -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
+
+    <!-- QUERY STRINGS: Forces browser to pull fresh files from GitHub -->
+    <link rel="stylesheet" href="styles.css?v=5.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,26 +30,21 @@
 <div id="auth-overlay" class="modal-overlay" style="display: flex;">
     <div class="auth-card">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
-        
         <div class="login-option">
             <h4 style="color: var(--text-main);">Sign In / Register</h4>
             <p>Enter an email or nickname to begin. <br><b style="color: var(--accent-green);">Emails are strictly for login and never shared or sold.</b></p>
         </div>
-
         <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
         <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 10px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
-        
         <div style="text-align: right; margin-bottom: 15px; width: 100%;">
             <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); font-size: 12px; text-decoration: none;">Forgot Password?</a>
         </div>
-
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="primary" id="login-btn" onclick="handleAuth('login')" style="flex:2;">Log In</button>
             <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')" style="flex:1;">Register</button>
         </div>
-
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (Single Round Tracking Only)</button>
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (Single Round Only)</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
     </div>
@@ -49,7 +54,6 @@
     <div class="auth-card">
         <button type="button" class="close-modal-btn" onclick="document.getElementById('settings-overlay').style.display='none'">✕</button>
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
-        
         <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
             <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
@@ -70,26 +74,22 @@
                 <option value="light">Light Mode</option>
             </select>
         </div>
-
         <div id="password-change-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px; display: block; text-align: left;">SECURITY</label>
             <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 10px;">
             <button class="primary" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Password</button>
             <div id="settings-msg" style="font-size: 12px; margin-top: 10px;"></div>
         </div>
-
         <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DATABASE ADMIN</label>
-            <button class="view-toggle-btn" style="width: 100%; padding: 10px;" onclick="checkHarvesterStatus()">📡 Harvester Status</button>
+            <button class="view-toggle-btn" style="width: 100%; padding: 10px;" onclick="checkHarvesterStatus()">📡 Live Harvester Monitor</button>
         </div>
-        
         <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
             <textarea id="feedback-text" rows="3" placeholder="Tell us what's broken or what you'd like to see added..." style="width: 100%; margin-bottom: 10px; resize: vertical;"></textarea>
             <button class="view-toggle-btn" id="feedback-btn" style="width: 100%; padding: 10px;" onclick="submitFeedback()">Send Feedback</button>
             <div id="feedback-msg" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
         </div>
-        
         <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
             <button class="danger-btn" style="width: 100%; padding: 10px;" onclick="logOut()">Sign Out completely</button>
         </div>
@@ -102,9 +102,7 @@
             <h2 id="insight-detail-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">INSIGHT DETAIL</h2>
         </div>
         <button type="button" class="close-modal-btn" onclick="document.getElementById('insight-modal').style.display='none'">✕</button>
-        <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;">
-            Loading...
-        </div>
+        <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;"></div>
     </div>
 </div>
 
@@ -114,7 +112,7 @@
             <h2 id="stat-graph-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">STAT TREND</h2>
         </div>
         <div style="margin-bottom: 15px; display:flex; gap:10px;">
-            <select class="filter-select" id="modal-filter-timeframe" onchange="refreshModalGraph()" style="width:auto; flex:none; padding:8px; font-size:12px;">
+            <select class="filter-select" id="modal-filter-timeframe" onchange="refreshModalGraph()" style="width:auto; padding:8px; font-size:12px;">
                 <option value="last10" selected>Last 10 Rounds</option>
                 <option value="last20">Last 20 Rounds</option>
                 <option value="season">This Season</option>
@@ -138,26 +136,6 @@
             <button class="danger-btn" style="flex:1;" onclick="forceSubmitRound()">Submit Anyway</button>
         </div>
     </div>
-</div>
-
-<div id="history-modal" class="modal-overlay" style="display: none;">
-    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
-        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
-            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
-            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
-        </div>
-        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
-            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
-        </div>
-        <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
-        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
-            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
-            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
-        </div>
-    </form>
 </div>
 
 <div class="container">
@@ -302,7 +280,6 @@
     <!-- ANALYTICS VIEW -->
     <div id="view-analytics" class="view-container">
         <div class="card">
-            
             <div class="analytics-tabs">
                 <button class="active" onclick="switchAnalyticsTab('summary', this)">Summary</button>
                 <button onclick="switchAnalyticsTab('charts', this)">Charts</button>
@@ -333,7 +310,6 @@
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="month-checkbox-list">
                         <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <!-- JS fills month checkboxes -->
                     </div>
                 </div>
                 <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
@@ -351,7 +327,7 @@
                     <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
                     <div class="multi-select-dropdown" id="hole-checkbox-list">
                         <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                        <!-- JS fills hole checkboxes -->
+                        <!-- JS Fills Holes Here -->
                     </div>
                 </div>
             </div>
@@ -368,12 +344,11 @@
             <!-- TAB 2: CHARTS -->
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
-                    
                     <div class="chart-container" style="grid-column: 1 / -1; height:300px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                             <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
                             <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
-                            <div style="display: flex; gap: 10px; align-items: center;">
+                            <div>
                                 <select id="primary-chart-metric" onchange="updateAnalytics()" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; padding: 4px 8px; border-radius: 4px; outline: none;">
                                     <option value="none">-- Select Overlay --</option>
                                     <option value="hcp" selected>Handicap</option>
@@ -415,8 +390,7 @@
     </div>
 </div>
 
-<!-- CACHE BUSTING SCRIPT TAG -->
-<script src="app.js?v=2.0"></script>
+<script src="app.js?v=5.0"></script>
 
 </body>
 </html>
