@@ -424,6 +424,16 @@ document.getElementById('course-search-input').addEventListener('keypress', func
     }
 });
 
+function adjustStat(field, amount) {
+    let el = document.getElementById(`play-${field}`);
+    let current = parseInt(el.value);
+    if(isNaN(current)) current = (field === 'score' ? parseInt(currentCoursePars[currentPlayHole]) || 4 : 2);
+    let next = current + amount;
+    if(next < 0) next = 0;
+    el.value = next;
+    syncPlayToState(field, next);
+}
+
 document.addEventListener('input', e => {
     if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
         let val = e.target.value, idParts = e.target.id.split('-'), type = idParts[1], idx = parseInt(idParts[2]);
@@ -455,7 +465,6 @@ async function fetchCourseDetails() {
     try {
         let { data: teeData, error } = await supabaseClient.from('course_tees').select('*');
         if (teeData) {
-            // Fuzzy Matching Fix
             let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase().includes(query.toUpperCase()) || query.toUpperCase().includes(t.course_name.trim().toUpperCase()));
             if (!matchedCourse && teeData.length > 0) matchedCourse = teeData[0];
             
@@ -639,6 +648,13 @@ window.cycleSand = function() {
     saveLocalState();
 };
 
+window.setPlayToggle = function(type, status) {
+    let current = roundData[currentPlayHole][type];
+    roundData[currentPlayHole][type] = (current === status) ? "" : status;
+    updatePlayModeUI();
+    saveLocalState();
+};
+
 function toggleGridHit(index, type) { 
     const btn = document.getElementById(`grid-${type}-${index}`); 
     let ns = type === 'sandSave' ? (btn.innerText === "MISS" ? "" : (btn.innerText === "SAVE" ? "no" : "yes")) : (btn.innerText === "MISS" ? "hit" : "miss"); 
@@ -658,8 +674,14 @@ function toggleGridHit(index, type) {
 function togglePlayMode(isPlayMode) { 
     document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
     document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
-    document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; 
-    document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; 
+    
+    if (window.innerWidth >= 1000) {
+        // Handled by CSS media queries
+    } else {
+        document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; 
+        document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; 
+    }
+    
     if(isPlayMode) updatePlayModeUI(); 
 }
 
@@ -680,13 +702,19 @@ function updatePlayModeUI() {
     const state = roundData[currentPlayHole]; 
     const yds = currentYardages[currentPlayHole] || '-';
     
-    // SMART CADDIE AUTO-DEFAULTS
+    // HISTORICAL SMART DEFAULTS
     if (state.score === "") {
         if ((par == 4 || par == 5)) {
-            if (state.driveClub === "") state.driveClub = "Driver";
+            if (state.driveClub === "") {
+                let dClubs = masterAnalyticsData.flatMap(r => (r.hole_scores||[]).filter(h => h.par == par && h.drive_club).map(h => h.drive_club));
+                state.driveClub = dClubs.length ? dClubs.sort((a,b) => dClubs.filter(v => v===a).length - dClubs.filter(v => v===b).length).pop() : "Driver";
+            }
         }
         if (par == 3) {
-            if (state.appClub === "") state.appClub = "Iron";
+            if (state.appClub === "") {
+                let aClubs = masterAnalyticsData.flatMap(r => (r.hole_scores||[]).filter(h => h.par == 3 && h.approach_club).map(h => h.approach_club));
+                state.appClub = aClubs.length ? aClubs.sort((a,b) => aClubs.filter(v => v===a).length - aClubs.filter(v => v===b).length).pop() : "Iron";
+            }
             state.fir = "hit"; // Bypasses FIR breakdown silently for Par 3s
         }
     }
@@ -760,7 +788,7 @@ function updatePlayModeUI() {
         let hb = document.getElementById(`${type}-hit-btn`); if(hb) hb.classList.remove('active'); 
         let mb = document.getElementById(`${type}-miss-btn`); if(mb) mb.classList.remove('active');
         if(state[type] === 'hit') { if(hb) hb.classList.add('active'); } 
-        else if(state[type] === 'miss' && !(type === 'fir' && par === 3)) { if(mb) mb.classList.add('active'); }
+        else if(state[type] === 'miss') { if(mb) mb.classList.add('active'); }
     });
     
     let dBlock = document.getElementById('play-fir-block'); 
@@ -915,7 +943,7 @@ async function fetchHistory() {
     document.getElementById('history-list').innerHTML = html;
 }
 
-async function openHistoryModal(id, name, date, score, holesPlayed, temp, wind) {
+window.openHistoryModal = async function(id, name, date, score, holesPlayed, temp, wind) {
     document.getElementById('modal-course-title').innerText = name.trim(); 
     document.getElementById('modal-total-score').innerText = score; 
     
@@ -959,16 +987,16 @@ function buildModalGrid(holesCount, startOffset) {
             else if(r.type === 'par') c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
             else if(['score','putts','drive'].includes(r.type)) c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
             else if(r.type === 'drops') { let cVal = parseInt(modalRoundData[i].drops) || 0; c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':(v==='stuck'?'STUCK':'-'))):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
+            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':'-')):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
             grid.appendChild(c);
         }
     });
     document.getElementById('modal-delete-btn').onclick = () => deleteActiveRound(activeModalRoundId); document.getElementById('modal-save-btn').onclick = () => saveModalChanges(activeModalRoundId, holesCount);
 }
 
-function toggleModalDrops(btn, i) { let cVal = parseInt(modalRoundData[i].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; modalRoundData[i].drops = newVal; btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; }
-function toggleModalHit(b, i, t) { let ns = t==='sandSave'?(b.innerText==="MISS"?"": (b.innerText==="SAVE"?"no":"yes")):(b.innerText==="MISS"?"hit":"miss"); b.innerText=ns==="-"?"-":(ns==='yes'?'SAVE':(ns==='no'?'MISS':ns.toUpperCase())); if(ns==='hit'||ns==='yes')b.classList.add('hit'); else b.classList.remove('hit'); modalRoundData[i][t] = ns==="-"?"":ns; }
-function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); activeModalRoundId = null; }
+window.toggleModalDrops = function(btn, i) { let cVal = parseInt(modalRoundData[i].drops) || 0; let newVal = cVal >= 4 ? 0 : cVal + 1; modalRoundData[i].drops = newVal; btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; }
+window.toggleModalHit = function(b, i, t) { let ns = t==='sandSave'?(b.innerText==="MISS"?"": (b.innerText==="SAVE"?"no":"yes")):(b.innerText==="MISS"?"hit":"miss"); b.innerText=ns==="-"?"-":(ns==='yes'?'SAVE':(ns==='no'?'MISS':ns.toUpperCase())); if(ns==='hit'||ns==='yes')b.classList.add('hit'); else b.classList.remove('hit'); modalRoundData[i][t] = ns==="-"?"":ns; }
+window.closeHistoryModal = function() { document.getElementById('history-modal').classList.remove('active'); activeModalRoundId = null; }
 
 async function saveModalChanges(id, holesCount) {
     if(!id) return; let tScore=0; let tPutts=0; 
@@ -1159,6 +1187,10 @@ async function loadAnalyticsData() {
     } catch(err) { table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; }
 }
 
+window.toggleGroupToggles = function(mainCb, childClass, btnTextId, defaultText) { document.querySelectorAll(childClass).forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}s` : `0 ${defaultText}s`; updateAnalytics(); }
+window.checkGroupToggles = function(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); updateAnalytics(); }
+window.toggleFilterDropdown = function(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+
 function populateFilters() {
     const uC = [...new Set(masterAnalyticsData.map(r => r.course_name.trim()))].sort();
     document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" autocomplete="off" checked onchange="toggleGroupToggles(this, '.course-cb', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" autocomplete="off" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
@@ -1166,13 +1198,10 @@ function populateFilters() {
     document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
 }
 
-function toggleFilterDropdown(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
-function toggleGroupToggles(mainCb, childClass, btnTextId, defaultText) { document.querySelectorAll(childClass).forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}s` : `0 ${defaultText}s`; updateAnalytics(); }
-function checkGroupToggles(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); updateAnalytics(); }
 document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container') && !e.target.closest('summary')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
 
 function calculateHandicap(allRounds) {
-    const hcpRounds = allRounds.filter(r => r.course_rating && r.slope_rating && !r.tee_name.includes('[SIM]') && !r.tee_name.includes('[RANGE]')).slice(0, 20);
+    const hcpRounds = allRounds.filter(r => r.course_rating && r.slope_rating && !(r.tee_name && r.tee_name.includes('[SIM]')) && !(r.tee_name && r.tee_name.includes('[RANGE]'))).slice(0, 20);
     const n = hcpRounds.length; if (n < 3) return "--.-";
     let diffs = hcpRounds.map(r => ((r.total_score - r.course_rating) * 113 / r.slope_rating)).sort((a,b) => a-b);
     let countToUse = 1, adj = 0;
@@ -1357,7 +1386,7 @@ function renderCharts(filteredRounds, actHoles, actPars) {
     
     trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlay !== 'none', position: 'right', grid: { drawOnChartArea: false } } } } });
 
-    // COMBINED CLUB & BAG DISTANCE MODEL GRAPH
+    // CLUB DISTANCE BAR CHART
     let clubStats = {};
     chartData.forEach(r => {
         let targetHoles = r.hole_scores || []; 
@@ -1409,7 +1438,7 @@ function renderCharts(filteredRounds, actHoles, actPars) {
         options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: '#333' }, grid: { color: '#333' }, pointLabels: { color: '#9ca3af', font: {size: 11, weight: 'bold'} }, ticks: { display: false, backdropColor: 'transparent' } } }, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: {size: 11} } }, title: { display: true, text: 'Directional Miss Bias', color: '#f3f4f6' } } }
     });
 
-    // NEW GROUPED WEATHER BAR CHART
+    // CLIMATE BAR CHART FIX
     let wBuckets = { cold: {tot:0, cnt:0}, optimal: {tot:0, cnt:0}, hot: {tot:0, cnt:0} };
     chartData.forEach(r => {
         if(r.weather_temp && r.total_score > 0) {
@@ -1436,11 +1465,11 @@ function renderCharts(filteredRounds, actHoles, actPars) {
         type: 'bar',
         data: { 
             labels: wLabels, 
-            datasets: [{ label: 'Avg Score To Par', data: wData, backgroundColor: ['#3b82f6', '#10b981', '#ef4444'], borderRadius: 4 }] 
+            datasets: [{ label: 'Avg Strokes To Par', data: wData, backgroundColor: ['#3b82f6', '#10b981', '#ef4444'], borderRadius: 4 }] 
         },
         options: { 
             responsive: true, maintainAspectRatio: false, 
-            plugins: { legend: { display: false } }, 
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Avg: ${c.raw > 0 ? '+'+c.raw : (c.raw===0?'E':c.raw)}` } } }, 
             scales: { y: { title: { display: true, text: 'Avg Strokes To Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } 
         }
     });
