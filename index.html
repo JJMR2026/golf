@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=8.0">
+    <link rel="stylesheet" href="styles.css?v=10.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -268,7 +268,7 @@
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
+        <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: none;">
             <div class="card">
                 <div class="scorecard-header">
                     <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE (Tap to edit)</h3>
@@ -510,7 +510,14 @@
                                     <option value="fir">FIR %</option>
                                     <option value="gir">GIR %</option>
                                     <option value="scram">Scrambling %</option>
+                                    <option value="sand">Sand Save %</option>
                                     <option value="drops">Penalty Drops</option>
+                                    <option value="birdies">Birdies</option>
+                                    <option value="pars">Pars</option>
+                                    <option value="bogeys">Bogeys</option>
+                                    <option value="p3">Par 3 Avg</option>
+                                    <option value="p4">Par 4 Avg</option>
+                                    <option value="p5">Par 5 Avg</option>
                                 </select>
                             </div>
                         </div>
@@ -522,20 +529,18 @@
                         <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Calculated from on-course GPS data and direct Driving Range inputs.</div>
                         <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
                     </div>
-                    
-                    <!-- REPLACED USELESS CHARTS WITH CLEAN STAT BLOCKS -->
-                    <div class="chart-container" style="grid-column: 1 / -1; height: auto; padding-bottom: 15px;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">DIRECTIONAL MISS & PENALTY BREAKDOWN</div>
-                        <div id="miss-penalty-stats" style="font-size: 13px; color: var(--text-main); line-height: 1.8;">
-                            <!-- JS Populates clean % text here -->
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
             <!-- TAB 3: INSIGHTS -->
             <div id="analytics-tab-insights" style="display:none;">
+                <div class="insights-card" style="margin-top:0; margin-bottom: 20px;">
+                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">DIRECTIONAL MISS & PENALTY BREAKDOWN</div>
+                    <div id="miss-penalty-stats" style="font-size: 13px; color: var(--text-main); line-height: 1.8;">
+                        <!-- JS Populates clean % text here -->
+                    </div>
+                </div>
+                
                 <div class="insights-card" style="margin-top:0;">
                     <h4>AI Performance Insights</h4>
                     <div id="ai-insights-box">⏳ Analyzing data...</div>
@@ -554,7 +559,7 @@
     <button class="nav-btn" onclick="switchView('view-analytics', this)"><span>📊</span>Stats</button>
 </div>
 
-<script src="app.js?v=9.0"></script>
+<script src="app.js?v=10.0"></script>
 
 </body>
 </html>
