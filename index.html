@@ -9,15 +9,10 @@
     <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     
-    <script>
-        (function() {
-            const ts = Date.now();
-            const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'styles.css?v=' + ts; document.head.appendChild(css);
-            const js = document.createElement('script'); js.src = 'app.js?v=' + ts; js.defer = true; document.head.appendChild(js);
-        })();
-    </script>
+    <link rel="stylesheet" href="styles.css?v=15.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=15.0" defer></script>
 </head>
 <body>
 
@@ -38,7 +33,7 @@
             <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')" style="flex:1;">Register</button>
         </div>
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (Single Session Only)</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
     </div>
@@ -259,7 +254,6 @@
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <!-- FORM IS DISPLAY: BLOCK SO GRID IS VISIBLE ON LOAD -->
         <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: block;">
             <div class="card">
                 <div class="scorecard-header">
@@ -278,7 +272,6 @@
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
                 <div class="view-toggle-row desktop-hide"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button></div>
                 
-                <!-- DESKTOP FLEX WRAPPER -->
                 <div class="desktop-flex-wrapper">
                     <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                     
@@ -466,6 +459,7 @@
                 </div>
             </details>
             
+            <!-- TAB 1: SUMMARY -->
             <div id="analytics-tab-summary" style="display:block;">
                 <div id="trophy-room-box" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:20px;"></div>
                 <p style="font-size:12px; color:var(--text-muted); text-align:center;"><i>Tap any data row below to parse a targeted timeline trend.</i></p>
@@ -474,6 +468,7 @@
                 </div>
             </div>
 
+            <!-- TAB 2: CHARTS -->
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
                     
@@ -541,9 +536,10 @@
                 </div>
             </div>
 
+            <!-- TAB 3: INSIGHTS -->
             <div id="analytics-tab-insights" style="display:none;">
                 <div class="insights-card" style="margin-top:0; margin-bottom: 20px;">
-                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">SPATIAL MISSEST & BOUNDARY HAZARD BREAKDOWNS</div>
+                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">SPATIAL MISS & BOUNDARY HAZARD BREAKDOWNS</div>
                     <div id="miss-penalty-stats" style="font-size: 13px; color: var(--text-main); line-height: 1.8;"></div>
                 </div>
                 <div class="insights-card" style="margin-top:0;">
