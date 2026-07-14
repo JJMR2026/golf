@@ -1145,6 +1145,65 @@ window.jumpToPlayMode = function(index) {
     window.togglePlayMode(true); 
 };
 
+window.saveCourseTemplate = async function() {
+    if (!currentUser || currentUser.email !== 'jordanrohel@yahoo.ca') {
+        return alert("Unauthorized. Admin access required to push templates.");
+    }
+    
+    const courseName = document.getElementById('current-course-display').innerText.trim();
+    if (!courseName || courseName === 'NO COURSE SELECTED' || courseName === 'MANUAL SCORECARD (SEARCH TO FETCH)') {
+        return alert("⚠️ Please provide a valid Course Name (Edit the title at the top).");
+    }
+    
+    let teeName = "";
+    let setupTeeInput = document.getElementById('setup-tee');
+    if (setupTeeInput) teeName = setupTeeInput.value.trim();
+    
+    if (!teeName) teeName = prompt("Enter the name of the Tee Box (e.g., Blue, White, Men's):");
+    if (!teeName) return alert("Tee name is required to save a template.");
+
+    let missingPars = false;
+    for(let i = 0; i < 18; i++) {
+        if (!currentCoursePars[i] || currentCoursePars[i] === "") missingPars = true;
+    }
+    if (missingPars) {
+        if (!confirm("⚠️ Some holes are missing Pars. Save to database anyway?")) return;
+    }
+
+    const btn = document.getElementById('admin-save-template-btn');
+    const origText = btn.innerText;
+    btn.innerText = "⏳ PUSHING TO SUPABASE...";
+    btn.disabled = true;
+
+    try {
+        if (!supabaseClient) throw new Error("Database offline.");
+        
+        const payload = {
+            course_name: courseName,
+            tee_name: teeName,
+            pars: currentCoursePars,
+            yardages: currentYardages
+        };
+        
+        const { error } = await supabaseClient.from('course_tees').insert([payload]);
+        if (error) throw error;
+        
+        alert("✅ Course Template Saved to Global Database!");
+        btn.style.display = 'none';
+        
+        let searchInput = document.getElementById('course-search-input');
+        if(searchInput) searchInput.value = courseName;
+        window.fetchCourseDetails();
+        
+    } catch(e) {
+        console.error(e);
+        alert("❌ Error saving template: " + e.message);
+    } finally {
+        btn.innerText = origText;
+        btn.disabled = false;
+    }
+};
+
 window.buildGrid = function() {
     const grid = document.getElementById('scorecard-grid'); 
     if(!grid) return;
@@ -1205,6 +1264,32 @@ window.buildGrid = function() {
         }
     });
     window.updateDriveDistances();
+
+    // ADMIN TEMPLATE SAVER INJECTION
+    let tmplBtn = document.getElementById('admin-save-template-btn');
+    if (!tmplBtn) {
+        tmplBtn = document.createElement('button');
+        tmplBtn.id = 'admin-save-template-btn';
+        tmplBtn.className = 'primary';
+        tmplBtn.style.width = '100%';
+        tmplBtn.style.marginTop = '15px';
+        tmplBtn.style.marginBottom = '15px';
+        tmplBtn.style.background = '#f59e0b';
+        tmplBtn.style.color = '#000';
+        tmplBtn.innerText = '💾 ADMIN: PUSH TEMPLATE TO DATABASE';
+        tmplBtn.onclick = window.saveCourseTemplate;
+        
+        let submitBtn = document.getElementById('submit-round-btn');
+        if (submitBtn && submitBtn.parentNode) {
+            submitBtn.parentNode.insertBefore(tmplBtn, submitBtn);
+        }
+    }
+    
+    if (currentUser && currentUser.email === 'jordanrohel@yahoo.ca' && !selectedTee) {
+        tmplBtn.style.display = 'block';
+    } else {
+        if (tmplBtn) tmplBtn.style.display = 'none';
+    }
 };
 
 window.toggleGridDrops = function(index) { 
