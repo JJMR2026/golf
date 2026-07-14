@@ -53,8 +53,7 @@ window.applyTheme = function(themeName) {
     if (selector) selector.value = themeName;
 };
 
-let savedTheme = localStorage.getItem('golf_theme') || 'dark'; 
-window.applyTheme(savedTheme);
+let savedTheme = localStorage.getItem('golf_theme') || 'dark'; window.applyTheme(savedTheme);
 
 async function initializeApp() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -62,18 +61,13 @@ async function initializeApp() {
         currentUser = session.user; 
         localStorage.removeItem('golf_guest_mode'); 
         document.getElementById('auth-overlay').style.display = 'none'; 
-        loadLocalState(); 
-        window.buildGrid(); 
-        processOfflineQueue(); 
+        loadLocalState(); window.buildGrid(); processOfflineQueue(); 
     } 
     else if (localStorage.getItem('golf_guest_mode') === 'true') { 
         document.getElementById('auth-overlay').style.display = 'none'; 
-        loadLocalState(); 
-        window.buildGrid(); 
+        loadLocalState(); window.buildGrid(); 
     } 
-    else { 
-        document.getElementById('auth-overlay').style.display = 'flex'; 
-    }
+    else { document.getElementById('auth-overlay').style.display = 'flex'; }
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'PASSWORD_RECOVERY') { document.getElementById('auth-overlay').style.display = 'none'; window.openSettings(); document.getElementById('settings-msg').innerText = "Security token authenticated."; }
@@ -405,7 +399,8 @@ window.toggleAdv = function(type, val) {
 };
 
 window.cycleSand = function() {
-    let s = roundData[currentPlayHole].sandSave; let next = (s === "") ? "1" : (s === "1" ? "2" : (s === "2" ? "3+" : ""));
+    let s = roundData[currentPlayHole].sandSave; 
+    let next = (s === "") ? "1" : (s === "1" ? "2" : (s === "2" ? "3+" : ""));
     roundData[currentPlayHole].sandSave = next;
     const gridCell = document.getElementById(`grid-sandSave-${currentPlayHole}`);
     if(gridCell) { gridCell.innerText = next === "" ? "-" : next; gridCell.classList.toggle('hit', next === "1"); }
@@ -545,7 +540,8 @@ window.setNineSide = function(side) {
 window.jumpToPlayMode = function(index) { currentPlayHole = index; window.togglePlayMode(true); };
 
 window.buildGrid = function() {
-    const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `70px repeat(${currentHoleCount}, minmax(35px, 1fr))`;
+    const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; 
+    grid.style.gridTemplateColumns = `70px repeat(${currentHoleCount}, 48px)`; // Hardcoded 48px width prevents stretching
     const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YDS', type: 'yardage' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }];
     let endIndex = currentHoleOffset + currentHoleCount;
     rows.forEach(row => {
@@ -713,7 +709,8 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
 };
 
 window.buildModalGrid = function(holesCount, startOffset) {
-    const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `70px repeat(${holesCount}, minmax(35px, 1fr))`;
+    const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; 
+    grid.style.gridTemplateColumns = `70px repeat(${holesCount}, 48px)`; // Hardcoded 48px to prevent extreme stretching
     const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }];
     rows.forEach(r => {
         const lc = document.createElement('div'); lc.className = 'row-label'; lc.innerText = r.label; grid.appendChild(lc);
@@ -748,7 +745,7 @@ window.saveModalChanges = async function(id, holesCount) {
 window.deleteActiveRound = async function(id) { if(id && confirm("Delete round?")) { await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); window.fetchHistory(); window.closeHistoryModal(); window.loadAnalyticsData(); } };
 
 // ----------------------------------------------------
-// ANALYTICS & MATH GLOBAL DECLARATIONS
+// ANALYTICS & MATH GLOBAL ENGINE (HOISTED FOR SAFETY)
 // ----------------------------------------------------
 window.getRelativeParString = function(score, par) { if(par === 0 || score === 0) return ""; let diff = score - par; return diff > 0 ? `(+${diff})` : (diff === 0 ? `(E)` : `(${diff})`); };
 
@@ -765,6 +762,127 @@ window.calculateHcpHistory = function(rounds) {
     let chrono = [...rounds].reverse(); let history = [];
     for (let i = 0; i < chrono.length; i++) { let windowRounds = chrono.slice(Math.max(0, i - 19), i + 1).reverse(); history.push({ date: chrono[i].date_played, hcp: window.calculateHandicap(windowRounds) }); } return history;
 };
+
+window.getExpectedPutts = function(feet) {
+    if (!feet) return 2.0; 
+    if (feet <= 3) return 1.05; if (feet <= 5) return 1.25; if (feet <= 10) return 1.60;
+    if (feet <= 15) return 1.78; if (feet <= 20) return 1.87; if (feet <= 30) return 2.00;
+    if (feet <= 40) return 2.14; if (feet <= 50) return 2.25; return 2.4;
+};
+
+window.pearsonCorrelation = function(x, y) {
+    let n = x.length; if(n === 0) return 0;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+    for (let i=0; i<n; i++) { sumX += x[i]; sumY += y[i]; sumXY += x[i]*y[i]; sumX2 += x[i]*x[i]; sumY2 += y[i]*y[i]; }
+    let num = (n * sumXY) - (sumX * sumY); let den = Math.sqrt(((n * sumX2) - (sumX * sumX)) * ((n * sumY2) - (sumY * sumY)));
+    if (den === 0) return 0; return num / den;
+};
+
+function updateTrophyRoom(fRounds) {
+    let lowScores = []; let minScore = 999; let longDrives = []; let maxDrive = 0; let lowPuttsList = []; let minPutts = 999; let mostFirsList = []; let maxFir = 0;
+
+    fRounds.forEach(r => {
+        let dStr = r.date_played ? new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}) : "Unknown";
+        let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
+        
+        if (holesPlayed >= 18) {
+            let coursePar = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
+            if (r.total_score > 0) { if (r.total_score < minScore) { minScore = r.total_score; lowScores = [{c: (r.course_name||"").trim(), d: dStr, p: coursePar}]; } else if (r.total_score === minScore) { lowScores.push({c: (r.course_name||"").trim(), d: dStr, p: coursePar}); } }
+            if (r.total_putts > 0) { if (r.total_putts < minPutts) { minPutts = r.total_putts; lowPuttsList = [{c: (r.course_name||"").trim(), d: dStr}]; } else if (r.total_putts === minPutts) { lowPuttsList.push({c: (r.course_name||"").trim(), d: dStr}); } }
+            let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
+            if (firs > maxFir) { maxFir = firs; mostFirsList = [{c: (r.course_name||"").trim(), d: dStr}]; } else if (firs === maxFir && firs > 0) { mostFirsList.push({c: (r.course_name||"").trim(), d: dStr}); }
+        }
+        
+        if (r.hole_scores) {
+            r.hole_scores.forEach(h => {
+                if (h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) {
+                    if (h.drive_distance > maxDrive) { maxDrive = h.drive_distance; longDrives = [{c: (r.course_name||"").trim(), d: dStr}]; } else if (h.drive_distance === maxDrive) { longDrives.push({c: (r.course_name||"").trim(), d: dStr}); }
+                }
+            });
+        }
+    });
+
+    const tBox = document.getElementById('trophy-room-box'); if(!tBox) return;
+    const tStyle = "flex: 1; min-width: 120px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
+    let displayScore = minScore === 999 ? '--' : `${minScore} <span style="font-size:14px; opacity:0.8;">${window.getRelativeParString(minScore, lowScores[0].p)}</span>`;
+    tBox.innerHTML = `
+        <div style="width: 100%; font-size: 14px; font-weight: bold; color: var(--accent-green); text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
+        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Low Round</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${displayScore}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowScores.length ? `<strong>${lowScores[0].c}</strong><br><span style="opacity:0.6">${lowScores[0].d}</span>` : '--'}</div></div>
+        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Long Drive</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxDrive === 0 ? '--' : maxDrive + 'y'}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${longDrives.length ? `<strong>${longDrives[0].c}</strong><br><span style="opacity:0.6">${longDrives[0].d}</span>` : '--'}</div></div>
+        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Fewest Putts</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${minPutts === 999 ? '--' : minPutts}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowPuttsList.length ? `<strong>${lowPuttsList[0].c}</strong><br><span style="opacity:0.6">${lowPuttsList[0].d}</span>` : '--'}</div></div>
+        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Most FIRs</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxFir}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${mostFirsList.length ? `<strong>${mostFirsList[0].c}</strong><br><span style="opacity:0.6">${mostFirsList[0].d}</span>` : '--'}</div></div>
+    `;
+}
+
+function generateInsights(fRounds) {
+    let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0;
+    let bbOpp=0, bbHit=0, bbmOpp=0, bbmHit=0, f9={s:0,p:0}, late={s:0,p:0};
+    let windArr = [], tempArr = [], scoreArr = [];
+    let scramOpp = 0, scramHit = 0;
+    
+    fRounds.forEach(r => { 
+        if(r.weather_temp && r.weather_wind && r.total_score > 0) {
+            let t = parseInt(String(r.weather_temp).replace('°C', ''));
+            let w = parseInt(String(r.weather_wind).replace('km/h', ''));
+            let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72;
+            if(!isNaN(t) && !isNaN(w)) { tempArr.push(t); windArr.push(w); scoreArr.push(r.total_score - par); }
+        }
+
+        if(!r.hole_scores || r.hole_scores.length === 0) { if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return; }
+        
+        let hs = r.hole_scores.slice().sort((a,b) => a.hole_number - b.hole_number);
+        for(let i=0; i<hs.length - 1; i++) {
+            let curr = hs[i], next = hs[i+1];
+            if(curr.score && curr.par && next.score && next.par) {
+                let prevDiff = curr.score - curr.par; let nextDiff = next.score - next.par;
+                if(prevDiff === 1) { bbOpp++; if(nextDiff <= 0) bbHit++; }
+                if(prevDiff >= 2) { bbmOpp++; if(nextDiff <= 1) bbmHit++; }
+            }
+        }
+
+        hs.forEach(h => {
+            if(h.score && h.par) { 
+                let diff = h.score - h.par; 
+                if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} 
+                if(h.hole_number >= 1 && h.hole_number <= 9) { f9.s += h.score; f9.p += h.par; }
+                if(h.hole_number >= 10 && h.hole_number <= 18) { late.s += h.score; late.p += h.par; }
+            }
+            if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
+            if(h.gir === 'miss' && h.score && h.par) { scramOpp++; if(h.score <= h.par) scramHit++; }
+        }); 
+    });
+    
+    let averages = [];
+    if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
+    if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
+    
+    if (f9.p > 0 && late.p > 0) {
+        let f9Avg = f9.s - f9.p; let lateAvg = late.s - late.p;
+        if (lateAvg > f9Avg + 1) { insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Stamina Fade')"><span style="font-size:18px;">🔴</span><div><b>Stamina Fade:</b> You bleed strokes on the back 9, averaging +${lateAvg.toFixed(1)} compared to +${f9Avg.toFixed(1)} on the front.</div></div>`); }
+    }
+
+    if (scramOpp > 10) {
+        let scramPct = (scramHit / scramOpp) * 100;
+        if (scramPct < 20) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scrambling')"><span style="font-size:18px;">🔴</span><div><b>Scrambling:</b> You only save par ${scramPct.toFixed(0)}% of the time when missing the green.</div></div>`);
+        else if (scramPct > 40) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scrambling')"><span style="font-size:18px;">🟢</span><div><b>Scrambling:</b> Excellent recovery rate. You save par ${scramPct.toFixed(0)}% of the time when missing the green.</div></div>`);
+    }
+
+    if (bbOpp > 5) {
+        let bbPct = (bbHit / bbOpp) * 100;
+        if (bbPct > 30) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Bounce-Back')"><span style="font-size:18px;">🟢</span><div><b>Bounce-Back:</b> Mental resilience detected. You follow up a bogey with a par or better ${bbPct.toFixed(0)}% of the time.</div></div>`);
+    }
+
+    if(scoreArr.length > 5) {
+        let rWind = window.pearsonCorrelation(windArr, scoreArr);
+        let rTemp = window.pearsonCorrelation(tempArr, scoreArr);
+        if (rWind > 0.4) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> Strong correlation detected. Your score negatively compounds in high winds.</div></div>`);
+        if (rTemp < -0.4) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> Correlation detected. You bleed strokes rapidly in colder weather.</div></div>`);
+    }
+
+    if (holesPutted > 0) { let avgPutts = putts / holesPutted; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); }
+    
+    if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
+}
 
 // ----------------------------------------------------
 // SELF-HEALING ARRAYS PROCESSING FILTER (FOOLPROOF ENGINE)
@@ -803,7 +921,7 @@ window.updateAnalytics = function() {
         const t = document.getElementById('analytics-data-table');
         if(fRounds.length === 0) { 
             if(t) t.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No logs match selected filters.</td></tr></tbody>`; 
-            window.renderCharts([], [], []);
+            if(typeof window.renderCharts === 'function') window.renderCharts([], [], []);
             document.getElementById('ai-insights-box').innerHTML = "Not enough data.";
             document.getElementById('hcp-display').innerText = "--.-";
             document.getElementById('trophy-room-box').innerHTML = "";
@@ -813,11 +931,11 @@ window.updateAnalytics = function() {
         if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
         
         let hcDisplay = document.getElementById('hcp-display');
-        if (hcDisplay) hcDisplay.innerText = window.calculateHandicap(fRounds); 
+        if (hcDisplay && typeof window.calculateHandicap === 'function') hcDisplay.innerText = window.calculateHandicap(fRounds); 
         
-        window.renderCharts(fRounds, actHoles, actPars); 
-        if(typeof window.generateInsights === 'function') document.getElementById('ai-insights-box').innerHTML = window.generateInsights(fRounds);
-        window.updateTrophyRoom(fRounds);
+        if(typeof window.renderCharts === 'function') window.renderCharts(fRounds, actHoles, actPars); 
+        document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
+        updateTrophyRoom(fRounds);
         
         let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; let totalStrokes = 0; let totalHolesCount = 0;
         fRounds.forEach(r => { 
@@ -854,6 +972,15 @@ window.updateAnalytics = function() {
         const t = document.getElementById('analytics-data-table');
         if(t) t.innerHTML = `<tbody><tr><td colspan="4" style="color:#ef4444; padding:20px; text-align:center;">❌ Analytics Sync Error: ${err.message}</td></tr></tbody>`;
     }
+};
+
+window.openInsightDetail = function(type) {
+    document.getElementById('insight-detail-title').innerText = type.toUpperCase();
+    let contentHtml = "";
+    if (type === "Scoring Leak" || type === "Scoring Strength") { contentHtml = `<i>Analyzes your pure mathematical baseline over par across hole architectures.</i>`; } 
+    else if (type === "Climate Impact") { contentHtml = `<i>Pearson Correlation (r) maps your historical scores strictly against documented weather vectors at the time of your round.</i>`; }
+    else { contentHtml = `Deeper historical context mapping is actively being recorded.`; }
+    document.getElementById('insight-detail-content').innerHTML = contentHtml; document.getElementById('insight-modal').style.display = 'flex';
 };
 
 window.loadAnalyticsData = async function() {
@@ -957,7 +1084,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
 
     let wBuckets = { cold: {tot:0, cnt:0}, optimal: {tot:0, cnt:0}, hot: {tot:0, cnt:0} };
     chartData.forEach(r => { if(r.weather_temp && r.total_score > 0) { let tempNum = parseInt(String(r.weather_temp).replace('°C', '')); let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72; let relScore = r.total_score - par; if(!isNaN(tempNum)) { if (tempNum < 15) { wBuckets.cold.tot += relScore; wBuckets.cold.cnt++; } else if (tempNum <= 25) { wBuckets.optimal.tot += relScore; wBuckets.optimal.cnt++; } else { wBuckets.hot.tot += relScore; wBuckets.hot.cnt++; } } } });
-    try { if(wCtx) weatherChart = new Chart(wCtx.getContext('2d'), { type: 'bar', data: { labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], datasets: [{ data: [wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0], backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+    try { if(wCtx) weatherChart = new Chart(wCtx.getContext('2d'), { type: 'bar', data: { labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], datasets: [{ data: [wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0], backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Avg: ${c.raw > 0 ? '+'+c.raw : (c.raw===0?'E':c.raw)}` } } }, scales: { y: { title: { display: true, text: 'Avg Strokes To Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } }); } catch(e){}
 
     let fL=0, fR=0, fS=0, fTotMiss=0; let gL=0, gR=0, gS=0, gLg=0, gTotMiss=0;
     chartData.forEach(r => { (r.hole_scores || []).forEach(h => { let fA = h.fir_adv || ""; let gA = h.gir_adv || ""; if(h.fir === 'miss') { fTotMiss++; if(fA.includes('LEFT')) fL++; if(fA.includes('RIGHT')) fR++; if(fA.includes('SHORT')) fS++; } if(h.gir === 'miss') { gTotMiss++; if(gA.includes('LEFT')) gL++; if(gA.includes('RIGHT')) gR++; if(gA.includes('SHORT')) gS++; if(gA.includes('LONG')) gLg++; } }); });
@@ -968,69 +1095,6 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             <div><b>Approach Bias:</b> ${gTotMiss>0 ? `${Math.round((gS/gTotMiss)*100)}% Short | ${Math.round((gL/gTotMiss)*100)}% Left` : 'No data.'}</div>
         `;
     }
-};
-
-window.generateInsights = function(fRounds) {
-    let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0;
-    let bbOpp=0, bbHit=0, bbmOpp=0, bbmHit=0, f9={s:0,p:0}, late={s:0,p:0};
-    let windArr = [], tempArr = [], scoreArr = [];
-    
-    fRounds.forEach(r => { 
-        if(r.weather_temp && r.weather_wind && r.total_score > 0) {
-            let t = parseInt(String(r.weather_temp).replace('°C', ''));
-            let w = parseInt(String(r.weather_wind).replace('km/h', ''));
-            let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72;
-            if(!isNaN(t) && !isNaN(w)) { tempArr.push(t); windArr.push(w); scoreArr.push(r.total_score - par); }
-        }
-
-        if(!r.hole_scores || r.hole_scores.length === 0) { if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return; }
-        
-        let hs = r.hole_scores.slice().sort((a,b) => a.hole_number - b.hole_number);
-        for(let i=0; i<hs.length - 1; i++) {
-            let curr = hs[i], next = hs[i+1];
-            if(curr.score && curr.par && next.score && next.par) {
-                let prevDiff = curr.score - curr.par; let nextDiff = next.score - next.par;
-                if(prevDiff === 1) { bbOpp++; if(nextDiff <= 0) bbHit++; }
-                if(prevDiff >= 2) { bbmOpp++; if(nextDiff <= 1) bbmHit++; }
-            }
-        }
-
-        hs.forEach(h => {
-            if(h.score && h.par) { 
-                let diff = h.score - h.par; 
-                if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} 
-                if(h.hole_number >= 1 && h.hole_number <= 6) { f9.s += h.score; f9.p += h.par; }
-                if(h.hole_number >= 13 && h.hole_number <= 18) { late.s += h.score; late.p += h.par; }
-            }
-            if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
-        }); 
-    });
-    
-    let averages = [];
-    if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
-    if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
-    
-    if(scoreArr.length > 5) {
-        let rWind = window.pearsonCorrelation(windArr, scoreArr);
-        let rTemp = window.pearsonCorrelation(tempArr, scoreArr);
-        let msg = "No strong climate correlations detected yet.";
-        if (rWind > 0.4) msg = "Strong correlation detected. Your score negatively compounds in high winds.";
-        if (rTemp < -0.4) msg = "Correlation detected. You bleed strokes rapidly in colder weather.";
-        insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> ${msg}</div></div>`);
-    }
-
-    if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); }
-    
-    if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
-};
-
-window.openInsightDetail = function(type) {
-    document.getElementById('insight-detail-title').innerText = type.toUpperCase();
-    let contentHtml = "";
-    if (type === "Scoring Leak" || type === "Scoring Strength") { contentHtml = `<i>Analyzes your pure mathematical baseline over par across hole architectures.</i>`; } 
-    else if (type === "Climate Impact") { contentHtml = `<i>Pearson Correlation (r) maps your historical scores strictly against documented weather vectors at the time of your round.</i>`; }
-    else { contentHtml = `Deeper historical context mapping is actively being recorded.`; }
-    document.getElementById('insight-detail-content').innerHTML = contentHtml; document.getElementById('insight-modal').style.display = 'flex';
 };
 
 window.openStatGraph = function(title, statKey) {
@@ -1097,7 +1161,23 @@ window.refreshModalGraph = function() {
         if(valid) plotData.push({x: new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}), y: val});
     });
 
-    document.getElementById('stat-graph-title').innerText = currentStatTitle.toUpperCase();
+    if(currentStatKey === 'sgPutt') {
+        let shortSg = 0, medSg = 0, longSg = 0;
+        rList.forEach(r => {
+            r.hole_scores && r.hole_scores.forEach(h => {
+                if(h.putts !== null && h.putt_1_ft > 0) {
+                    let diff = window.getExpectedPutts(h.putt_1_ft) - h.putts;
+                    if(h.putt_1_ft < 10) shortSg += diff;
+                    else if(h.putt_1_ft <= 20) medSg += diff;
+                    else longSg += diff;
+                }
+            });
+        });
+        document.getElementById('stat-graph-title').innerHTML = `STROKES GAINED MATRIX<br><span style='font-size:11px; color:var(--text-muted); font-weight:normal;'>Short (<10ft): ${shortSg > 0 ? '+' : ''}${shortSg.toFixed(2)} | Medium (10-20ft): ${medSg > 0 ? '+' : ''}${medSg.toFixed(2)} | Long (20ft+): ${longSg > 0 ? '+' : ''}${longSg.toFixed(2)}</span>`;
+    } else {
+        document.getElementById('stat-graph-title').innerText = currentStatTitle.toUpperCase();
+    }
+
     if(statDetailChartObj) statDetailChartObj.destroy();
     let cEl = document.getElementById('statDetailChart'); if(!cEl) return;
     statDetailChartObj = new Chart(cEl.getContext('2d'), { type: 'line', data: { labels: plotData.map(d=>d.x), datasets: [{ label: currentStatTitle, data: plotData.map(d=>d.y), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 2, fill: true, pointBackgroundColor: '#121212', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } } });
