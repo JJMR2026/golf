@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=10.0">
+    <link rel="stylesheet" href="styles.css?v=11.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -258,7 +258,15 @@
                         <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Select Tee Box</label>
                         <select id="tee-select" onchange="handleTeeChange()" style="width: 100%;"></select>
                     </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Round Type</label>
+                        <select id="round-type-select" style="width: 100%;">
+                            <option value="Regular">⛳ Real Round</option>
+                            <option value="SIM">🎮 Simulator Round</option>
+                        </select>
+                    </div>
                 </div>
+                
                 <div class="setup-row" id="manual-tee-row" style="display: none; margin-top: 10px;">
                     <div class="setup-group"><label>Manual Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue" autocomplete="off"></div>
                 </div>
@@ -271,7 +279,7 @@
         <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: none;">
             <div class="card">
                 <div class="scorecard-header">
-                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE (Tap to edit)</h3>
+                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE</h3>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
                         <div class="hole-toggle-wrapper">
                             <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button>
@@ -339,7 +347,6 @@
                                 <div id="fir-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
                                     <button type="button" class="adv-btn sub-miss" id="fir-adv-left" onclick="toggleAdv('fir', 'LEFT')">LEFT</button>
                                     <button type="button" class="adv-btn sub-miss" id="fir-adv-right" onclick="toggleAdv('fir', 'RIGHT')">RIGHT</button>
-                                    <button type="button" class="adv-btn sub-miss" id="fir-adv-short" onclick="toggleAdv('fir', 'SHORT')">SHORT</button>
                                 </div>
                                 <div style="display:flex; gap:5px; margin-top:5px;">
                                     <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width:60px;">
@@ -506,7 +513,8 @@
                                     <option value="none">-- Select Overlay --</option>
                                     <option value="hcp" selected>Handicap</option>
                                     <option value="sg">Strokes Gained: Putting</option>
-                                    <option value="putts">Putts</option>
+                                    <option value="putts">Total Putts</option>
+                                    <option value="driveDist">Avg Drive Distance</option>
                                     <option value="fir">FIR %</option>
                                     <option value="gir">GIR %</option>
                                     <option value="scram">Scrambling %</option>
@@ -523,12 +531,23 @@
                         </div>
                         <div style="position: relative; height: 230px;"><canvas id="scoringTrendChart"></canvas></div>
                     </div>
+
+                    <div class="chart-container" style="grid-column: 1 / -1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4; width:100%; text-align:left;">SCORING DISTRIBUTION</div>
+                        <div style="position: relative; height: 180px; width:220px;"><canvas id="scoringPieChart"></canvas></div>
+                    </div>
                     
                     <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 10px; grid-column: 1 / -1;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Average Bag Distances (Yards)</div>
                         <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Calculated from on-course GPS data and direct Driving Range inputs.</div>
                         <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
                     </div>
+                    
+                    <div class="chart-container" style="grid-column: 1 / -1;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">CLIMATE IMPACT (SCORE vs TEMPERATURE)</div>
+                        <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
+                    </div>
+
                 </div>
             </div>
 
@@ -559,7 +578,7 @@
     <button class="nav-btn" onclick="switchView('view-analytics', this)"><span>📊</span>Stats</button>
 </div>
 
-<script src="app.js?v=10.0"></script>
+<script src="app.js?v=11.0"></script>
 
 </body>
 </html>
