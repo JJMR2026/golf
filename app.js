@@ -381,6 +381,7 @@ window.clearPuttMap = function() {
 window.clearPuttCanvas = function() {
     if(!puttCtx || !puttCanvas) return;
     puttCtx.clearRect(0, 0, puttCanvas.width, puttCanvas.height);
+    
     puttCtx.beginPath(); 
     puttCtx.arc(150, 150, 50, 0, 2*Math.PI); 
     puttCtx.strokeStyle = 'rgba(255,255,255,0.1)'; 
@@ -401,7 +402,9 @@ window.loadSatelliteGreen = function(lat, lon) {
     const img = new Image(); 
     img.crossOrigin = "Anonymous";
     img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=20&size=300x300&maptype=satellite&key=${GOOGLE_MAPS_API_KEY}`;
-    img.onload = () => { puttCtx.drawImage(img, 0, 0, 300, 300); }; 
+    img.onload = () => { 
+        puttCtx.drawImage(img, 0, 0, 300, 300); 
+    }; 
     img.onerror = () => window.clearPuttCanvas();
 };
 
@@ -457,11 +460,18 @@ window.fetchWeatherForCourse = function(courseName) {
             fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(courseName)}&format=json&limit=1`, { headers: { 'User-Agent': 'GolfScorecardApp/1.0' } })
             .then(res => res.json())
             .then(data2 => {
-                if (data2 && data2.length > 0) window.fetchWeatherByCoords(data2[0].lat, data2[0].lon, display, courseName);
-                else display.innerText = "⚠️ Weather unavailable";
-            }).catch(() => display.innerText = "⚠️ Weather unavailable");
+                if (data2 && data2.length > 0) {
+                    window.fetchWeatherByCoords(data2[0].lat, data2[0].lon, display, courseName);
+                } else {
+                    display.innerText = "⚠️ Weather unavailable";
+                }
+            }).catch(() => {
+                display.innerText = "⚠️ Weather unavailable";
+            });
         }
-    }).catch(() => display.innerText = "⚠️ Weather unavailable");
+    }).catch(() => {
+        display.innerText = "⚠️ Weather unavailable";
+    });
 };
 
 window.fetchWeatherByCoords = async function(lat, lon, display, courseName) {
@@ -864,10 +874,30 @@ window.updatePlayModeUI = function() {
     document.getElementById('play-approach-dist').value = state.appDist || "";
     
     let sBtn = document.getElementById('sand-cycle-btn');
-    if (state.sandSave === "1") { sBtn.innerText = "1 STROKE (SAVE)"; sBtn.className = "adv-btn active"; sBtn.style.background = "var(--accent-green)"; sBtn.style.color = "#000"; }
-    else if (state.sandSave === "2") { sBtn.innerText = "2 STROKES"; sBtn.className = "adv-btn active"; sBtn.style.background = "#ef4444"; sBtn.style.color = "#fff"; }
-    else if (state.sandSave === "3+") { sBtn.innerText = "3+ STROKES"; sBtn.className = "adv-btn active"; sBtn.style.background = "#ef4444"; sBtn.style.color = "#fff"; }
-    else { sBtn.innerText = "NONE"; sBtn.className = "adv-btn"; sBtn.style.background = "rgba(0,0,0,0.4)"; sBtn.style.color = "var(--text-muted)"; }
+    if (state.sandSave === "1") { 
+        sBtn.innerText = "1 STROKE (SAVE)"; 
+        sBtn.className = "adv-btn active"; 
+        sBtn.style.background = "var(--accent-green)"; 
+        sBtn.style.color = "#000"; 
+    }
+    else if (state.sandSave === "2") { 
+        sBtn.innerText = "2 STROKES"; 
+        sBtn.className = "adv-btn active"; 
+        sBtn.style.background = "#ef4444"; 
+        sBtn.style.color = "#fff"; 
+    }
+    else if (state.sandSave === "3+") { 
+        sBtn.innerText = "3+ STROKES"; 
+        sBtn.className = "adv-btn active"; 
+        sBtn.style.background = "#ef4444"; 
+        sBtn.style.color = "#fff"; 
+    }
+    else { 
+        sBtn.innerText = "NONE"; 
+        sBtn.className = "adv-btn"; 
+        sBtn.style.background = "rgba(0,0,0,0.4)"; 
+        sBtn.style.color = "var(--text-muted)"; 
+    }
 
     let dropsVal = parseInt(state.drops) || 0; 
     document.getElementById('play-drops-display').value = dropsVal;
@@ -895,10 +925,12 @@ window.updatePlayModeUI = function() {
         let advArr = state[type + 'Adv'] || [];
         
         if(hb) {
-            if (state[type] === 'hit') hb.classList.add('active'); else hb.classList.remove('active');
+            if (state[type] === 'hit') hb.classList.add('active'); 
+            else hb.classList.remove('active');
         }
         if(mb) {
-            if (state[type] === 'miss') mb.classList.add('active'); else mb.classList.remove('active');
+            if (state[type] === 'miss') mb.classList.add('active'); 
+            else mb.classList.remove('active');
         }
         
         if(subMenu) { 
@@ -1115,7 +1147,9 @@ window.jumpToPlayMode = function(index) {
 
 window.buildGrid = function() {
     const grid = document.getElementById('scorecard-grid'); 
+    if(!grid) return;
     grid.innerHTML = ''; 
+    
     grid.style.gridTemplateColumns = `70px repeat(${currentHoleCount}, 48px)`; 
     
     const rows = [
@@ -1811,26 +1845,38 @@ window.generateInsights = function(fRounds) {
 
     if (scramOpp > 10) {
         let scramPct = (scramHit / scramOpp) * 100;
-        if (scramPct < 20) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scrambling')"><span style="font-size:18px;">🔴</span><div><b>Scrambling:</b> You only save par ${scramPct.toFixed(0)}% of the time when missing the green.</div></div>`);
-        else if (scramPct > 40) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scrambling')"><span style="font-size:18px;">🟢</span><div><b>Scrambling:</b> Excellent recovery rate. You save par ${scramPct.toFixed(0)}% of the time when missing the green.</div></div>`);
+        if (scramPct < 20) {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scrambling')"><span style="font-size:18px;">🔴</span><div><b>Scrambling:</b> You only save par ${scramPct.toFixed(0)}% of the time when missing the green.</div></div>`);
+        } else if (scramPct > 40) {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scrambling')"><span style="font-size:18px;">🟢</span><div><b>Scrambling:</b> Excellent recovery rate. You save par ${scramPct.toFixed(0)}% of the time when missing the green.</div></div>`);
+        }
     }
 
     if (bbOpp > 5) {
         let bbPct = (bbHit / bbOpp) * 100;
-        if (bbPct > 30) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Bounce-Back')"><span style="font-size:18px;">🟢</span><div><b>Bounce-Back:</b> Mental resilience detected. You follow up a bogey with a par or better ${bbPct.toFixed(0)}% of the time.</div></div>`);
+        if (bbPct > 30) {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Bounce-Back')"><span style="font-size:18px;">🟢</span><div><b>Bounce-Back:</b> Mental resilience detected. You follow up a bogey with a par or better ${bbPct.toFixed(0)}% of the time.</div></div>`);
+        }
     }
 
     if(scoreArr.length > 5) {
         let rWind = window.pearsonCorrelation(windArr, scoreArr);
         let rTemp = window.pearsonCorrelation(tempArr, scoreArr);
-        if (rWind > 0.4) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> Strong correlation detected. Your score negatively compounds in high winds.</div></div>`);
-        if (rTemp < -0.4) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> Correlation detected. You bleed strokes rapidly in colder weather.</div></div>`);
+        if (rWind > 0.4) {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> Strong correlation detected. Your score negatively compounds in high winds.</div></div>`);
+        }
+        if (rTemp < -0.4) {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> Correlation detected. You bleed strokes rapidly in colder weather.</div></div>`);
+        }
     }
 
     if (holesPutted > 0) { 
         let avgPutts = putts / holesPutted; 
-        if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); 
-        else insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); 
+        if (avgPutts > 2.0) {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); 
+        } else {
+            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); 
+        }
     }
     
     if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; 
@@ -2132,7 +2178,13 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         fill: true, yAxisID: 'y', tension: 0.3 
     }];
     
-    const oColors = { hcp: '#f59e0b', putts: '#3b82f6', driveDist: '#8b5cf6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', sand: '#eab308', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308', sg: '#38bdf8', birdies: '#10b981', pars: '#9ca3af', bogeys: '#ef4444', tpAvoid: '#2dd4bf', acc: '#a855f7', f9: '#facc15', b9: '#fb923c' };
+    const oColors = { 
+        hcp: '#f59e0b', putts: '#3b82f6', driveDist: '#8b5cf6', fir: '#8b5cf6', 
+        gir: '#d946ef', scram: '#10b981', sand: '#eab308', drops: '#ef4444', 
+        p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308', sg: '#38bdf8', 
+        birdies: '#10b981', pars: '#9ca3af', bogeys: '#ef4444', tpAvoid: '#2dd4bf', 
+        acc: '#a855f7', f9: '#facc15', b9: '#fb923c' 
+    };
 
     if (activeOverlay === 'hcp') {
         let hcpHist = window.calculateHcpHistory(filteredRounds); 
@@ -2195,7 +2247,37 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     
     try { 
         if(tCtx && typeof Chart !== 'undefined') {
-            trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlay !== 'none', position: 'right', grid: { drawOnChartArea: false } } } } }); 
+            trendChart = new Chart(tCtx.getContext('2d'), { 
+                type: 'line', 
+                data: { 
+                    labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), 
+                    datasets: trendDatasets 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        tooltip: { 
+                            callbacks: { 
+                                label: function(context) { 
+                                    if (context.dataset.label === 'Trendline') return null; 
+                                    return context.dataset.label + ': ' + context.raw; 
+                                } 
+                            } 
+                        }, 
+                        legend: { 
+                            display: activeOverlay !== 'none', 
+                            labels: {color: '#9ca3af', font: {size: 10}} 
+                        }, 
+                        title: { display: false } 
+                    }, 
+                    scales: { 
+                        x: { display: false }, 
+                        y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, 
+                        y1: { type: 'linear', display: activeOverlay !== 'none', position: 'right', grid: { drawOnChartArea: false } } 
+                    } 
+                } 
+            }); 
         }
     } catch(e){}
 
@@ -2213,7 +2295,18 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     try { 
         if(pC && typeof Chart !== 'undefined') {
-            scorePieChart = new Chart(pC.getContext('2d'), { type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } }); 
+            scorePieChart = new Chart(pC.getContext('2d'), { 
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], 
+                    datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } 
+                } 
+            }); 
         }
     } catch(e){}
 
@@ -2231,7 +2324,18 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     try { 
         if(pCtx && typeof Chart !== 'undefined') {
-            penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['Water', 'OB', 'Lost', 'Unplayable'], datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } }); 
+            penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { 
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Water', 'OB', 'Lost', 'Unplayable'], 
+                    datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } 
+                } 
+            }); 
         }
     } catch(e){}
 
@@ -2248,7 +2352,14 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     try { 
         if(aCtx && typeof Chart !== 'undefined') {
-            accuracyChart = new Chart(aCtx.getContext('2d'), { type: 'line', data: { labels: accLabels, datasets: [{ label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+            accuracyChart = new Chart(aCtx.getContext('2d'), { 
+                type: 'line', 
+                data: { 
+                    labels: accLabels, 
+                    datasets: [{ label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false } 
+            }); 
         }
     } catch(e){}
 
@@ -2264,7 +2375,14 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     try { 
         if(psCtx && typeof Chart !== 'undefined') {
-            parScoringChart = new Chart(psCtx.getContext('2d'), { type: 'bar', data: { labels: ['Par 3', 'Par 4', 'Par 5'], datasets: [{ label: 'Avg Strokes', data: [p3C>0?(p3T/p3C).toFixed(2):0, p4C>0?(p4T/p4C).toFixed(2):0, p5C>0?(p5T/p5C).toFixed(2):0], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+            parScoringChart = new Chart(psCtx.getContext('2d'), { 
+                type: 'bar', 
+                data: { 
+                    labels: ['Par 3', 'Par 4', 'Par 5'], 
+                    datasets: [{ label: 'Avg Strokes', data: [p3C>0?(p3T/p3C).toFixed(2):0, p4C>0?(p4T/p4C).toFixed(2):0, p5C>0?(p5T/p5C).toFixed(2):0], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] }] 
+                }, 
+                options: { responsive: true, maintainAspectRatio: false } 
+            }); 
         }
     } catch(e){}
 
@@ -2293,7 +2411,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
     try { 
         if(cCtx && typeof Chart !== 'undefined') {
-            clubChart = new Chart(cCtx.getContext('2d'), { type: 'bar', data: { labels: cLabels, datasets: [{ data: cData, backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+            clubChart = new Chart(cCtx.getContext('2d'), { 
+                type: 'bar', 
+                data: { labels: cLabels, datasets: [{ data: cData, backgroundColor: '#3b82f6' }] }, 
+                options: { responsive: true, maintainAspectRatio: false } 
+            }); 
         }
     } catch(e){}
 
@@ -2312,7 +2434,32 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     try { 
         if(wCtx && typeof Chart !== 'undefined') {
-            weatherChart = new Chart(wCtx.getContext('2d'), { type: 'bar', data: { labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], datasets: [{ data: [wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0], backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Avg: ${c.raw > 0 ? '+'+c.raw : (c.raw===0?'E':c.raw)}` } } }, scales: { y: { title: { display: true, text: 'Avg Strokes To Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } }); 
+            weatherChart = new Chart(wCtx.getContext('2d'), { 
+                type: 'bar', 
+                data: { 
+                    labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], 
+                    datasets: [{ 
+                        data: [
+                            wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, 
+                            wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, 
+                            wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0
+                        ], 
+                        backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { callbacks: { label: (c) => `Avg: ${c.raw > 0 ? '+'+c.raw : (c.raw===0?'E':c.raw)}` } } 
+                    }, 
+                    scales: { 
+                        y: { title: { display: true, text: 'Avg Strokes To Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, 
+                        x: { grid: { display: false } } 
+                    } 
+                } 
+            }); 
         }
     } catch(e){}
 
@@ -2489,7 +2636,10 @@ window.refreshModalGraph = function() {
             responsive: true, 
             maintainAspectRatio: false, 
             plugins: { legend: { display: false } }, 
-            scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } 
+            scales: { 
+                y: { grid: { color: '#2a2a2a' } }, 
+                x: { display: false } 
+            } 
         } 
     });
 };
