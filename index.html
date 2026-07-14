@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=9.0">
+    <link rel="stylesheet" href="styles.css?v=8.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -143,6 +143,26 @@
     </div>
 </div>
 
+<div id="history-modal" class="modal-overlay" style="display: none;">
+    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
+        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
+        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
+            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
+        </div>
+        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
+            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
+        </div>
+        <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
+            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
+            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
+        </div>
+    </form>
+</div>
+
 <div class="container" style="position: relative;">
     <!-- TOP BAR (Only Account Gear on Mobile) -->
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
@@ -185,6 +205,12 @@
                         <option value="Pure">🎯 Pure</option><option value="Thin">⬇️ Thin</option><option value="Fat">⬆️ Fat</option><option value="Toe">➡️ Toe</option><option value="Heel">⬅️ Heel</option>
                     </select>
                 </div>
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">SHOT SHAPE</label>
+                    <select id="range-shape" style="width: 100%;">
+                        <option value="Straight">Straight</option><option value="Draw">Draw</option><option value="Fade">Fade</option><option value="Hook">Hook</option><option value="Slice">Slice</option>
+                    </select>
+                </div>
                 
                 <!-- EXTRA SIM METRICS -->
                 <div class="sim-metric" style="display: none;">
@@ -206,8 +232,8 @@
                 </h4>
                 <div id="practice-session-table" style="overflow-x: auto; background: var(--cell-bg); border: 1px solid var(--border-color); border-radius: 8px;">
                     <table class="stats-table" style="margin-top:0;">
-                        <thead><tr><th>Club</th><th>Avg Yds</th><th>Shots</th></tr></thead>
-                        <tbody id="practice-session-body"><tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding: 15px;">No shots logged this session.</td></tr></tbody>
+                        <thead><tr><th>Club</th><th>Avg Yds</th><th>Shape</th><th>Shots</th></tr></thead>
+                        <tbody id="practice-session-body"><tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 15px;">No shots logged this session.</td></tr></tbody>
                     </table>
                 </div>
                 <button class="view-toggle-btn" style="width: 100%; margin-top: 15px; padding: 12px;" onclick="savePracticeSession()">Save Session to Database</button>
@@ -245,7 +271,7 @@
         <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
             <div class="card">
                 <div class="scorecard-header">
-                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE</h3>
+                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE (Tap to edit)</h3>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
                         <div class="hole-toggle-wrapper">
                             <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button>
@@ -290,7 +316,7 @@
                         <div class="play-row">
                             <div class="play-label">PUTTS</div>
                             <div style="display:flex; gap:10px; align-items:center;">
-                                <div class="play-input-box" style="width: 80px; position:relative;">
+                                <div class="play-input-box" style="width: 70px; position:relative;">
                                     <input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" placeholder="Ft.">
                                     <button type="button" onclick="openPuttMapper()" style="position:absolute; right:-30px; top:50%; transform:translateY(-50%); background:transparent; border:none; font-size:18px;">🎯</button>
                                 </div>
@@ -473,7 +499,7 @@
                     
                     <div class="chart-container" style="grid-column: 1 / -1;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
-                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
+                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND (WITH SLICER)</div>
                             <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
                             <div>
                                 <select id="primary-chart-metric" onchange="updateAnalytics()" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; padding: 4px 8px; border-radius: 4px; outline: none;">
@@ -497,15 +523,12 @@
                         <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
                     </div>
                     
-                    <div class="chart-container" style="grid-column: 1 / -1;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">DIRECTIONAL MISS BIAS</div>
-                        <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Tracks where you bleed strokes off the tee (FIR) and on approach (GIR).</div>
-                        <div style="position: relative; height: 180px;"><canvas id="missRadarChart"></canvas></div>
-                    </div>
-                    
-                    <div class="chart-container" style="grid-column: 1 / -1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4; width:100%; text-align:left;">PENALTY BREAKDOWN</div>
-                        <div style="position: relative; height: 180px; width:180px;"><canvas id="penaltyPieChart"></canvas></div>
+                    <!-- REPLACED USELESS CHARTS WITH CLEAN STAT BLOCKS -->
+                    <div class="chart-container" style="grid-column: 1 / -1; height: auto; padding-bottom: 15px;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">DIRECTIONAL MISS & PENALTY BREAKDOWN</div>
+                        <div id="miss-penalty-stats" style="font-size: 13px; color: var(--text-main); line-height: 1.8;">
+                            <!-- JS Populates clean % text here -->
+                        </div>
                     </div>
 
                 </div>
