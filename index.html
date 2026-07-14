@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=8.0">
+    <link rel="stylesheet" href="styles.css?v=9.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -121,7 +121,7 @@
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 5px;">🎯 MAP PUTT</h2>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Tap once for Flag ⛳. Tap again for Ball ⚪.</p>
         <div style="display:flex; justify-content:center; margin-bottom: 15px;">
-            <canvas id="putt-canvas" width="300" height="300" style="background: #064e3b; border-radius: 50%; border: 2px solid var(--accent-green); cursor: crosshair; touch-action: none;"></canvas>
+            <canvas id="putt-canvas" width="300" height="300" style="background: #064e3b; border-radius: 8px; border: 2px solid var(--border-color); cursor: crosshair; touch-action: none;"></canvas>
         </div>
         <div id="putt-distance-display" style="font-size: 24px; font-weight: bold; color: var(--text-main); margin-bottom: 15px; text-align: center;">-- ft</div>
         <div style="display: flex; gap: 10px;">
@@ -143,43 +143,24 @@
     </div>
 </div>
 
-<div id="history-modal" class="modal-overlay" style="display: none;">
-    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
-        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
-            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
-            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
-        </div>
-        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
-            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
-        </div>
-        <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
-        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
-            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
-            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
-        </div>
-    </form>
-</div>
-
-<div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div class="nav-buttons">
+<div class="container" style="position: relative;">
+    <!-- TOP BAR (Only Account Gear on Mobile) -->
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+        <h2 style="margin:0; color:var(--accent-green); font-size:18px; letter-spacing:1px; text-transform:uppercase;" class="mobile-hide">GOLF TRACKER PRO</h2>
+        <div class="nav-buttons mobile-hide">
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">Play</button>
-            <button class="nav-btn" onclick="switchView('view-range', this)">Range / Sim</button>
+            <button class="nav-btn" onclick="switchView('view-range', this)">Practice</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
         </div>
-        <!-- COMPACT GEAR ICON FOR SETTINGS -->
-        <button class="view-toggle-btn" onclick="openSettings()" style="padding: 10px; margin-left: 5px; border-radius: 50%; font-size: 16px;">⚙️</button>
+        <button class="view-toggle-btn" onclick="openSettings()" style="padding: 10px; margin-left: auto; border-radius: 50%; font-size: 18px; background: rgba(0,0,0,0.3); border-color: var(--border-color);">⚙️</button>
     </div>
 
     <!-- RANGE / SIM VIEW -->
     <div id="view-range" class="view-container">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: var(--accent-green); margin: 0; text-transform: uppercase;">Practice Dashboard</h3>
+                <h3 style="color: var(--accent-green); margin: 0; text-transform: uppercase;">Practice Hub</h3>
                 <select id="practice-type-select" style="width: auto; padding: 8px; font-size: 12px; background: rgba(0,0,0,0.2); border-color: var(--border-color); color: var(--text-main); border-radius: 6px;" onchange="togglePracticeMode()">
                     <option value="RANGE">Driving Range</option>
                     <option value="SIM">Simulator</option>
@@ -216,16 +197,20 @@
                 </div>
             </div>
             
-            <button class="primary" style="width: 100%; margin-bottom: 20px;" onclick="logPracticeShot()">LOG SHOT</button>
+            <button class="primary" style="width: 100%; margin-bottom: 20px; padding: 12px; font-size: 14px;" onclick="logPracticeShot()">LOG SHOT TO SESSION</button>
 
             <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-                <h4 style="margin-top: 0; color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Session Averages</h4>
-                <div id="practice-session-table" style="overflow-x: auto;">
-                    <table class="stats-table">
+                <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--text-muted); font-size: 12px; text-transform: uppercase; display: flex; justify-content: space-between;">
+                    <span>Current Session Averages</span>
+                    <span id="practice-weather-display" style="color: var(--accent-green); text-transform: none;"></span>
+                </h4>
+                <div id="practice-session-table" style="overflow-x: auto; background: var(--cell-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+                    <table class="stats-table" style="margin-top:0;">
                         <thead><tr><th>Club</th><th>Avg Yds</th><th>Shots</th></tr></thead>
-                        <tbody id="practice-session-body"><tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No shots logged this session.</td></tr></tbody>
+                        <tbody id="practice-session-body"><tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding: 15px;">No shots logged this session.</td></tr></tbody>
                     </table>
                 </div>
+                <button class="view-toggle-btn" style="width: 100%; margin-top: 15px; padding: 12px;" onclick="savePracticeSession()">Save Session to Database</button>
             </div>
         </div>
     </div>
@@ -257,10 +242,10 @@
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: none;">
+        <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
             <div class="card">
                 <div class="scorecard-header">
-                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE (Tap to edit)</h3>
+                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE</h3>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
                         <div class="hole-toggle-wrapper">
                             <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button>
@@ -273,7 +258,7 @@
                     </div>
                 </div>
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
-                <div class="view-toggle-row desktop-hide"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play</button></div>
+                <div class="view-toggle-row desktop-hide"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button></div>
                 
                 <!-- DESKTOP FLEX WRAPPER -->
                 <div class="desktop-flex-wrapper">
@@ -305,7 +290,7 @@
                         <div class="play-row">
                             <div class="play-label">PUTTS</div>
                             <div style="display:flex; gap:10px; align-items:center;">
-                                <div class="play-input-box" style="width: 70px; position:relative;">
+                                <div class="play-input-box" style="width: 80px; position:relative;">
                                     <input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" placeholder="Ft.">
                                     <button type="button" onclick="openPuttMapper()" style="position:absolute; right:-30px; top:50%; transform:translateY(-50%); background:transparent; border:none; font-size:18px;">🎯</button>
                                 </div>
@@ -328,11 +313,12 @@
                                 <div id="fir-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
                                     <button type="button" class="adv-btn sub-miss" id="fir-adv-left" onclick="toggleAdv('fir', 'LEFT')">LEFT</button>
                                     <button type="button" class="adv-btn sub-miss" id="fir-adv-right" onclick="toggleAdv('fir', 'RIGHT')">RIGHT</button>
+                                    <button type="button" class="adv-btn sub-miss" id="fir-adv-short" onclick="toggleAdv('fir', 'SHORT')">SHORT</button>
                                 </div>
                                 <div style="display:flex; gap:5px; margin-top:5px;">
                                     <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width:60px;">
                                     <select class="play-sub-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)">
-                                        <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="5W">5 Wood</option><option value="Iron">Iron</option>
+                                        <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="5W">5 Wood</option><option value="Hybrid">Hybrid</option><option value="Iron">Iron</option>
                                     </select>
                                 </div>
                             </div>
@@ -353,7 +339,7 @@
                                     <button type="button" class="adv-btn sub-miss" id="gir-adv-right" onclick="toggleAdv('gir', 'RIGHT')">RIGHT</button>
                                 </div>
                                 <div style="display:flex; gap:5px; margin-top:5px;">
-                                    <input type="number" class="play-sub-select" id="play-approach-dist" placeholder="Yds" onchange="syncPlayToState('appDist', this.value)" style="width:60px;">
+                                    <input type="number" class="play-sub-select" id="play-approach-dist" placeholder="Yds to Pin" style="width:80px;">
                                     <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
                                         <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
                                     </select>
@@ -376,10 +362,11 @@
                                 </div>
                             </div>
                             <!-- DYNAMIC DROP SUB-MENU -->
-                            <div id="drop-sub-menu" style="display:none; gap:5px; margin-top:10px; width: 100%;">
+                            <div id="drop-sub-menu" style="display:none; gap:5px; margin-top:10px; width: 100%; flex-wrap: wrap;">
                                 <button type="button" class="adv-btn sub-miss" id="drop-water" onclick="toggleDropType('WATER')">WATER</button>
                                 <button type="button" class="adv-btn sub-miss" id="drop-ob" onclick="toggleDropType('OB')">OB</button>
-                                <button type="button" class="adv-btn sub-miss" id="drop-lost" onclick="toggleDropType('LOST')">LOST BALL</button>
+                                <button type="button" class="adv-btn sub-miss" id="drop-lost" onclick="toggleDropType('LOST')">LOST</button>
+                                <button type="button" class="adv-btn sub-miss" id="drop-unplayable" onclick="toggleDropType('UNPLAYABLE')">UNPLAYABLE</button>
                             </div>
                         </div>
 
@@ -400,9 +387,15 @@
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="file" id="csv-upload" style="display:none" accept=".csv" onchange="handleBulkImport(this)">
                     <button class="view-toggle-btn" style="padding: 6px 12px; font-size: 11px;" onclick="document.getElementById('csv-upload').click()">📥 Import CSV</button>
-                    <div class="badge" style="background: #10b981; color: #000; border: none; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: bold;">CLOUD SYNCED</div>
                 </div>
             </div>
+            
+            <div class="analytics-tabs" style="margin-bottom: 15px;">
+                <button class="active" onclick="filterHistoryList('REAL', this)">Course</button>
+                <button onclick="filterHistoryList('RANGE', this)">Range</button>
+                <button onclick="filterHistoryList('SIM', this)">Simulator</button>
+            </div>
+
             <div id="history-list"></div>
         </div>
     </div>
@@ -509,12 +502,12 @@
                         <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Tracks where you bleed strokes off the tee (FIR) and on approach (GIR).</div>
                         <div style="position: relative; height: 180px;"><canvas id="missRadarChart"></canvas></div>
                     </div>
-
-                    <div class="chart-container" style="grid-column: 1 / -1;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">CLIMATE IMPACT (SCORE vs TEMPERATURE)</div>
-                        <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Plots Average Strokes to Par against temperature buckets.</div>
-                        <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
+                    
+                    <div class="chart-container" style="grid-column: 1 / -1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4; width:100%; text-align:left;">PENALTY BREAKDOWN</div>
+                        <div style="position: relative; height: 180px; width:180px;"><canvas id="penaltyPieChart"></canvas></div>
                     </div>
+
                 </div>
             </div>
 
@@ -530,7 +523,15 @@
     </div>
 </div>
 
-<script src="app.js?v=8.0"></script>
+<!-- BOTTOM NAVIGATION BAR (MOBILE ONLY) -->
+<div class="bottom-nav desktop-hide">
+    <button class="nav-btn active" onclick="switchView('view-new-round', this)"><span>⛳</span>Play</button>
+    <button class="nav-btn" onclick="switchView('view-range', this)"><span>🏌️‍♂️</span>Practice</button>
+    <button class="nav-btn" onclick="switchView('view-history', this)"><span>📖</span>History</button>
+    <button class="nav-btn" onclick="switchView('view-analytics', this)"><span>📊</span>Stats</button>
+</div>
+
+<script src="app.js?v=9.0"></script>
 
 </body>
 </html>
