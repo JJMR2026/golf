@@ -7,20 +7,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505" id="meta-theme-color">
-    <link rel="manifest" href="manifest.json">
     
-    <!-- PWA CACHE BUSTER: Forces mobile browsers to drop broken old caches -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
+                for(let registration of registrations) { registration.unregister(); }
             });
         }
     </script>
 
-    <!-- QUERY STRINGS: Forces browser to pull fresh files from GitHub -->
     <link rel="stylesheet" href="styles.css?v=6.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -157,25 +152,29 @@
                 <button class="primary" id="fetch-course-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
                 <ul id="search-dropdown" class="dropdown-list"></ul>
             </div>
+            
+            <!-- ADDED ROUND TYPE SELECTOR -->
             <div id="course-setup-container" style="display: none; margin-top: 20px;">
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 150px;">
-                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Tee Box</label>
-                        <select id="tee-select" onchange="handleTeeChange()"></select>
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Select Tee Box</label>
+                        <select id="tee-select" onchange="handleTeeChange()" style="width: 100%;"></select>
                     </div>
                     <div style="flex: 1; min-width: 150px;">
                         <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Round Type</label>
-                        <select id="round-type-select">
-                            <option value="Regular">⛳ Regular Round</option>
-                            <option value="Simulator">🎮 Simulator</option>
-                            <option value="Range">🏌️‍♂️ Driving Range / Practice</option>
+                        <select id="round-type-select" style="width: 100%;">
+                            <option value="Regular">⛳ Real Round</option>
+                            <option value="SIM">🎮 Simulator</option>
+                            <option value="RANGE">🏌️‍♂️ Driving Range</option>
                         </select>
                     </div>
                 </div>
-                <div class="setup-row" id="manual-tee-row" style="display: none;">
+                
+                <div class="setup-row" id="manual-tee-row" style="display: none; margin-top: 10px;">
                     <div class="setup-group"><label>Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue" autocomplete="off"></div>
                 </div>
             </div>
+            
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
@@ -199,8 +198,7 @@
                 
                 <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                 
-                <!-- CLASSIC VERTICAL PLAY UI WITH UPGRADES -->
-                <div id="play-mode-container" style="display:none;">
+                <div id="play-mode-container" style="display:none; max-width: 600px; margin: 0 auto; width: 100%;">
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
                         <span id="pace-projected-display">Pace: --</span>
@@ -213,62 +211,62 @@
                         <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
                     </div>
                     
+                    <!-- REVERTED TO CLEAN VERTICAL PLAY ROWS -->
                     <div class="play-row">
                         <div class="play-label">SCORE</div>
                         <div class="play-input-box"><input type="number" id="play-score" onchange="syncPlayToState('score', this.value)"></div>
                     </div>
-                    
-                    <div class="play-row" style="flex-wrap: wrap; gap: 10px;">
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <div class="play-label">PUTTS</div>
+
+                    <div class="play-row">
+                        <div class="play-label">PUTTS</div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <div class="play-input-box" style="width: 70px;"><input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" placeholder="Ft."></div>
                             <div class="play-input-box"><input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)"></div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <div class="play-label" style="font-size:11px; color:var(--text-muted); margin-left:15px;">↳ 1st Putt Dist (ft)</div>
-                            <input type="number" class="play-sub-select" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" placeholder="Optional" style="width: 80px; text-align: center; box-sizing: border-box;">
                         </div>
                     </div>
 
-                    <div class="play-row" id="play-fir-block" style="flex-wrap: wrap; gap: 10px;">
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <div class="play-label">DRIVE (FIR)</div>
-                            <div style="display:flex; gap:5px; width:140px;">
+                    <div class="play-row" id="play-fir-block">
+                        <div class="play-label">DRIVE (FIR)</div>
+                        <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+                            <div style="display:flex; gap:5px;">
                                 <button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button>
                                 <button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
                             </div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center; gap: 10px;">
-                            <select class="play-sub-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)" style="flex:1;">
-                                <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
-                            </select>
-                            <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width: 80px; text-align: center; box-sizing: border-box;">
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width:60px;">
+                                <select class="play-sub-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)">
+                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="play-row" id="play-gir-block" style="flex-wrap: wrap; gap: 10px;">
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                            <div class="play-label">APPR. (GIR)</div>
-                            <div style="display:flex; gap:5px; width:140px;">
+                    <div class="play-row" id="play-gir-block">
+                        <div class="play-label">APPROACH (GIR)</div>
+                        <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+                            <div style="display:flex; gap:5px;">
                                 <button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button>
                                 <button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button>
                             </div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center; gap: 10px;">
-                            <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)" style="flex:1;">
-                                <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
-                            </select>
-                            <input type="number" class="play-sub-select" id="play-approach-dist" placeholder="Yds" onchange="syncPlayToState('appDist', this.value)" style="width: 80px; text-align: center; box-sizing: border-box;">
+                            <div style="display:flex; gap:5px;">
+                                <input type="number" class="play-sub-select" id="play-approach-dist" placeholder="Yds" onchange="syncPlayToState('appDist', this.value)" style="width:60px;">
+                                <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
+                                    <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
                     <div class="play-row">
-                        <div class="play-label">SAND</div>
-                        <button type="button" id="sand-cycle-btn" class="adv-btn" style="flex:none; width:140px; margin:0; padding:12px;" onclick="cycleSand()">SAND: NONE</button>
+                        <div class="play-label">SAND TRACKING</div>
+                        <button type="button" id="sand-cycle-btn" class="adv-btn" style="flex:none; width: 150px; padding: 12px; margin:0;" onclick="cycleSand()">SAND: NONE</button>
                     </div>
-                    
+
                     <div class="play-row">
                         <div class="play-label">PENALTY DROPS</div>
-                        <div class="play-input-box"><button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:transparent; border:none; font-size:24px; font-weight:bold; color:var(--text-main); cursor:pointer;">-</button></div>
+                        <div class="play-input-box" style="background:transparent; border:none;">
+                            <button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:transparent; border:none; color:var(--accent-green); font-size:28px; font-weight:bold; padding:0; cursor:pointer;">-</button>
+                        </div>
                     </div>
 
                     <div class="play-nav"><button type="button" onclick="changePlayHole(-1)" id="play-prev-btn">←</button><button type="button" onclick="changePlayHole(1)" class="primary" id="play-next-btn">→</button></div>
@@ -305,55 +303,47 @@
 
             <div class="hcp-badge"><div class="hcp-label">Estimated Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
             
-            <!-- COLLAPSIBLE FILTERS -->
-            <details style="background: var(--cell-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <summary style="font-weight:bold; color:var(--text-main); cursor:pointer; outline:none; font-size: 14px; display: flex; align-items: center; justify-content: space-between;">
-                    📊 Toggle Analytics Filters
-                </summary>
-                
-                <div class="filter-row" style="margin-top: 15px;">
-                    <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
-                        <option value="season" selected>This Season</option>
-                        <option value="last1">Last Round</option>
-                        <option value="last2">Last 2 Rounds</option>
-                        <option value="last3">Last 3 Rounds</option>
-                        <option value="last4">Last 4 Rounds</option>
-                        <option value="last5">Last 5 Rounds</option>
-                        <option value="full">All Time</option>
-                    </select>
-                    
-                    <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
-                        <option value="18" selected>18-Holes Only</option>
-                        <option value="9">9-Holes Only</option>
-                        <option value="all">All Rounds</option>
-                    </select>
-
-                    <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
-                    
-                    <div class="multi-select-container">
-                        <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
-                        <div class="multi-select-dropdown" id="month-checkbox-list">
-                            <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+            <details class="year-folder" style="margin-bottom: 20px;">
+                <summary style="font-size:12px; padding:10px;">⚙️ ADJUST ANALYTICS FILTERS</summary>
+                <div class="folder-content">
+                    <div class="filter-row">
+                        <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                            <option value="season" selected>This Season</option>
+                            <option value="last1">Last Round</option>
+                            <option value="last2">Last 2 Rounds</option>
+                            <option value="last3">Last 3 Rounds</option>
+                            <option value="last4">Last 4 Rounds</option>
+                            <option value="last5">Last 5 Rounds</option>
+                            <option value="full">All Time</option>
+                        </select>
+                        <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
+                            <option value="18" selected>18-Holes Only</option>
+                            <option value="9">9-Holes Only</option>
+                            <option value="all">All Rounds</option>
+                        </select>
+                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
+                        <div class="multi-select-container">
+                            <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
+                            <div class="multi-select-dropdown" id="month-checkbox-list">
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
-                    
-                    <div class="multi-select-container">
-                        <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
-                        <div class="multi-select-dropdown" id="par-checkbox-list">
-                            <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                            <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
-                            <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
-                            <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
-                            <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
+                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
+                        <div class="multi-select-container">
+                            <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
+                            <div class="multi-select-dropdown" id="par-checkbox-list">
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="multi-select-container">
-                        <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
-                        <div class="multi-select-dropdown" id="hole-checkbox-list">
-                            <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                        <div class="multi-select-container">
+                            <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
+                            <div class="multi-select-dropdown" id="hole-checkbox-list">
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -372,11 +362,11 @@
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
                     
-                    <div class="chart-container" style="grid-column: 1 / -1; height:320px;">
+                    <div class="chart-container" style="grid-column: 1 / -1;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                             <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND</div>
                             <div id="trend-badge" style="font-size: 14px; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border-color); display: none;"></div>
-                            <div style="display: flex; gap: 10px; align-items: center;">
+                            <div>
                                 <select id="primary-chart-metric" onchange="updateAnalytics()" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; padding: 4px 8px; border-radius: 4px; outline: none;">
                                     <option value="none">-- Select Overlay --</option>
                                     <option value="hcp" selected>Handicap</option>
@@ -392,16 +382,17 @@
                         <div style="position: relative; height: 230px;"><canvas id="scoringTrendChart"></canvas></div>
                     </div>
                     
-                    <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 30px; grid-column: 1 / -1; height:320px;">
+                    <div class="chart-container" style="display:flex; flex-direction:column; padding-bottom: 10px; grid-column: 1 / -1;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase;">Average Bag Distances (Yards)</div>
+                        <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Calculated from on-course GPS data and direct Driving Range inputs.</div>
                         <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
                     </div>
                     
-                    <div class="chart-container" style="grid-column: 1 / -1; height:320px; padding-bottom: 30px;"><canvas id="missRadarChart"></canvas></div>
+                    <div class="chart-container" style="grid-column: 1 / -1;"><canvas id="missRadarChart"></canvas></div>
 
-                    <div class="chart-container" style="grid-column: 1 / -1; height:320px; padding-bottom: 30px;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">WEATHER VS. SCORE CORRELATION<br><span style="font-size:10px; font-weight:normal; opacity:0.7;">Plots Score against Temperature. Hover for wind data.</span></div>
-                        <div style="position: relative; height: 200px;"><canvas id="weatherScoreChart"></canvas></div>
+                    <div class="chart-container" style="grid-column: 1 / -1;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">CLIMATE IMPACT (SCORE vs TEMPERATURE)</div>
+                        <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -418,7 +409,7 @@
     </div>
 </div>
 
-<script src="app.js?v=5.0"></script>
+<script src="app.js?v=6.0"></script>
 
 </body>
 </html>
