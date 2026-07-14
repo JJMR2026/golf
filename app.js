@@ -207,7 +207,6 @@ function handlePuttClick(e) {
         puttCtx.beginPath(); puttCtx.moveTo(pinPos.x, pinPos.y); puttCtx.lineTo(ballPos.x, ballPos.y);
         puttCtx.setLineDash([5, 5]); puttCtx.strokeStyle = 'rgba(255,255,255,0.8)'; puttCtx.lineWidth = 2; puttCtx.stroke(); puttCtx.setLineDash([]);
         
-        // Pythagorean math mapped to a 90ft depth Green (Radius 150px = 45ft) -> ~ 0.3ft per pixel
         let pxDist = Math.sqrt(Math.pow(ballPos.x - pinPos.x, 2) + Math.pow(ballPos.y - pinPos.y, 2));
         let ftDist = Math.round(pxDist * 0.3);
         
@@ -353,6 +352,9 @@ function getSmartClubRecommendation(targetDistance) {
     return closestClub;
 }
 
+// ----------------------------------------------------
+// PLAY MODE LOGIC (SMART CLUB AUTO-MATH INCLUDED)
+// ----------------------------------------------------
 window.adjustStat = function(field, amount) {
     let el = document.getElementById(`play-${field}`); let current = parseInt(el.value);
     if(isNaN(current)) current = (field === 'score' ? parseInt(currentCoursePars[currentPlayHole]) || 4 : 2);
@@ -362,7 +364,6 @@ window.adjustStat = function(field, amount) {
 window.adjustDrop = function(amount) {
     let cVal = parseInt(roundData[currentPlayHole].drops) || 0; let next = cVal + amount; if(next < 0) next = 0;
     roundData[currentPlayHole].drops = next; document.getElementById('play-drops-display').value = next;
-    
     if (next === 0) { roundData[currentPlayHole].dropsAdv = []; document.getElementById('drop-sub-menu').style.display = 'none'; } 
     else { document.getElementById('drop-sub-menu').style.display = 'flex'; }
     saveLocalState();
@@ -372,7 +373,6 @@ window.toggleDropType = function(type) {
     let adv = roundData[currentPlayHole].dropsAdv || [];
     if(adv.includes(type)) adv = adv.filter(v => v !== type); else adv.push(type);
     roundData[currentPlayHole].dropsAdv = adv;
-    
     ['WATER', 'OB', 'LOST', 'UNPLAYABLE'].forEach(idType => {
         let btn = document.getElementById(`drop-${idType.toLowerCase()}`);
         if(btn) { if(adv.includes(idType)) btn.classList.add('active'); else btn.classList.remove('active'); }
@@ -380,12 +380,43 @@ window.toggleDropType = function(type) {
     saveLocalState();
 };
 
+function syncPlayToState(field, val) { 
+    roundData[currentPlayHole][field] = val; 
+    
+    // SMART CLUB AUTO-MATH
+    if (field === 'drive') {
+        let holeYardage = parseInt(currentYardages[currentPlayHole]);
+        let driveDist = parseInt(val);
+        if (!isNaN(holeYardage) && !isNaN(driveDist)) {
+            let remaining = holeYardage - driveDist;
+            if (remaining > 0) {
+                roundData[currentPlayHole]['appDist'] = remaining;
+                let rec = getSmartClubRecommendation(remaining);
+                if (rec) roundData[currentPlayHole]['appClub'] = rec;
+            }
+        }
+    }
+
+    const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); 
+    if(gridInput) gridInput.value = val; 
+    saveLocalState(); updatePlayModeUI(); 
+}
+
+document.addEventListener('input', e => {
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.id.startsWith('grid-')) {
+        let val = e.target.value, idParts = e.target.id.split('-'), type = idParts[1], idx = parseInt(idParts[2]);
+        if (type === 'score' && (val.length === 2 || (val.length === 1 && parseInt(val) >= 2))) { let next = document.getElementById(`grid-putts-${idx}`); if (next) setTimeout(() => next.focus(), 150); } 
+        else if (type === 'putts' && val.length === 1) { let next = (currentCoursePars[idx] === 3) ? document.getElementById(`grid-score-${idx + 1}`) : document.getElementById(`grid-drive-${idx}`); if (next) setTimeout(() => next.focus(), 150); }
+        else if (type === 'drive' && val.length === 3) { let next = document.getElementById(`grid-score-${idx + 1}`); if (next) setTimeout(() => next.focus(), 150); }
+    }
+});
+
+document.getElementById('play-score').addEventListener('input', e => { if (e.target.value.length === 2 || (e.target.value.length === 1 && parseInt(e.target.value) >= 2)) setTimeout(() => document.getElementById('play-putts').focus(), 150); });
+document.getElementById('play-putts').addEventListener('input', e => { if (e.target.value.length >= 1) setTimeout(() => { document.getElementById('play-putt-dist').focus(); }, 150); });
+document.getElementById('play-drive').addEventListener('input', e => { if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-drive-club').focus(), 150); });
 document.getElementById('play-approach-dist').addEventListener('input', e => { 
     let yds = parseInt(e.target.value);
-    if(yds > 0) {
-        let rec = getSmartClubRecommendation(yds);
-        if(rec) { document.getElementById('play-approach-club').value = rec; syncPlayToState('appClub', rec); }
-    }
+    if(yds > 0) { let rec = getSmartClubRecommendation(yds); if(rec) { document.getElementById('play-approach-club').value = rec; roundData[currentPlayHole]['appClub'] = rec; saveLocalState(); } }
     if (e.target.value.length === 3) setTimeout(() => document.getElementById('play-approach-club').focus(), 150); 
 });
 
@@ -500,7 +531,13 @@ function buildGrid() {
 }
 
 function syncGridToState(index, field, val) { roundData[index][field] = val; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
-function syncPlayToState(field, val) { roundData[currentPlayHole][field] = val; const gridInput = document.getElementById(`grid-${field}-${currentPlayHole}`); if(gridInput) gridInput.value = val; saveLocalState(); updatePlayModeUI(); }
+
+function toggleGridDrops(index) { 
+    let cVal = parseInt(roundData[index].drops) || 0; let newVal = cVal >= 10 ? 0 : cVal + 1; roundData[index].drops = newVal; 
+    if (newVal === 0) roundData[index].dropsAdv = [];
+    const btn = document.getElementById(`grid-drops-${index}`); if(btn) { btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; } 
+    if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); 
+}
 
 window.cycleSand = function() {
     let s = roundData[currentPlayHole].sandSave;
@@ -512,8 +549,7 @@ window.cycleSand = function() {
 };
 
 window.setPlayToggle = function(type, status) {
-    let current = roundData[currentPlayHole][type];
-    roundData[currentPlayHole][type] = (current === status) ? "" : status;
+    let current = roundData[currentPlayHole][type]; roundData[currentPlayHole][type] = (current === status) ? "" : status;
     if (status !== 'miss') roundData[currentPlayHole][type + 'Adv'] = [];
     updatePlayModeUI(); saveLocalState();
 };
@@ -526,13 +562,11 @@ window.toggleAdv = function(type, val) {
 };
 
 function toggleGridHit(index, type) { 
-    const btn = document.getElementById(`grid-${type}-${index}`); 
-    let ns = "";
+    const btn = document.getElementById(`grid-${type}-${index}`); let ns = "";
     if (type === 'sandSave') { let cur = btn.innerText; ns = cur === "-" ? "0" : (cur === "0" ? "1" : (cur === "1" ? "2" : (cur === "2" ? "3+" : ""))); btn.innerText = ns === "" ? "-" : ns; } 
     else { ns = btn.innerText === "MISS" ? "hit" : "miss"; btn.innerText = ns === "" ? "-" : ns.toUpperCase(); }
     if(ns === 'hit' || ns === '0' || ns === '1') btn.classList.add('hit'); else btn.classList.remove('hit'); 
-    roundData[index][type] = ns === "-" ? "" : ns; 
-    if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); 
+    roundData[index][type] = ns === "-" ? "" : ns; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); 
 }
 
 function togglePlayMode(isPlayMode) { 
@@ -579,10 +613,8 @@ function updatePlayModeUI() {
     else { sBtn.innerText = "NONE"; sBtn.className = "adv-btn"; sBtn.style.background = "rgba(0,0,0,0.4)"; sBtn.style.color = "var(--text-muted)"; }
 
     let dropsVal = parseInt(state.drops) || 0; document.getElementById('play-drops-display').value = dropsVal;
-    
     if (dropsVal > 0) {
-        document.getElementById('drop-sub-menu').style.display = 'flex';
-        let adv = state.dropsAdv || [];
+        document.getElementById('drop-sub-menu').style.display = 'flex'; let adv = state.dropsAdv || [];
         ['WATER', 'OB', 'LOST', 'UNPLAYABLE'].forEach(idType => { let btn = document.getElementById(`drop-${idType.toLowerCase()}`); if(btn) { if(adv.includes(idType)) btn.classList.add('active'); else btn.classList.remove('active'); } });
     } else { document.getElementById('drop-sub-menu').style.display = 'none'; }
 
@@ -591,7 +623,6 @@ function updatePlayModeUI() {
     
     let relToPar = strokes - parSum; let relStr = relToPar > 0 ? `+${relToPar}` : (relToPar === 0 ? 'E' : relToPar);
     document.getElementById('pace-score-display').innerText = `Strokes: ${strokes} (${relStr})`;
-    
     if (holesPlayed > 0) { let paceRel = Math.round((relToPar / holesPlayed) * currentHoleCount); let paceTotal = totalCoursePar + paceRel; let paceRelStr = paceRel > 0 ? `+${paceRel}` : (paceRel === 0 ? 'E' : paceRel); document.getElementById('pace-projected-display').innerText = `Pace: ${paceTotal} (${paceRelStr})`; } 
     else { document.getElementById('pace-projected-display').innerText = `Pace: --`; }
 
@@ -612,7 +643,6 @@ function updatePlayModeUI() {
         let hb = document.getElementById(`${type}-hit-btn`); if(hb) hb.classList.remove('active'); 
         let mb = document.getElementById(`${type}-miss-btn`); if(mb) mb.classList.remove('active');
         let subMenu = document.getElementById(`${type}-sub-menu`); let advArr = state[type + 'Adv'] || [];
-        
         if(state[type] === 'hit') { if(hb) hb.classList.add('active'); if(subMenu) subMenu.style.display = 'none'; } 
         else if(state[type] === 'miss' && !(type === 'fir' && par === 3)) { 
             if(mb) mb.classList.add('active'); 
@@ -631,14 +661,12 @@ function updatePlayModeUI() {
 }
 
 function changePlayHole(dir) { let endIndex = currentHoleOffset + currentHoleCount; currentPlayHole = Math.max(currentHoleOffset, Math.min((endIndex - 1), currentPlayHole + dir)); updatePlayModeUI(); }
-
 function updatePar(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(6, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); }
 function updateDriveDistances() { for (let i = 0; i < 18; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } }
 
 function attemptSubmitRound() {
     let endIndex = currentHoleOffset + currentHoleCount; let missingHoles = [];
     for (let i = currentHoleOffset; i < endIndex; i++) { if (roundData[i].score === "") missingHoles.push(i + 1); }
-
     if (missingHoles.length > 0 && missingHoles.length < currentHoleCount) {
         let mBox = document.getElementById('incomplete-holes-list'); mBox.innerHTML = missingHoles.map(h => `<button type="button" class="adv-btn" style="background:#b45309; color:#fff; border-color:#b45309; padding: 10px; font-size: 14px; min-width: 80px;" onclick="document.getElementById('incomplete-modal').style.display='none'; jumpToPlayMode(${h-1});">Hole ${h}</button>`).join('');
         document.getElementById('incomplete-modal').style.display = 'flex';
@@ -697,21 +725,14 @@ async function fetchHistory() {
     if(!currentUser) return;
     const { data } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
     if(!data || data.length === 0) { document.getElementById('history-list').innerHTML = '<div class="empty-state">No rounds found.</div>'; return; }
-    
-    // Auto-filter by active tab
     const activeTabBtn = document.querySelector('#view-history .analytics-tabs button.active');
     const filterType = activeTabBtn ? (activeTabBtn.innerText.includes('Range') ? 'RANGE' : (activeTabBtn.innerText.includes('Sim') ? 'SIM' : 'REAL')) : 'REAL';
-    
     window.renderHistoryList(data, filterType);
 }
 
 window.filterHistoryList = function(type, btn) {
-    document.querySelectorAll('#view-history .analytics-tabs button').forEach(el => el.classList.remove('active'));
-    btn.classList.add('active');
-    
-    const { data } = supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => {
-        if(data) renderHistoryList(data, type);
-    });
+    document.querySelectorAll('#view-history .analytics-tabs button').forEach(el => el.classList.remove('active')); btn.classList.add('active');
+    const { data } = supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => { if(data) renderHistoryList(data, type); });
 };
 
 window.renderHistoryList = function(allData, type) {
@@ -742,7 +763,7 @@ window.renderHistoryList = function(allData, type) {
 
 window.openHistoryModal = async function(id, name, date, score, holesPlayed, temp, wind) {
     document.getElementById('modal-course-title').innerText = name.trim(); document.getElementById('modal-total-score').innerText = score; 
-    document.getElementById('modal-weather').innerText = temp ? `⛅ ${temp}` : ''; document.getElementById('modal-wind-dir').innerText = wind ? `💨 ${wind}` : '';
+    let wText = temp ? `⛅ ${temp}` : ''; document.getElementById('modal-weather').innerText = wText; document.getElementById('modal-wind-dir').innerText = wind ? `💨 ${wind}` : '';
     activeModalRoundId = id; document.getElementById('history-modal').classList.add('active'); document.getElementById('modal-scorecard-grid').innerHTML = '⏳ Loading...';
     if (holesPlayed === 0) { document.getElementById('modal-scorecard-grid').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Bulk imported rounds do not contain hole-by-hole data.</div>'; return; }
     
@@ -752,7 +773,6 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
     let viewHoles = endHole - startHole;
     
     modalCoursePars = Array(viewHoles).fill(""); modalRoundData = Array.from({length: viewHoles}, () => ({ id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" }));
-    
     if(data) data.forEach(h => { 
         const i = h.hole_number - 1 - startHole; 
         if(i>=0 && i<viewHoles){ 
@@ -885,11 +905,7 @@ window.openInsightDetail = function(type) {
 window.openStatGraph = function(title, statKey) {
     document.getElementById('stat-graph-title').innerText = title.toUpperCase(); document.getElementById('stat-graph-modal').style.display = 'flex';
     currentStatKey = statKey; currentStatTitle = title;
-    
-    // INHERIT MAIN PAGE FILTER
-    let tf = document.getElementById('filter-timeframe').value;
-    document.getElementById('modal-filter-timeframe').value = tf;
-    
+    let tf = document.getElementById('filter-timeframe').value; document.getElementById('modal-filter-timeframe').value = tf;
     refreshModalGraph();
 };
 
