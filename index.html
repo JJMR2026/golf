@@ -9,10 +9,10 @@
     <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     
-    <link rel="stylesheet" href="styles.css?v=15.0">
+    <link rel="stylesheet" href="styles.css?v=16.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=15.0" defer></script>
+    <script src="app.js?v=16.0" defer></script>
 </head>
 <body>
 
@@ -124,11 +124,12 @@
     </div>
 </div>
 
+<!-- FIXED HISTORY MODAL OVERLAP -->
 <div id="history-modal" class="modal-overlay" style="display: none; z-index: 50000; background: rgba(0,0,0,0.96);">
     <div class="modal-content card" style="max-width: 1200px; margin: 20px auto; width: 95%; position: relative;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 15px;">
-            <h3 id="modal-course-title" style="color: var(--accent-green); margin: 0;">COURSE TITLE</h3>
+        <div class="scorecard-header" style="margin-bottom: 15px; padding-right: 40px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+            <h3 id="modal-course-title" style="color: var(--accent-green); margin: 0; font-size: 18px;">COURSE TITLE</h3>
             <div id="modal-course-date" style="color: var(--text-muted); font-size: 13px;">Round Date</div>
         </div>
         <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 15px;"></div>
@@ -193,7 +194,6 @@
                     </select>
                 </div>
                 
-                <!-- EXTRA SIM METRICS -->
                 <div class="sim-metric" style="display: none;">
                     <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">BALL SPEED</label>
                     <input type="number" id="sim-ball-speed" placeholder="mph" style="width: 100%;">
@@ -222,7 +222,7 @@
         </div>
     </div>
 
-    <!-- ACTIVE PLAY VIEW -->
+    <!-- PLAY ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
             <div class="search-header">COURSE SETUP</div>
@@ -459,7 +459,6 @@
                 </div>
             </details>
             
-            <!-- TAB 1: SUMMARY -->
             <div id="analytics-tab-summary" style="display:block;">
                 <div id="trophy-room-box" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:20px;"></div>
                 <p style="font-size:12px; color:var(--text-muted); text-align:center;"><i>Tap any data row below to parse a targeted timeline trend.</i></p>
@@ -468,7 +467,6 @@
                 </div>
             </div>
 
-            <!-- TAB 2: CHARTS -->
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
                     
@@ -536,7 +534,6 @@
                 </div>
             </div>
 
-            <!-- TAB 3: INSIGHTS -->
             <div id="analytics-tab-insights" style="display:none;">
                 <div class="insights-card" style="margin-top:0; margin-bottom: 20px;">
                     <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">SPATIAL MISS & BOUNDARY HAZARD BREAKDOWNS</div>
