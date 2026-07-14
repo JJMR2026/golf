@@ -75,11 +75,11 @@ async function initializeApp() {
         else if (event === 'SIGNED_OUT') { currentUser = null; if (localStorage.getItem('golf_guest_mode') !== 'true') document.getElementById('auth-overlay').style.display = 'flex'; }
     });
 
-    let htmlList = ""; for(let i=1; i<=18; i++) htmlList += `<label class="checkbox-container"><input type="checkbox" class="hole-cb" value="${i}" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole ${i}</label>`;
+    let htmlList = ""; for(let i=1; i<=18; i++) htmlList += `<label class="checkbox-container"><input type="checkbox" class="hole-cb" value="${i}" autocomplete="off" checked onchange="window.checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole ${i}</label>`;
     let hBox = document.getElementById('hole-checkbox-list'); if(hBox) hBox.innerHTML += htmlList;
 
     let monthHtml = ""; const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    for(let i=1; i<=12; i++) monthHtml += `<label class="checkbox-container"><input type="checkbox" class="month-cb" value="${i}" autocomplete="off" checked onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> ${months[i-1]}</label>`;
+    for(let i=1; i<=12; i++) monthHtml += `<label class="checkbox-container"><input type="checkbox" class="month-cb" value="${i}" autocomplete="off" checked onchange="window.checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> ${months[i-1]}</label>`;
     let mBox = document.getElementById('month-checkbox-list'); if(mBox) mBox.innerHTML += monthHtml;
 
     puttCanvas = document.getElementById('putt-canvas');
@@ -127,6 +127,30 @@ window.switchAnalyticsTab = function(tab, btn) {
     document.querySelectorAll('.analytics-tabs button').forEach(el => el.classList.remove('active')); 
     document.getElementById('analytics-tab-' + tab).style.display = 'block'; 
     btn.classList.add('active'); 
+};
+
+window.checkHarvesterStatus = async function() {
+    document.getElementById('settings-overlay').style.display = 'none';
+    document.getElementById('insight-detail-title').innerText = "HARVESTER LAYER LOG";
+    document.getElementById('insight-detail-content').innerHTML = "⏳ Pinging database...";
+    document.getElementById('insight-modal').style.display = 'flex';
+    try {
+        const { data, error } = await supabaseClient.from('course_tees').select('course_name');
+        if(error) throw error;
+        let grouped = {};
+        data.forEach(t => { let c = t.course_name.trim().toUpperCase(); grouped[c] = (grouped[c] || 0) + 1; });
+        let html = `<b>Total Tee Boxes Indexed:</b> ${data.length}<br><b>Unique Courses Indexed:</b> ${Object.keys(grouped).length}<br><br>`;
+        html += `<div style="height:200px; overflow-y:auto; background:var(--cell-bg); padding:10px; border-radius:8px; border:1px solid var(--border-color); font-size:12px;">`;
+        let sorted = Object.keys(grouped).sort((a,b) => grouped[b] - grouped[a]);
+        sorted.forEach(c => {
+            let pct = Math.min(100, (grouped[c] / 6) * 100);
+            html += `<div style="margin-bottom:8px;"><div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${c}</span><span>${grouped[c]} Tees</span></div><div style="width:100%; height:6px; background:var(--card-bg); border-radius:3px; overflow:hidden;"><div style="width:${pct}%; height:100%; background:var(--accent-green);"></div></div></div>`;
+        });
+        html += `</div>`;
+        document.getElementById('insight-detail-content').innerHTML = html;
+    } catch(e) {
+        document.getElementById('insight-detail-content').innerHTML = "❌ Error fetching status: " + e.message;
+    }
 };
 
 // ----------------------------------------------------
@@ -196,6 +220,7 @@ function loadSatelliteGreen(lat, lon) {
 
 function handlePuttClick(e) {
     const rect = puttCanvas.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+
     if (!pinPos) { pinPos = {x, y}; puttCtx.font = "24px Arial"; puttCtx.fillText("⛳", x - 12, y + 12); } 
     else if (!ballPos) {
         ballPos = {x, y}; puttCtx.font = "18px Arial"; puttCtx.fillText("⚪", x - 9, y + 9);
@@ -377,10 +402,10 @@ window.toggleAdv = function(type, val) {
 };
 
 window.cycleSand = function() {
-    let s = roundData[currentPlayHole].sandSave; let next = (s === "") ? "0" : (s === "0" ? "1" : (s === "1" ? "2" : (s === "2" ? "3+" : "")));
+    let s = roundData[currentPlayHole].sandSave; let next = (s === "") ? "1" : (s === "1" ? "2" : (s === "2" ? "3+" : ""));
     roundData[currentPlayHole].sandSave = next;
     const gridCell = document.getElementById(`grid-sandSave-${currentPlayHole}`);
-    if(gridCell) { gridCell.innerText = next === "" ? "-" : next; gridCell.classList.toggle('hit', next === "0" || next === "1"); }
+    if(gridCell) { gridCell.innerText = next === "" ? "-" : next; gridCell.classList.toggle('hit', next === "1"); }
     updatePlayModeUI(); saveLocalState();
 };
 
@@ -414,8 +439,7 @@ function updatePlayModeUI() {
     document.getElementById('play-score').value = state.score; document.getElementById('play-putts').value = state.putts; document.getElementById('play-putt-dist').value = state.puttDist || ""; document.getElementById('play-drive').value = state.drive; document.getElementById('play-drive-club').value = state.driveClub || ""; document.getElementById('play-approach-club').value = state.appClub || ""; document.getElementById('play-approach-dist').value = state.appDist || "";
     
     let sBtn = document.getElementById('sand-cycle-btn');
-    if (state.sandSave === "0") { sBtn.innerText = "0 STROKES (SAVE)"; sBtn.className = "adv-btn active"; sBtn.style.background = "var(--accent-green)"; sBtn.style.color = "#000"; }
-    else if (state.sandSave === "1") { sBtn.innerText = "1 STROKE (SAVE)"; sBtn.className = "adv-btn active"; sBtn.style.background = "var(--accent-green)"; sBtn.style.color = "#000"; }
+    if (state.sandSave === "1") { sBtn.innerText = "1 STROKE (SAVE)"; sBtn.className = "adv-btn active"; sBtn.style.background = "var(--accent-green)"; sBtn.style.color = "#000"; }
     else if (state.sandSave === "2") { sBtn.innerText = "2 STROKES"; sBtn.className = "adv-btn active"; sBtn.style.background = "#ef4444"; sBtn.style.color = "#fff"; }
     else if (state.sandSave === "3+") { sBtn.innerText = "3+ STROKES"; sBtn.className = "adv-btn active"; sBtn.style.background = "#ef4444"; sBtn.style.color = "#fff"; }
     else { sBtn.innerText = "NONE"; sBtn.className = "adv-btn"; sBtn.style.background = "rgba(0,0,0,0.4)"; sBtn.style.color = "var(--text-muted)"; }
@@ -430,8 +454,6 @@ function updatePlayModeUI() {
     });
     let dBlock = document.getElementById('play-fir-block'); if(dBlock) { document.querySelectorAll('#play-fir-block button, #play-fir-block input, #play-fir-block select').forEach(el => el.disabled = (par == 3)); dBlock.style.opacity = (par == 3) ? '0.3' : '1'; }
 }
-
-window.checkHarvesterStatus = function() { document.getElementById('settings-overlay').style.display = 'none'; document.getElementById('insight-detail-title').innerText = "HARVESTER LAYER LOG"; document.getElementById('insight-detail-content').innerHTML = `<b>Unique Scraped Array Profiles:</b> Active matching processes operating normally across Western Canadian spatial tables.`; document.getElementById('insight-modal').style.display = 'flex'; };
 
 window.selectCourseFromDropdown = function(courseName) { document.getElementById('course-search-input').value = courseName.toUpperCase(); document.getElementById('search-dropdown').classList.remove('active'); window.fetchCourseDetails(); };
 
@@ -517,6 +539,8 @@ window.setNineSide = function(side) {
     currentPlayHole = currentHoleOffset; window.buildGrid(); updatePlayModeUI(); saveLocalState(); 
 };
 
+window.jumpToPlayMode = function(index) { currentPlayHole = index; window.togglePlayMode(true); };
+
 window.buildGrid = function() {
     const grid = document.getElementById('scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `70px repeat(${currentHoleCount}, minmax(35px, 1fr))`;
     const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'YDS', type: 'yardage' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }];
@@ -529,19 +553,46 @@ window.buildGrid = function() {
             else if (row.type === 'par') { cell.className = 'cell'; cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${currentCoursePars[i] ?? ''}" onchange="updatePar(${i}, this.value)">`; } 
             else if (row.type === 'yardage') { cell.className = 'cell'; cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; updatePlayModeUI(); saveLocalState();">`; }
             else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${roundData[i][row.type]}" onchange="syncGridToState(${i}, '${row.type}', this.value)">`; }
-            else if (row.type === 'drops') { cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0; cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-            else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === "" ? "-" : cVal) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === '0' || cVal === '1' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
+            else if (row.type === 'drops') { cell.className = 'cell'; let cVal = parseInt(roundData[i].drops) || 0; cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="window.toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`; }
+            else { cell.className = 'cell'; let cVal = roundData[i][row.type]; let btnText = row.type === 'sandSave' ? (cVal === "" ? "-" : cVal) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === '1' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="window.toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; }
             grid.appendChild(cell);
         }
     });
     window.updateDriveDistances();
 };
 
+window.toggleGridDrops = function(index) { 
+    let cVal = parseInt(roundData[index].drops) || 0; let newVal = cVal >= 10 ? 0 : cVal + 1; roundData[index].drops = newVal; 
+    if (newVal === 0) roundData[index].dropsAdv = [];
+    const btn = document.getElementById(`grid-drops-${index}`); if(btn) { btn.innerText = newVal === 0 ? "-" : newVal; btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; } 
+    if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); 
+};
+
+window.toggleGridHit = function(index, type) { 
+    const btn = document.getElementById(`grid-${type}-${index}`); let ns = "";
+    if (type === 'sandSave') { let cur = btn.innerText; ns = cur === "-" ? "1" : (cur === "1" ? "2" : (cur === "2" ? "3+" : "")); btn.innerText = ns === "" ? "-" : ns; } 
+    else { ns = btn.innerText === "MISS" ? "hit" : "miss"; btn.innerText = ns === "" ? "-" : ns.toUpperCase(); }
+    if(ns === 'hit' || ns === '1') btn.classList.add('hit'); else btn.classList.remove('hit'); 
+    roundData[index][type] = ns === "-" ? "" : ns; if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); 
+};
+
+window.togglePlayMode = function(isPlayMode) { 
+    document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
+    document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
+    document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; 
+    document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; 
+    if(isPlayMode) updatePlayModeUI(); 
+};
+
+window.changePlayHole = function(dir) { let endIndex = currentHoleOffset + currentHoleCount; currentPlayHole = Math.max(currentHoleOffset, Math.min((endIndex - 1), currentPlayHole + dir)); updatePlayModeUI(); };
+window.updatePar = function(index, val) { let p = parseInt(val); currentCoursePars[index] = isNaN(p) ? "" : Math.max(3, Math.min(6, p)); document.getElementById(`par-input-${index}`).value = currentCoursePars[index]; window.updateDriveDistances(); if(currentPlayHole === index) updatePlayModeUI(); saveLocalState(); };
+window.updateDriveDistances = function() { for (let i = 0; i < 18; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } };
+
 window.attemptSubmitRound = function() {
     let endIndex = currentHoleOffset + currentHoleCount; let missingHoles = [];
     for (let i = currentHoleOffset; i < endIndex; i++) { if (roundData[i].score === "") missingHoles.push(i + 1); }
     if (missingHoles.length > 0 && missingHoles.length < currentHoleCount) {
-        let mBox = document.getElementById('incomplete-holes-list'); mBox.innerHTML = missingHoles.map(h => `<button type="button" class="adv-btn" style="background:#b45309; color:#fff; border-color:#b45309; padding: 10px; font-size: 14px; min-width: 80px;" onclick="document.getElementById('incomplete-modal').style.display='none'; jumpToPlayMode(${h-1});">Hole ${h}</button>`).join('');
+        let mBox = document.getElementById('incomplete-holes-list'); mBox.innerHTML = missingHoles.map(h => `<button type="button" class="adv-btn" style="background:#b45309; color:#fff; border-color:#b45309; padding: 10px; font-size: 14px; min-width: 80px;" onclick="document.getElementById('incomplete-modal').style.display='none'; window.jumpToPlayMode(${h-1});">Hole ${h}</button>`).join('');
         document.getElementById('incomplete-modal').style.display = 'flex';
     } else { window.forceSubmitRound(); }
 };
@@ -650,7 +701,7 @@ window.updateAnalytics = function() {
         const t = document.getElementById('analytics-data-table');
         if(fRounds.length === 0) { 
             if(t) t.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No logs match selected filters.</td></tr></tbody>`; 
-            renderCharts([], [], []);
+            window.renderCharts([], [], []);
             document.getElementById('ai-insights-box').innerHTML = "Not enough data.";
             document.getElementById('hcp-display').innerText = "--.-";
             document.getElementById('trophy-room-box').innerHTML = "";
@@ -662,7 +713,7 @@ window.updateAnalytics = function() {
         let hcDisplay = document.getElementById('hcp-display');
         if (hcDisplay) hcDisplay.innerText = window.calculateHandicap(fRounds); 
         
-        renderCharts(fRounds, actHoles, actPars); 
+        window.renderCharts(fRounds, actHoles, actPars); 
         if(typeof window.generateInsights === 'function') document.getElementById('ai-insights-box').innerHTML = window.generateInsights(fRounds);
         window.updateTrophyRoom(fRounds);
         
@@ -753,38 +804,190 @@ window.loadAnalyticsData = async function() {
 
 window.populateFilters = function() {
     const uC = [...new Set(masterAnalyticsData.map(r => (r.course_name||"").trim()))].sort();
-    document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" autocomplete="off" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" autocomplete="off" checked onchange="checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
+    document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" autocomplete="off" checked onchange="window.checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" autocomplete="off" checked onchange="window.checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
     const uY = [...new Set(masterAnalyticsData.map(r => r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString()))].sort((a,b)=>b-a);
-    document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
+    document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
 };
 
 document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container') && !e.target.closest('summary')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
 
-// Complete remaining framework declarations to guarantee layout bounds
 window.toggleGroupToggles = function(mainCb, childClass, btnTextId, defaultText) { document.querySelectorAll(childClass).forEach(b => b.checked = mainCb.checked); window.updateAnalytics(); };
-window.checkGroupToggles = function(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); document.getElementById(mainId).checked = allChecked; window.updateAnalytics(); };
+window.checkGroupToggles = function(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); window.updateAnalytics(); };
 window.toggleFilterDropdown = function(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; };
 
-window.buildModalGrid = function(holesCount, startOffset) {
-    const grid = document.getElementById('modal-scorecard-grid'); grid.innerHTML = ''; grid.style.gridTemplateColumns = `70px repeat(${holesCount}, minmax(35px, 1fr))`;
-    const rows = [{ label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, { label: 'SCORE', type: 'score' }, { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }];
-    rows.forEach(r => {
-        const lc = document.createElement('div'); lc.className = 'row-label'; lc.innerText = r.label; grid.appendChild(lc);
-        for(let i=0; i<holesCount; i++) {
-            const c = document.createElement('div'); c.className = 'cell';
-            if(r.type === 'header') { c.className = 'cell hole-header'; c.innerText = i+1+startOffset; }
-            else if(r.type === 'par') c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
-            else if(['score','putts','drive'].includes(r.type)) c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
-            else if(r.type === 'drops') { let cVal = parseInt(modalRoundData[i].drops) || 0; c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="window.toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':(v==='stuck'?'STUCK':'-'))):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="window.toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
-            grid.appendChild(c);
-        }
-    });
-    document.getElementById('modal-delete-btn').onclick = () => window.deleteActiveRound(activeModalRoundId); document.getElementById('modal-save-btn').onclick = () => window.saveModalChanges(activeModalRoundId, holesCount);
+window.forceSyncFilters = function() {
+    document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+    document.getElementById('month-btn-text').innerText = 'All Months'; document.getElementById('year-btn-text').innerText = 'All Years';
+    document.getElementById('course-btn-text').innerText = 'All Courses'; document.getElementById('par-btn-text').innerText = 'All Pars'; document.getElementById('hole-btn-text').innerText = 'All Holes';
 };
 
-window.updateDriveDistances = function() { for (let i = 0; i < 18; i++) { const input = document.getElementById(`grid-drive-${i}`); const container = document.getElementById(`drive-container-${i}`); if(input && container) { if (currentCoursePars[i] === 3) { input.value = ""; input.disabled = true; input.placeholder = "N/A"; container.classList.add("disabled"); } else { input.disabled = false; input.placeholder = "yds"; container.classList.remove("disabled"); } } } };
+window.renderCharts = function(filteredRounds, actHoles, actPars) {
+    const tCtx = document.getElementById('scoringTrendChart'); const cCtx = document.getElementById('clubChart'); const wCtx = document.getElementById('weatherScoreChart'); const pC = document.getElementById('scoringPieChart'); const pCtx = document.getElementById('penaltyPieChart'); const aCtx = document.getElementById('accuracyChart'); const psCtx = document.getElementById('parScoringChart');
+    if (trendChart) trendChart.destroy(); if (clubChart) clubChart.destroy(); if (weatherChart) weatherChart.destroy(); if (scorePieChart) scorePieChart.destroy(); if(penaltyPieChartObj) penaltyPieChartObj.destroy(); if (accuracyChart) accuracyChart.destroy(); if(parScoringChart) parScoringChart.destroy();
+    
+    if (filteredRounds.length === 0) return;
+    const chartData = [...filteredRounds].reverse(); const activeOverlay = document.getElementById('primary-chart-metric') ? document.getElementById('primary-chart-metric').value : 'none'; let baseScores = [];
+    
+    chartData.forEach(r => { 
+        let targetHoles = r.hole_scores || []; 
+        if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
+        if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
+        let rs = 0; if (targetHoles.length === 0 && (!r.hole_scores || r.hole_scores.length === 0)) rs = r.total_score; else rs = targetHoles.reduce((sum, h) => sum + (h.score || 0), 0);
+        baseScores.push(rs); 
+    });
+    
+    let trendDatasets = [{ label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y', tension: 0.3 }];
+    const oColors = { hcp: '#f59e0b', putts: '#3b82f6', driveDist: '#8b5cf6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', sand: '#eab308', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308', sg: '#38bdf8', birdies: '#10b981', pars: '#9ca3af', bogeys: '#ef4444', tpAvoid: '#2dd4bf', acc: '#a855f7', f9: '#facc15', b9: '#fb923c' };
 
-// Remaining structural references ported cleanly
-window.syncGridToState = syncGridToState;
+    if (activeOverlay === 'hcp') {
+        let hcpHist = window.calculateHcpHistory(filteredRounds); let hcpData = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
+        trendDatasets.push({ label: 'Handicap Index', data: hcpData, borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#f59e0b', yAxisID: 'y1', tension: 0.3 });
+    } else if (activeOverlay !== 'none') {
+        let oData = [];
+        chartData.forEach(r => {
+            let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, sgTot=0, sgCnt=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, dTot=0, dCnt=0, f9=0, b9=0, tpA_H=0, tpA_T=0;
+            let th = r.hole_scores || []; 
+            if (actHoles.length < 18) th = th.filter(h => actHoles.includes(h.hole_number.toString())); 
+            if (actPars.length < 4) th = th.filter(h => actPars.includes(h.par.toString()));
+            th.forEach(h => {
+                if(h.hole_number <= 9) f9 += h.score; else b9 += h.score;
+                if(h.putts !== null && h.putts !== "") { p+=h.putts; tpA_T++; if(h.putts < 3) tpA_H++; if(h.putt_1_ft > 0) { sgTot += (window.getExpectedPutts(h.putt_1_ft) - h.putts); sgCnt++; } }
+                if(h.drops) dr+=h.drops; if(h.fir==='hit'||h.fir==='miss') { fT++; if(h.fir==='hit') fH++; } if(h.gir==='hit'||h.gir==='miss') { gT++; if(h.gir==='hit') gH++; }
+                if(h.sand_save==='yes'||h.sand_save==='1') { ssT++; ssH++; } else if(h.sand_save==='no' || h.sand_save==='2' || h.sand_save==='3+') { ssT++; }
+                if(h.score && h.par) { let d=h.score-h.par; if(h.par===3){p3+=d; p3c++;} if(h.par===4){p4+=d; p4c++;} if(h.par===5){p5+=d; p5c++;} if(d===-1) brd++; if(d===0) pr++; if(d===1) bog++; }
+                if(h.drive_distance>0) { dTot+=h.drive_distance; dCnt++; }
+            });
+            if(activeOverlay === 'putts') oData.push(p); if(activeOverlay === 'drops') oData.push(dr); if(activeOverlay === 'fir') oData.push(fT>0?Math.round((fH/fT)*100):null); if(activeOverlay === 'gir') oData.push(gT>0?Math.round((gH/gT)*100):null);
+            if(activeOverlay === 'driveDist') oData.push(dCnt>0?Math.round(dTot/dCnt):null); if(activeOverlay === 'sand') oData.push(ssT>0?Math.round((ssH/ssT)*100):null); if(activeOverlay === 'birdies') oData.push(brd); if(activeOverlay === 'pars') oData.push(pr); if(activeOverlay === 'bogeys') oData.push(bog);
+            if(activeOverlay === 'p3') oData.push(p3c>0 ? (p3/p3c).toFixed(2) : null); if(activeOverlay === 'p4') oData.push(p4c>0 ? (p4/p4c).toFixed(2) : null); if(activeOverlay === 'p5') oData.push(p5c>0 ? (p5/p5c).toFixed(2) : null);
+            if(activeOverlay === 'sg') oData.push(sgCnt>0 ? sgTot.toFixed(2) : null); if(activeOverlay === 'f9') oData.push(f9); if(activeOverlay === 'b9') oData.push(b9);
+            if(activeOverlay === 'tpAvoid') oData.push(tpA_T>0?Math.round((tpA_H/tpA_T)*100):null); if(activeOverlay === 'acc') oData.push((fT+gT)>0?Math.round(((fH+gH)/(fT+gT))*100):null);
+        });
+        trendDatasets.push({ label: activeOverlay.toUpperCase(), data: oData, borderColor: oColors[activeOverlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[activeOverlay], yAxisID: 'y1', tension: 0.3 });
+    }
+    
+    try { if(tCtx) trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right', display: activeOverlay!=='none' } } } }); } catch(e){}
+
+    let tpBrd = 0, tpPar = 0, tpBog = 0, tpDbl = 0;
+    chartData.forEach(r => { (r.hole_scores||[]).forEach(h => { if (h.score && h.par) { let d = h.score - h.par; if (d <= -1) tpBrd++; else if (d === 0) tpPar++; else if (d === 1) tpBog++; else tpDbl++; } }); });
+    try { if(pC) scorePieChart = new Chart(pC.getContext('2d'), { type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+
+    let dW=0, dOB=0, dL=0, dU=0; chartData.forEach(r => { (r.hole_scores||[]).forEach(h => { let dA = h.drops_adv || ""; if(h.drops && h.drops > 0) { if(dA.includes('WATER')) dW++; if(dA.includes('OB')) dOB++; if(dA.includes('LOST')) dL++; if(dA.includes('UNPLAYABLE')) dU++; } }); });
+    try { if(pCtx) penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['Water', 'OB', 'Lost', 'Unplayable'], datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+
+    let accLabels = [], firData = [], girData = [];
+    chartData.forEach(r => {
+        let fH=0, fT=0, gH=0, gT=0; (r.hole_scores || []).forEach(h => { if(h.fir === 'hit' || h.fir === 'miss') { fT++; if(h.fir === 'hit') fH++; } if(h.gir === 'hit' || h.gir === 'miss') { gT++; if(h.gir === 'hit') gH++; } });
+        accLabels.push(new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'})); firData.push(fT > 0 ? Math.round((fH/fT)*100) : null); girData.push(gT > 0 ? Math.round((gH/gT)*100) : null);
+    });
+    try { if(aCtx) accuracyChart = new Chart(aCtx.getContext('2d'), { type: 'line', data: { labels: accLabels, datasets: [{ label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+
+    let p3T=0, p3C=0, p4T=0, p4C=0, p5T=0, p5C=0;
+    chartData.forEach(r => { (r.hole_scores || []).forEach(h => { if (h.score && h.par) { if(h.par === 3) { p3T+=h.score; p3C++; } if(h.par === 4) { p4T+=h.score; p4C++; } if(h.par === 5) { p5T+=h.score; p5C++; } } }); });
+    try { if(psCtx) parScoringChart = new Chart(psCtx.getContext('2d'), { type: 'bar', data: { labels: ['Par 3', 'Par 4', 'Par 5'], datasets: [{ label: 'Avg Strokes', data: [p3C>0?(p3T/p3C).toFixed(2):0, p4C>0?(p4T/p4C).toFixed(2):0, p5C>0?(p5T/p5C).toFixed(2):0], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+
+    let clubStats = {}; chartData.forEach(r => { (r.hole_scores||[]).forEach(h => { if (h.drive_club && h.drive_distance > 0) { if(!clubStats[h.drive_club]) clubStats[h.drive_club] = {tot:0, cnt:0}; clubStats[h.drive_club].tot += h.drive_distance; clubStats[h.drive_club].cnt++; } if (h.approach_club && h.approach_yd > 0) { if(!clubStats[h.approach_club]) clubStats[h.approach_club] = {tot:0, cnt:0}; clubStats[h.approach_club].tot += h.approach_yd; clubStats[h.approach_club].cnt++; } }); }); practiceSessionData.forEach(s => { if(!clubStats[s.club]) clubStats[s.club] = {tot:0, cnt:0}; clubStats[s.club].tot += s.dist; clubStats[s.club].cnt++; });
+    let cLabels = Object.keys(clubStats).sort((a,b) => (clubStats[b].tot/clubStats[b].cnt) - (clubStats[a].tot/clubStats[a].cnt)); let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
+    try { if(cCtx) clubChart = new Chart(cCtx.getContext('2d'), { type: 'bar', data: { labels: cLabels, datasets: [{ data: cData, backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+
+    let wBuckets = { cold: {tot:0, cnt:0}, optimal: {tot:0, cnt:0}, hot: {tot:0, cnt:0} };
+    chartData.forEach(r => { if(r.weather_temp && r.total_score > 0) { let tempNum = parseInt(String(r.weather_temp).replace('°C', '')); let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72; let relScore = r.total_score - par; if(!isNaN(tempNum)) { if (tempNum < 15) { wBuckets.cold.tot += relScore; wBuckets.cold.cnt++; } else if (tempNum <= 25) { wBuckets.optimal.tot += relScore; wBuckets.optimal.cnt++; } else { wBuckets.hot.tot += relScore; wBuckets.hot.cnt++; } } } });
+    try { if(wCtx) weatherChart = new Chart(wCtx.getContext('2d'), { type: 'bar', data: { labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], datasets: [{ data: [wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0], backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+
+    let fL=0, fR=0, fS=0, fTotMiss=0; let gL=0, gR=0, gS=0, gLg=0, gTotMiss=0;
+    chartData.forEach(r => { (r.hole_scores || []).forEach(h => { let fA = h.fir_adv || ""; let gA = h.gir_adv || ""; if(h.fir === 'miss') { fTotMiss++; if(fA.includes('LEFT')) fL++; if(fA.includes('RIGHT')) fR++; if(fA.includes('SHORT')) fS++; } if(h.gir === 'miss') { gTotMiss++; if(gA.includes('LEFT')) gL++; if(gA.includes('RIGHT')) gR++; if(gA.includes('SHORT')) gS++; if(gA.includes('LONG')) gLg++; } }); });
+    let mpStat = document.getElementById('miss-penalty-stats');
+    if(mpStat) {
+        mpStat.innerHTML = `
+            <div style="margin-bottom: 10px;"><b>Drive Bias:</b> ${fTotMiss>0 ? `${Math.round((fL/fTotMiss)*100)}% Left | ${Math.round((fR/fTotMiss)*100)}% Right` : 'No data.'}</div>
+            <div><b>Approach Bias:</b> ${gTotMiss>0 ? `${Math.round((gS/gTotMiss)*100)}% Short | ${Math.round((gL/gTotMiss)*100)}% Left` : 'No data.'}</div>
+        `;
+    }
+};
+
+window.generateInsights = function(fRounds) {
+    let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0;
+    let bbOpp=0, bbHit=0, bbmOpp=0, bbmHit=0, f9={s:0,p:0}, late={s:0,p:0};
+    let windArr = [], tempArr = [], scoreArr = [];
+    
+    fRounds.forEach(r => { 
+        if(r.weather_temp && r.weather_wind && r.total_score > 0) {
+            let t = parseInt(String(r.weather_temp).replace('°C', ''));
+            let w = parseInt(String(r.weather_wind).replace('km/h', ''));
+            let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72;
+            if(!isNaN(t) && !isNaN(w)) { tempArr.push(t); windArr.push(w); scoreArr.push(r.total_score - par); }
+        }
+
+        if(!r.hole_scores || r.hole_scores.length === 0) { if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return; }
+        
+        let hs = r.hole_scores.slice().sort((a,b) => a.hole_number - b.hole_number);
+        for(let i=0; i<hs.length - 1; i++) {
+            let curr = hs[i], next = hs[i+1];
+            if(curr.score && curr.par && next.score && next.par) {
+                let prevDiff = curr.score - curr.par; let nextDiff = next.score - next.par;
+                if(prevDiff === 1) { bbOpp++; if(nextDiff <= 0) bbHit++; }
+                if(prevDiff >= 2) { bbmOpp++; if(nextDiff <= 1) bbmHit++; }
+            }
+        }
+
+        hs.forEach(h => {
+            if(h.score && h.par) { 
+                let diff = h.score - h.par; 
+                if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} 
+                if(h.hole_number >= 1 && h.hole_number <= 6) { f9.s += h.score; f9.p += h.par; }
+                if(h.hole_number >= 13 && h.hole_number <= 18) { late.s += h.score; late.p += h.par; }
+            }
+            if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
+        }); 
+    });
+    
+    let averages = [];
+    if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
+    if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
+    
+    if(scoreArr.length > 5) {
+        let rWind = window.pearsonCorrelation(windArr, scoreArr);
+        let rTemp = window.pearsonCorrelation(tempArr, scoreArr);
+        let msg = "No strong climate correlations detected yet.";
+        if (rWind > 0.4) msg = "Strong correlation detected. Your score negatively compounds in high winds.";
+        if (rTemp < -0.4) msg = "Correlation detected. You bleed strokes rapidly in colder weather.";
+        insights.push(`<div class="insight-btn" onclick="openInsightDetail('Climate Impact')"><span style="font-size:18px;">⛅</span><div><b>Climate Impact:</b> ${msg}</div></div>`);
+    }
+
+    if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); }
+    
+    if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
+};
+
+window.openStatGraph = function(title, statKey) {
+    document.getElementById('stat-graph-title').innerText = title.toUpperCase(); document.getElementById('stat-graph-modal').style.display = 'flex';
+    currentStatKey = statKey; currentStatTitle = title;
+    let tf = document.getElementById('filter-timeframe').value; document.getElementById('modal-filter-timeframe').value = tf;
+    window.refreshModalGraph();
+};
+
+window.refreshModalGraph = function() {
+    if(!currentStatKey) return;
+    let tFilter = document.getElementById('modal-filter-timeframe').value;
+    let plotData = []; let rList = [...currentFilteredRounds];
+    if(tFilter === 'last10') rList = rList.slice(0, 10);
+    if(tFilter === 'last20') rList = rList.slice(0, 20);
+    rList = rList.reverse();
+    
+    rList.forEach(r => {
+        let val = 0; let valid = false; let targetHoles = r.hole_scores || [];
+        if(currentStatKey === 'score') { val = targetHoles.reduce((sum,h)=>sum+(h.score||0),0); valid=true; }
+        if(currentStatKey === 'putts') { let th=0, tp=0; targetHoles.forEach(h=>{if(h.putts!==null){tp+=h.putts; th++;}}); if(th>0) { val=(tp/th)*18; valid=true;} }
+        if(currentStatKey === 'fir') { let th=0, tf=0; targetHoles.forEach(h=>{if(h.fir==='hit'||h.fir==='miss'){tf++; if(h.fir==='hit')th++;}}); if(tf>0) { val=(th/tf)*100; valid=true;} }
+        if(currentStatKey === 'gir') { let th=0, tg=0; targetHoles.forEach(h=>{if(h.gir==='hit'||h.gir==='miss'){tg++; if(h.gir==='hit')th++;}}); if(tg>0) { val=(th/tg)*100; valid=true;} }
+        if(currentStatKey === 'drops') { val = targetHoles.reduce((sum,h)=>sum+(h.drops||0),0); valid=true; }
+        if(valid) plotData.push({x: new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}), y: val});
+    });
+
+    document.getElementById('stat-graph-title').innerText = currentStatTitle.toUpperCase();
+    if(statDetailChartObj) statDetailChartObj.destroy();
+    let cEl = document.getElementById('statDetailChart'); if(!cEl) return;
+    statDetailChartObj = new Chart(cEl.getContext('2d'), { type: 'line', data: { labels: plotData.map(d=>d.x), datasets: [{ label: currentStatTitle, data: plotData.map(d=>d.y), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 2, fill: true, pointBackgroundColor: '#121212', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } } });
+};
+
 initializeApp();
