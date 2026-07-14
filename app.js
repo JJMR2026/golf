@@ -30,6 +30,7 @@ let dismissedWarnings = [];
 let currentStatKey = null;
 let currentStatTitle = null;
 
+// Ensure colors load if cache drops
 const themes = {
     dark: { bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' },
     light: { bg: '#f3f4f6', card: '#ffffff', border: '#d1d5db', accent: '#10b981', hover: '#059669', text: '#111827', muted: '#6b7280', cell: '#f9fafb', cellBorder: '#e5e7eb' },
@@ -453,11 +454,10 @@ async function fetchCourseDetails() {
     document.getElementById('api-status').innerText = "Loading...";
 
     try {
-        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`);
-        
-        if (teeData && teeData.length > 0) {
-            let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase() === query.toUpperCase());
-            if (!matchedCourse) { matchedCourse = teeData[0]; }
+        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*');
+        if (teeData) {
+            let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase().includes(query.toUpperCase()) || query.toUpperCase().includes(t.course_name.trim().toUpperCase()));
+            if (!matchedCourse && teeData.length > 0) matchedCourse = teeData[0];
             
             if (matchedCourse) {
                 const fetchedCourseName = matchedCourse.course_name.trim();
@@ -467,7 +467,10 @@ async function fetchCourseDetails() {
                 
                 let parsedPars = availableTees[0].pars; if (typeof parsedPars === 'string') { try { parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
                 currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); 
-                currentYardages = Array.isArray(availableTees[0].yardages) ? [...availableTees[0].yardages] : Array(18).fill(""); 
+                
+                let parsedYards = availableTees[0].yardages; if (typeof parsedYards === 'string') { try { parsedYards = JSON.parse(parsedYards.replace(/{/g, '[').replace(/}/g, ']')); } catch(e){} }
+                currentYardages = Array.isArray(parsedYards) ? [...parsedYards] : Array(18).fill(""); 
+                
                 roundData = Array.from({length: 18}, () => ({ score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", puttDist: "", driveClub: "", appClub: "", appDist: "" }));
                 dismissedWarnings = [];
                 
@@ -695,14 +698,13 @@ function updatePlayModeUI() {
     document.getElementById('play-putt-dist').value = state.puttDist || ""; 
     document.getElementById('play-drive').value = state.drive;
     document.getElementById('play-drive-club').value = state.driveClub || "";
-    document.getElementById('play-drive-exception').value = state.driveException || "";
     document.getElementById('play-approach-club').value = state.appClub || "";
     document.getElementById('play-approach-dist').value = state.appDist || "";
     
     let sBtn = document.getElementById('sand-cycle-btn');
     if (state.sandSave === "yes") { sBtn.innerText = "SAND: SAVED 🟢"; sBtn.className = "adv-btn active"; sBtn.style.background = "var(--accent-green)"; sBtn.style.borderColor = "var(--accent-green)"; sBtn.style.color = "#000"; }
     else if (state.sandSave === "no") { sBtn.innerText = "SAND: MISSED 🔴"; sBtn.className = "adv-btn active"; sBtn.style.background = "#ef4444"; sBtn.style.borderColor = "#ef4444"; sBtn.style.color = "#fff"; }
-    else { sBtn.innerText = "SAND: NONE"; sBtn.className = "adv-btn"; sBtn.style.background = "rgba(0,0,0,0.2)"; sBtn.style.color = "var(--text-muted)"; sBtn.style.borderColor = "var(--border-color)";}
+    else { sBtn.innerText = "SAND: NONE"; sBtn.className = "adv-btn"; sBtn.style.background = "rgba(0,0,0,0.4)"; sBtn.style.color = "var(--text-muted)"; sBtn.style.borderColor = "var(--border-color)";}
 
     let dropsVal = parseInt(state.drops) || 0; 
     let dBtn = document.getElementById('play-drops-btn'); 
@@ -811,8 +813,21 @@ async function forceSubmitRound() {
     if (!currentUser) { if (confirm("Guest Round Complete!\n\nSince you are not logged in, this scorecard cannot be saved to the permanent History dashboard.\n\nClear your local scorecard to start a new round?")) { localStorage.removeItem('golf_round_state'); location.reload(); } return; }
     const courseName = document.getElementById('current-course-display').innerText.trim();
     if (!courseName || courseName === 'NO COURSE SELECTED' || courseName === '') return alert("⚠️ Please fetch a valid course.");
-    const teeVal = document.getElementById('tee-select').value; let teeName = null;
-    if (teeVal === 'new') { teeName = document.getElementById('setup-tee').value.trim(); if (teeName) { try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); } catch(e) {} } } else if (selectedTee) { teeName = selectedTee.tee_name.trim(); }
+    
+    const teeVal = document.getElementById('tee-select').value; 
+    let teeName = null;
+    let rType = document.getElementById('round-type-select').value;
+
+    if (teeVal === 'new') { 
+        teeName = document.getElementById('setup-tee').value.trim(); 
+        if (teeName) { 
+            try { await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); } catch(e) {} 
+        } 
+    } else if (selectedTee) { 
+        teeName = selectedTee.tee_name.trim(); 
+    }
+
+    let finalTeeName = teeName + (rType !== 'Regular' ? ' [' + rType + ']' : '');
 
     let totalScore = 0; let totalPutts = 0; const holesPayload = [];
     let missingCheck = [];
@@ -863,14 +878,14 @@ async function forceSubmitRound() {
     if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
 
     try {
-        const { data: roundHeader, error: headerError } = await supabaseClient.from('logged_rounds').insert([{ user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }]).select('id').single();
+        const { data: roundHeader, error: headerError } = await supabaseClient.from('logged_rounds').insert([{ user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: finalTeeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }]).select('id').single();
         if (headerError) throw headerError;
         await supabaseClient.from('hole_scores').insert(holesPayload.map(h => ({ ...h, round_id: roundHeader.id })));
         alert("✅ Round logged!"); localStorage.removeItem('golf_round_state'); fetchCourseDetails(); 
     } catch(e) { 
         console.error(e); 
         const queueStr = localStorage.getItem('golf_offline_queue'); let queue = queueStr ? JSON.parse(queueStr) : [];
-        queue.push({ header: { user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: teeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }, holes: holesPayload });
+        queue.push({ header: { user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: finalTeeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }, holes: holesPayload });
         localStorage.setItem('golf_offline_queue', JSON.stringify(queue));
         alert("📶 Network Offline.\n\nRound saved to your local device. It will automatically upload to the cloud the next time you open the app online.");
         localStorage.removeItem('golf_round_state'); location.reload();
@@ -945,7 +960,7 @@ function buildModalGrid(holesCount, startOffset) {
             else if(r.type === 'par') c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
             else if(['score','putts','drive'].includes(r.type)) c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
             else if(r.type === 'drops') { let cVal = parseInt(modalRoundData[i].drops) || 0; c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':(v==='stuck'?'STUCK':'-'))):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
+            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':'-')):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
             grid.appendChild(c);
         }
     });
@@ -1155,7 +1170,7 @@ function populateFilters() {
 function toggleFilterDropdown(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
 function toggleGroupToggles(mainCb, childClass, btnTextId, defaultText) { document.querySelectorAll(childClass).forEach(b => b.checked = mainCb.checked); document.getElementById(btnTextId).innerText = mainCb.checked ? `All ${defaultText}s` : `0 ${defaultText}s`; updateAnalytics(); }
 function checkGroupToggles(childClass, mainId, btnTextId, defaultText) { const cbs = Array.from(document.querySelectorAll(childClass)); const allChecked = cbs.every(b => b.checked); const checkedCount = cbs.filter(b => b.checked).length; document.getElementById(mainId).checked = allChecked; document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); updateAnalytics(); }
-document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
+document.addEventListener('click', function(e) { if (!e.target.closest('.multi-select-container') && !e.target.closest('summary')) { document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none'); } });
 
 function calculateHandicap(allRounds) {
     const hcpRounds = allRounds.filter(r => r.course_rating && r.slope_rating).slice(0, 20);
@@ -1163,478 +1178,227 @@ function calculateHandicap(allRounds) {
     let diffs = hcpRounds.map(r => ((r.total_score - r.course_rating) * 113 / r.slope_rating)).sort((a,b) => a-b);
     let countToUse = 1, adj = 0;
     if (n === 3) { countToUse = 1; adj = -2.0; } else if (n === 4) { countToUse = 1; adj = -1.0; } else if (n === 5) { countToUse = 1; adj = 0; } else if (n === 6) { countToUse = 2; adj = -1.0; } else if (n >= 7 && n <= 8) { countToUse = 2; adj = 0; } else if (n >= 9 && n <= 11) { countToUse = 3; adj = 0; } else if (n >= 12 && n <= 14) { countToUse = 4; adj = 0; } else if (n >= 15 && n <= 16) { countToUse = 5; adj = 0; } else if (n >= 17 && n <= 18) { countToUse = 6; adj = 0; } else if (n === 19) { countToUse = 7; adj = 0; } else if (n === 20) { countToUse = 8; adj = 0; }
-    const avg = (diffs.slice(0, countToUse).reduce((a,b) => a+b, 0) / countToUse) + adj; return Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
-}
+    const avg = (This is exactly the kind of direct feedback I need. I am not trying to burn your tokens—I was trying to solve the caching issue with a sledgehammer, and I ended up creating a UI mess in the process. You are completely right: the split 3-file system is the *only* way to build this properly, and we are sticking to it. 
 
-function calculateHcpHistory(rounds) {
-    let chrono = [...rounds].reverse();
-    let history = [];
-    for (let i = 0; i < chrono.length; i++) {
-        let windowRounds = chrono.slice(Math.max(0, i - 19), i + 1).reverse();
-        let h = calculateHandicap(windowRounds);
-        history.push({ date: chrono[i].date_played, hcp: h });
-    }
-    return history;
-}
+I have analyzed your screenshots and notes, and I have found the exact culprits:
+1. **The Fetch Button Bug (Snip 1):** In the code, if a course name wasn't an *exact, case-sensitive* match, the function aborted silently before it reached the line of code that resets the "⏳..." button text. I have wrapped the entire fetch function in a `finally` block so the button *always* resets, and improved the search to use "fuzzy matching" so **Maple Ridge** will successfully pull up.
+2. **The Play Mode Mess (Snip 2):** You are totally right. I tried to force a horizontal grid to save space, but it looks terrible and squished. I have reverted Play Mode completely back to the **clean, vertical scrolling list** we used before, but with tightened padding so it feels modern.
+3. **SIM & Range Tracking:** I have added a "Round Type" dropdown right next to the Tee Box selection: `[⛳ Real Round, 🎮 Simulator, 🏌️‍♂️ Driving Range]`. If you select SIM or Range, the app will silently tag the round in the database so it *never* ruins your real Handicap, but you can still filter for it in Analytics!
+4. **Weather Correlation Fix:** Scatter plots are useless for this. I have rewritten the math. The Weather Chart is now a **Bar Chart** showing your Average Score in three distinct buckets: `Cold (<15°C)`, `Optimal (15-25°C)`, and `Hot (>25°C)`. You will instantly see which climate you play best in.
+5. **Insights Coaching Text:** I replaced all the placeholder text. Now, when you tap an insight, you get a full paragraph of context explaining exactly what the math means for your game. 
 
-function generateInsights(fRounds) {
-    let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0, bbOpp=0, bbHit=0, bbMajorOpp=0, bbMajorHit=0;
-    let hAvg = {}, f9 = {s:0, p:0}, late = {s:0, p:0};
+Here are your 3 updated files to push to GitHub. This will overwrite the messy grid and bring back the clean layout.
+
+---
+
+### 1. `index.html` (The Structure)
+*Changes: Added the Round Type (SIM/Range) dropdown, reverted Play Mode to the clean vertical list, and added a collapsible wrapper for the Analytics filters to save mobile screen space.*
+
+<details open>
+<summary><b>CLICK TO EXPAND / COPY: index.html</b></summary>
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Golf Tracker Pro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050505" id="meta-theme-color">
+    <link rel="manifest" href="manifest.json">
     
-    fRounds.forEach(r => { 
-        if(!r.hole_scores || r.hole_scores.length === 0) {
-            if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return;
-        }
-        
-        let hs = r.hole_scores.slice().sort((a,b) => a.hole_number - b.hole_number);
-        for(let i=0; i<hs.length - 1; i++) {
-            let curr = hs[i], next = hs[i+1];
-            if(curr.score && curr.par && next.score && next.par) {
-                let prevDiff = curr.score - curr.par;
-                let nextDiff = next.score - next.par;
-                if(prevDiff === 1) { bbOpp++; if(nextDiff <= 0) bbHit++; }
-                if(prevDiff >= 2) { bbMajorOpp++; if(nextDiff <= 1) bbMajorHit++; }
-            }
-        }
-
-        hs.forEach(h => {
-            if(h.score && h.par) { 
-                let diff = h.score - h.par; 
-                if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} 
-                
-                if(!hAvg[h.hole_number]) hAvg[h.hole_number] = {tot:0, cnt:0};
-                hAvg[h.hole_number].tot += diff; hAvg[h.hole_number].cnt++;
-
-                if(h.hole_number >= 1 && h.hole_number <= 6) { f9.s += h.score; f9.p += h.par; }
-                if(h.hole_number >= 13 && h.hole_number <= 18) { late.s += h.score; late.p += h.par; }
-            }
-            if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
-            
-            if(h.drops && h.drops_adv) {
-                drops += h.drops;
-                let dArr = h.drops_adv.split(',');
-                dArr.forEach(d => {
-                    if(d === 'OB') dropsOB++;
-                    if(d === 'WATER') dropsWater++;
-                    if(d === 'LOST') dropsLost++;
-                });
-            } else if (h.drops) {
-                drops += h.drops;
-            }
-
-            if(h.fir === 'hit' || h.fir === 'miss') { 
-                totalFir++; 
-                if(h.fir === 'hit') firHit++; 
-                else { 
-                    firMisses++; 
-                    let fA = h.fir_adv || "";
-                    if(fA.includes('LEFT')) firMissLeft++; 
-                    if(fA.includes('RIGHT')) firMissRight++; 
-                } 
-            }
-            
-            if(h.gir === 'hit' || h.gir === 'miss') { 
-                totalGir++; 
-                if(h.gir === 'hit') girHit++; 
-                else { 
-                    girMisses++; 
-                    let gA = h.gir_adv || "";
-                    if(gA.includes('SHORT')) girMissShort++; 
-                } 
-            }
-        }); 
-    });
-    
-    let averages = [];
-    if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
-    if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
-    
-    let dHole = {num:0, val:-99};
-    for(let i=1; i<=18; i++) { if(hAvg[i] && hAvg[i].cnt > 0) { let avg = hAvg[i].tot / hAvg[i].cnt; if(avg > dHole.val) { dHole.val = avg; dHole.num = i; } } }
-    if (dHole.num > 0 && dHole.val > 0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Danger Holes')"><span style="font-size:18px;">🏴‍☠️</span><div><b>Danger Hole:</b> Historically, <b>Hole ${dHole.num}</b> costs you the most strokes (+${dHole.val.toFixed(1)} to par).</div></div>`);
-
-    if(f9.p > 0 && late.p > 0) {
-        let e1 = (f9.s - f9.p) / (f9.p / 6); 
-        let e3 = (late.s - late.p) / (late.p / 6); 
-        if(e3 > e1 + 0.3) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Fatigue')"><span style="font-size:18px;">📉</span><div><b>Late Round Fatigue:</b> You bleed strokes late, scoring significantly worse on holes 13-18 compared to holes 1-6.</div></div>`);
-    }
-
-    if (bbOpp > 0 || bbMajorOpp > 0) { 
-        let bbPct = bbOpp > 0 ? (bbHit / bbOpp) * 100 : 0; 
-        let icon = bbPct >= 30 ? '🔥' : '🧠';
-        insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span style="font-size:18px;">${icon}</span><div><b>Mental Toughness:</b> You successfully salvage Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); 
-    }
-
-    if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
-    if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
-    if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🔴</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🟢</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🎯</span><div><b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.</div></div>`); } }
-    if (drops > 0) { 
-        let dropsPerRound = drops / fRounds.length; 
-        if (dropsPerRound >= 2) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span style="font-size:18px;">⚠️</span><div><b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.</div></div>`); 
-        let dType = []; if(dropsOB > 0) dType.push({t:'OB', v:dropsOB}); if(dropsWater > 0) dType.push({t:'Water', v:dropsWater}); if(dropsLost > 0) dType.push({t:'Lost Ball', v:dropsLost});
-        if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.</div></div>`); }
-    }
-    
-    if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
-}
-
-function getRelativeParString(score, par) {
-    if(par === 0 || score === 0) return "";
-    let diff = score - par;
-    return diff > 0 ? `(+${diff})` : (diff === 0 ? `(E)` : `(${diff})`);
-}
-
-function updateTrophyRoom(fRounds) {
-    let lowScores = []; let minScore = 999;
-    let longDrives = []; let maxDrive = 0;
-    let lowPuttsList = []; let minPutts = 999;
-    let mostFirsList = []; let maxFir = 0;
-
-    fRounds.forEach(r => {
-        let dStr = new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-        let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
-        
-        if (holesPlayed >= 18) {
-            let coursePar = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
-            
-            if (r.total_score > 0) {
-                if (r.total_score < minScore) {
-                    minScore = r.total_score;
-                    lowScores = [{c: r.course_name.trim(), d: dStr, p: coursePar}];
-                } else if (r.total_score === minScore) {
-                    lowScores.push({c: r.course_name.trim(), d: dStr, p: coursePar});
-                }
-            }
-            
-            if (r.total_putts > 0) {
-                if (r.total_putts < minPutts) {
-                    minPutts = r.total_putts;
-                    lowPuttsList = [{c: r.course_name.trim(), d: dStr}];
-                } else if (r.total_putts === minPutts) {
-                    lowPuttsList.push({c: r.course_name.trim(), d: dStr});
-                }
-            }
-            
-            let firs = r.hole_scores.filter(h => h.fir === 'hit').length;
-            if (firs > maxFir) {
-                maxFir = firs;
-                mostFirsList = [{c: r.course_name.trim(), d: dStr}];
-            } else if (firs === maxFir && firs > 0) {
-                mostFirsList.push({c: r.course_name.trim(), d: dStr});
-            }
-        }
-        
-        if (r.hole_scores) {
-            r.hole_scores.forEach(h => {
-                if (h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) {
-                    if (h.drive_distance > maxDrive) {
-                        maxDrive = h.drive_distance;
-                        longDrives = [{c: r.course_name.trim(), d: dStr}];
-                    } else if (h.drive_distance === maxDrive) {
-                        longDrives.push({c: r.course_name.trim(), d: dStr});
-                    }
-                }
+    <!-- PWA CACHE BUSTER -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) { registration.unregister(); }
             });
         }
-    });
+    </script>
 
-    const tBox = document.getElementById('trophy-room-box');
-    if(!tBox) return;
-    
-    const tStyle = "flex: 1; min-width: 140px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
-    const labelStyle = "font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;";
-    const valStyle = "font-size: 24px; color: var(--accent-green); font-weight: bold;";
-    const subStyle = "font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;";
+    <link rel="stylesheet" href="styles.css?v=6.0">
+    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+</head>
+<body>
 
-    function formatList(arr) {
-        if(arr.length === 0) return "--";
-        let html = `<strong>${arr[0].c}</strong><br><span style="opacity:0.6">${arr[0].d}</span>`;
-        if (arr.length === 2) html += `<br><hr style="border:0; border-top:1px solid var(--border-color); margin:4px 0;"><strong>${arr[1].c}</strong><br><span style="opacity:0.6">${arr[1].d}</span>`;
-        else if (arr.length > 2) html += `<br><span style="color:var(--accent-green);">+ ${arr.length - 1} tied</span>`;
-        return html;
-    }
+<div id="auth-overlay" class="modal-overlay" style="display: flex;">
+    <div class="auth-card">
+        <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 25px;">GOLF TRACKER</h2>
+        <div class="login-option">
+            <h4 style="color: var(--text-main);">Sign In / Register</h4>
+            <p>Enter an email or nickname to begin. <br><b style="color: var(--accent-green);">Emails are strictly for login and never shared or sold.</b></p>
+        </div>
+        <input type="text" id="auth-nickname" placeholder="Email or Nickname" autocomplete="off" style="margin-top: 10px; width: 100%; margin-bottom: 15px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
+        <input type="password" id="auth-password" placeholder="PIN / Password" style="width: 100%; margin-bottom: 10px;" onkeypress="if(event.key === 'Enter') handleAuth('login')">
+        <div style="text-align: right; margin-bottom: 15px; width: 100%;">
+            <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); font-size: 12px; text-decoration: none;">Forgot Password?</a>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="primary" id="login-btn" onclick="handleAuth('login')" style="flex:2;">Log In</button>
+            <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')" style="flex:1;">Register</button>
+        </div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (Single Round Only)</button>
+        </div>
+        <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
+    </div>
+</div>
 
-    let lowScoreRel = (minScore !== 999 && lowScores.length > 0) ? getRelativeParString(minScore, lowScores[0].p) : "";
-    let displayScore = minScore === 999 ? '--' : `${minScore} <span style="font-size:14px; opacity:0.8;">${lowScoreRel}</span>`;
+<div id="settings-overlay" class="modal-overlay" style="display: none;">
+    <div class="auth-card">
+        <button type="button" class="close-modal-btn" onclick="document.getElementById('settings-overlay').style.display='none'">✕</button>
+        <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
+        <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
+            <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
+                <option value="dark">Dark Mode (Default)</option>
+                <option value="sunset">Sunset (Orange/Purple)</option>
+                <option value="ocean">Ocean (Deep Blue)</option>
+                <option value="midnight">Midnight (Cyber Blue)</option>
+                <option value="crimson">Crimson (Blood Red)</option>
+                <option value="neon">Neon (Cyberpunk Pink)</option>
+                <option value="forest">Forest (Green/Brown)</option>
+                <option value="royal">Royal (Purple/Gold)</option>
+                <option value="stealth">Stealth (Black/Yellow)</option>
+                <option value="cyber">Matrix (Black/Lime)</option>
+                <option value="autumn">Autumn (Brown/Orange)</option>
+                <option value="slate">Slate (Blue-Grey/Silver)</option>
+                <option value="mint">Mint (Dark Gray/Mint)</option>
+                <option value="masters">Masters Green</option>
+                <option value="light">Light Mode</option>
+            </select>
+        </div>
+        <div id="password-change-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px; display: block; text-align: left;">SECURITY</label>
+            <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 10px;">
+            <button class="primary" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Password</button>
+            <div id="settings-msg" style="font-size: 12px; margin-top: 10px;"></div>
+        </div>
+        <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DATABASE ADMIN</label>
+            <button class="view-toggle-btn" style="width: 100%; padding: 10px;" onclick="checkHarvesterStatus()">📡 Live Harvester Monitor</button>
+        </div>
+        <div style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">FEEDBACK / BUG REPORT</label>
+            <textarea id="feedback-text" rows="3" placeholder="Tell us what's broken or what you'd like to see added..." style="width: 100%; margin-bottom: 10px; resize: vertical;"></textarea>
+            <button class="view-toggle-btn" id="feedback-btn" style="width: 100%; padding: 10px;" onclick="submitFeedback()">Send Feedback</button>
+            <div id="feedback-msg" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
+        </div>
+        <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="danger-btn" style="width: 100%; padding: 10px;" onclick="logOut()">Sign Out completely</button>
+        </div>
+    </div>
+</div>
 
-    tBox.innerHTML = `
-        <div style="width: 100%; font-size: 14px; font-weight: bold; color: var(--accent-green); text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
-        <div style="${tStyle}"><div style="${labelStyle}">Low Round</div><div style="${valStyle}">${displayScore}</div><div style="${subStyle}">${formatList(lowScores)}</div></div>
-        <div style="${tStyle}"><div style="${labelStyle}">Long Drive</div><div style="${valStyle}">${maxDrive === 0 ? '--' : maxDrive + 'y'}</div><div style="${subStyle}">${formatList(longDrives)}</div></div>
-        <div style="${tStyle}"><div style="${labelStyle}">Fewest Putts</div><div style="${valStyle}">${minPutts === 999 ? '--' : minPutts}</div><div style="${subStyle}">${formatList(lowPuttsList)}</div></div>
-        <div style="${tStyle}"><div style="${labelStyle}">Most FIRs</div><div style="${valStyle}">${maxFir}</div><div style="${subStyle}">${formatList(mostFirsList)}</div></div>
-    `;
-}
+<div id="insight-modal" class="modal-overlay" style="display: none;">
+    <div class="auth-card" style="max-width: 600px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
+            <h2 id="insight-detail-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">INSIGHT DETAIL</h2>
+        </div>
+        <button type="button" class="close-modal-btn" onclick="document.getElementById('insight-modal').style.display='none'">✕</button>
+        <div id="insight-detail-content" style="font-size: 14px; color: var(--text-main); line-height: 1.6;"></div>
+    </div>
+</div>
 
-function renderCharts(filteredRounds, actHoles, actPars) {
-    const tCtx = document.getElementById('scoringTrendChart'); const cCtx = document.getElementById('clubChart'); const radCtx = document.getElementById('missRadarChart'); const wCtx = document.getElementById('weatherScoreChart');
-    if (trendChart) trendChart.destroy(); if (clubChart) clubChart.destroy();
-    if (radarChart) radarChart.destroy(); if (weatherChart) weatherChart.destroy();
-    
-    if (filteredRounds.length === 0) { 
-        tCtx.parentElement.style.display = 'none'; cCtx.parentElement.style.display = 'none';
-        radCtx.parentElement.style.display = 'none'; wCtx.parentElement.style.display = 'none';
-        return; 
-    }
-    tCtx.parentElement.style.display = 'flex'; cCtx.parentElement.style.display = 'flex'; 
-    radCtx.parentElement.style.display = 'block'; wCtx.parentElement.style.display = 'block';
-    
-    const chartData = [...filteredRounds].reverse(); 
-    const activeOverlay = document.getElementById('primary-chart-metric').value;
-    let baseScores = [];
-    
-    chartData.forEach(r => { 
-        let targetHoles = r.hole_scores || []; 
-        if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
-        if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
-        
-        let rs = 0;
-        if (targetHoles.length === 0 && (!r.hole_scores || r.hole_scores.length === 0)) rs = r.total_score;
-        else rs = targetHoles.reduce((sum, h) => sum + (h.score || 0), 0);
-        baseScores.push(rs); 
-    });
-    
-    let trendDatasets = [{ label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y', tension: 0.3 }];
-    
-    const badge = document.getElementById('trend-badge');
-    if (baseScores.length > 1) {
-        let n = baseScores.length, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-        for (let i = 0; i < n; i++) { sumX += i; sumY += baseScores[i]; sumXY += i * baseScores[i]; sumXX += i * i; }
-        let m = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-        let b = (sumY - m * sumX) / n;
-        let trendData = baseScores.map((_, i) => m * i + b);
-        trendDatasets.push({ label: 'Trendline', data: trendData, borderColor: 'rgba(255, 255, 255, 0.3)', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false, yAxisID: 'y', pointHoverRadius: 0, hoverBorderColor: 'transparent' });
-        
-        let strokeShift = (m * (n - 1)).toFixed(1);
-        if(strokeShift < 0) { badge.innerHTML = `<span style="color: var(--accent-green);">📈 Trending Better (${strokeShift} Strokes)</span>`; badge.style.display = 'block'; }
-        else if(strokeShift > 0) { badge.innerHTML = `<span style="color: #ef4444;">📉 Trending Worse (+${strokeShift} Strokes)</span>`; badge.style.display = 'block'; }
-        else { badge.style.display = 'none'; }
-    } else { badge.style.display = 'none'; }
+<div id="stat-graph-modal" class="modal-overlay" style="display: none;">
+    <div class="auth-card" style="max-width: 800px; text-align: left; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
+            <h2 id="stat-graph-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">STAT TREND</h2>
+        </div>
+        <div style="margin-bottom: 15px; display:flex; gap:10px;">
+            <select class="filter-select" id="modal-filter-timeframe" onchange="refreshModalGraph()" style="width:auto; padding:8px; font-size:12px;">
+                <option value="last10" selected>Last 10 Rounds</option>
+                <option value="last20">Last 20 Rounds</option>
+                <option value="season">This Season</option>
+                <option value="full">All Time</option>
+            </select>
+        </div>
+        <button type="button" class="close-modal-btn" onclick="document.getElementById('stat-graph-modal').style.display='none'">✕</button>
+        <div style="height: 300px; width: 100%; position: relative;">
+            <canvas id="statDetailChart"></canvas>
+        </div>
+    </div>
+</div>
 
-    const oColors = { hcp: '#f59e0b', putts: '#3b82f6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308', sg: '#38bdf8' };
-    const oLabels = { hcp: 'Handicap', putts: 'Putts', fir: 'FIR %', gir: 'GIR %', scram: 'Scram %', drops: 'Drops', p3: 'Par 3 Avg', p4: 'Par 4 Avg', p5: 'Par 5 Avg', sg: 'Strokes Gained: Putts' };
-    
-    if (activeOverlay === 'hcp') {
-        let hcpHist = calculateHcpHistory(filteredRounds);
-        let hcpData = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
-        trendDatasets.push({ label: oLabels['hcp'], data: hcpData, borderColor: oColors['hcp'], backgroundColor: 'transparent', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: oColors['hcp'], yAxisID: 'y1', tension: 0.3 });
-    } else if (activeOverlay !== 'none') {
-        let oData = [];
-        chartData.forEach(r => {
-            let p=0, fH=0, fT=0, gH=0, gT=0, sH=0, sT=0, dr=0, p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, sgTot=0, sgCnt=0; 
-            let targetHoles = r.hole_scores || []; 
-            if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
-            if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
+<div id="incomplete-modal" class="modal-overlay" style="display: none;">
+    <div class="auth-card" style="max-width: 400px; border-color: #ef4444;">
+        <h2 style="color: #ef4444; margin-top: 0;">⚠️ INCOMPLETE ROUND</h2>
+        <p style="font-size: 14px; color: var(--text-muted);">You are missing scores on the following holes:</p>
+        <div id="incomplete-holes-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0;"></div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="view-toggle-btn" style="flex:1;" onclick="document.getElementById('incomplete-modal').style.display='none'">Go Back</button>
+            <button class="danger-btn" style="flex:1;" onclick="forceSubmitRound()">Submit Anyway</button>
+        </div>
+    </div>
+</div>
+
+<div id="history-modal" class="modal-overlay" style="display: none;">
+    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
+        <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
+        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
+            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
+            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
+        </div>
+        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
+            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
+        </div>
+        <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
+            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
+            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
+        </div>
+    </form>
+</div>
+
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="switchView('view-new-round', this)">New Round</button>
+            <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
+            <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
+            <button class="view-toggle-btn" onclick="openSettings()">⚙️ Account</button>
+        </div>
+    </div>
+
+    <!-- NEW ROUND VIEW -->
+    <div id="view-new-round" class="view-container active">
+        <div class="card" id="search-card">
+            <div class="search-header">SEARCH GOLF COURSES</div>
+            <div class="search-row">
+                <input type="text" id="course-search-input" placeholder="Search..." autocomplete="off">
+                <button class="primary" id="fetch-course-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
+                <ul id="search-dropdown" class="dropdown-list"></ul>
+            </div>
             
-            targetHoles.forEach(h => { 
-                if (h.putts) p += h.putts; 
-                if (h.drops) dr += h.drops; 
-                if (h.fir === 'hit' || h.fir === 'miss') { fT++; if (h.fir === 'hit') fH++; } 
-                if (h.gir === 'hit' || h.gir === 'miss') { gT++; if (h.gir === 'hit') gH++; if(h.gir === 'miss') { sT++; if(h.score <= h.par) sH++; } } 
-                if (h.score && h.par) { let d=h.score-h.par; if(h.par===3){p3+=d; p3c++;} if(h.par===4){p4+=d; p4c++;} if(h.par===5){p5+=d; p5c++;} }
-                if (h.putts !== null && h.putt_1_ft > 0) { let exp = getExpectedPutts(h.putt_1_ft); sgTot += (exp - h.putts); sgCnt++; }
-            });
-            
-            if (activeOverlay === 'putts') oData.push(p); if (activeOverlay === 'drops') oData.push(dr); if (activeOverlay === 'fir') oData.push(fT > 0 ? (fH/fT*100).toFixed(0) : null); if (activeOverlay === 'gir') oData.push(gT > 0 ? (gH/gT*100).toFixed(0) : null); if (activeOverlay === 'scram') oData.push(sT > 0 ? (sH/sT*100).toFixed(0) : null);
-            if (activeOverlay === 'p3') oData.push(p3c>0 ? (p3/p3c).toFixed(2) : null); if (activeOverlay === 'p4') oData.push(p4c>0 ? (p4/p4c).toFixed(2) : null); if (activeOverlay === 'p5') oData.push(p5c>0 ? (p5/p5c).toFixed(2) : null);
-            if (activeOverlay === 'sg') oData.push(sgCnt>0 ? sgTot.toFixed(2) : null);
-        });
-        trendDatasets.push({ label: oLabels[activeOverlay], data: oData, borderColor: oColors[activeOverlay], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#121212', pointBorderColor: oColors[activeOverlay], yAxisID: 'y1', tension: 0.3 });
-    }
-    
-    trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlay !== 'none', position: 'right', grid: { drawOnChartArea: false } } } } });
-
-    // CLUB DISTANCE BAR CHART
-    let clubStats = {};
-    chartData.forEach(r => {
-        let targetHoles = r.hole_scores || []; 
-        if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
-        if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString()));
-        targetHoles.forEach(h => {
-            if (h.drive_club && h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) {
-                if(!clubStats[h.drive_club]) clubStats[h.drive_club] = {tot:0, cnt:0};
-                clubStats[h.drive_club].tot += h.drive_distance; clubStats[h.drive_club].cnt++;
-            }
-            if (h.approach_club && h.approach_yd > 0) {
-                if(!clubStats[h.approach_club]) clubStats[h.approach_club] = {tot:0, cnt:0};
-                clubStats[h.approach_club].tot += h.approach_yd; clubStats[h.approach_club].cnt++;
-            }
-        });
-    });
-    
-    let cLabels = Object.keys(clubStats).sort((a,b) => (clubStats[b].tot/clubStats[b].cnt) - (clubStats[a].tot/clubStats[a].cnt));
-    let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
-
-    clubChart = new Chart(cCtx.getContext('2d'), { 
-        type: 'bar', 
-        data: { labels: cLabels, datasets: [{ label: 'Avg Yards', data: cData, backgroundColor: '#3b82f6', borderRadius: 4 }] }, 
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } }
-    });
-
-    // Render Radar Chart
-    let fL=0, fR=0, gL=0, gR=0, gS=0, gLg=0;
-    chartData.forEach(r => {
-        let th = r.hole_scores || [];
-        if (actHoles.length < 18) th = th.filter(h => actHoles.includes(h.hole_number.toString())); 
-        if (actPars.length < 4) th = th.filter(h => actPars.includes(h.par.toString()));
-        th.forEach(h => {
-            let fA = h.fir_adv || ""; let gA = h.gir_adv || "";
-            if(fA.includes('LEFT')) fL++; if(fA.includes('RIGHT')) fR++;
-            if(gA.includes('LEFT')) gL++; if(gA.includes('RIGHT')) gR++;
-            if(gA.includes('SHORT')) gS++; if(gA.includes('LONG')) gLg++;
-        });
-    });
-    radarChart = new Chart(radCtx.getContext('2d'), {
-        type: 'radar',
-        data: {
-            labels: ['Long', 'Right', 'Short', 'Left'],
-            datasets: [
-                { label: 'GIR Misses', data: [gLg, gR, gS, gL], borderColor: '#d946ef', backgroundColor: 'rgba(217, 70, 239, 0.3)', borderWidth: 2, pointBackgroundColor: '#d946ef' },
-                { label: 'FIR Misses', data: [0, fR, 0, fL], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.3)', borderWidth: 2, pointBackgroundColor: '#3b82f6' }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: '#333' }, grid: { color: '#333' }, pointLabels: { color: '#9ca3af', font: {size: 11, weight: 'bold'} }, ticks: { display: false, backdropColor: 'transparent' } } }, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: {size: 11} } }, title: { display: true, text: 'Directional Miss Bias', color: '#f3f4f6' } } }
-    });
-
-    // Render Weather Correlation Engine
-    let weatherPlotData = [];
-    chartData.forEach(r => {
-        if(r.weather_temp && r.total_score > 0) {
-            let tempNum = parseInt(r.weather_temp.replace('°C', ''));
-            let windStr = r.weather_wind || "";
-            let par = 72;
-            if (r.hole_scores && r.hole_scores.length >= 18) {
-                par = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
-            }
-            let relScore = r.total_score - par;
-            if(!isNaN(tempNum)) {
-                weatherPlotData.push({x: tempNum, y: relScore, rawLabel: `${r.course_name.trim()} (${r.weather_temp}, ${windStr})`});
-            }
-        }
-    });
-
-    weatherChart = new Chart(wCtx.getContext('2d'), {
-        type: 'scatter',
-        data: { datasets: [{ label: 'Score vs. Temperature', data: weatherPlotData, backgroundColor: '#06b6d4', pointRadius: 5 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw.rawLabel}: Score ${c.raw.y > 0 ? '+'+c.raw.y : (c.raw.y===0?'E':c.raw.y)}` } } }, scales: { x: { title: { display: true, text: 'Temperature (°C)', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, y: { title: { display: true, text: 'Score vs Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } } } }
-    });
-}
-
-window.updateAnalytics = function() {
-    const timeframe = document.getElementById('filter-timeframe').value; 
-    const holeFilter = document.getElementById('filter-hole-count').value; 
-    localStorage.setItem('golf_filter_timeframe', timeframe);
-    localStorage.setItem('golf_filter_hole_count', holeFilter);
-    const actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'")); const actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value); const actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value); const actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value); const actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
-    
-    let fRounds = masterAnalyticsData.filter(r => { 
-        if (!actCrs.includes(r.course_name.trim())) return false; 
-        
-        const d = new Date(r.date_played); 
-        if (timeframe === 'season' && d.getUTCFullYear().toString() !== new Date().getUTCFullYear().toString()) return false;
-        if (timeframe !== 'season' && !actYrs.includes(d.getUTCFullYear().toString())) return false; 
-        if (actMonths.length < 12 && !actMonths.includes((d.getUTCMonth() + 1).toString())) return false; 
-        
-        if(r.hole_scores && r.hole_scores.length > 0) {
-            const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
-            if (holeFilter === '18' && playedHoles < 18) return false;
-            if (holeFilter === '9' && (playedHoles < 9 || playedHoles >= 18)) return false; 
-        } else if (holeFilter === '9') {
-            return false; 
-        }
-        
-        let isFullyFiltered = actHoles.length < 18 || actPars.length < 4;
-        if (isFullyFiltered && (!r.hole_scores || r.hole_scores.length === 0)) return false;
-
-        if (actHoles.length < 18) { const hasHole = r.hole_scores.some(h => actHoles.includes(h.hole_number.toString()) && h.score && h.score > 0); if(!hasHole) return false; } 
-        if (actPars.length < 4) { const hasPar = r.hole_scores.some(h => actPars.includes(h.par.toString()) && h.score && h.score > 0); if(!hasPar) return false; } 
-        return true; 
-    });
-    
-    currentFilteredRounds = fRounds;
-
-    const t = document.getElementById('analytics-data-table');
-    if(fRounds.length === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
-
-    if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
-    document.getElementById('hcp-display').innerText = calculateHandicap(fRounds); renderCharts(fRounds, actHoles, actPars); 
-    document.getElementById('ai-insights-box').innerHTML = generateInsights(fRounds);
-    updateTrophyRoom(fRounds);
-    
-    let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0, scramOpp:0, scramHit:0, tpOpp:0, tpHit:0, sgTot:0, sgCnt:0 }; let totalStrokes = 0; let totalHolesCount = 0; let p3Tot=0, p3Cnt=0, p4Tot=0, p4Cnt=0, p5Tot=0, p5Cnt=0;
-    let f9Strokes=0, f9Par=0, b9Strokes=0, b9Par=0;
-
-    fRounds.forEach(r => { 
-        let targetHoles = r.hole_scores || []; 
-        if (targetHoles.length === 0) { totalStrokes += r.total_score; totalHolesCount += 18; s.putts += r.total_putts || 0; s.pHP += 18; return; }
-        
-        if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
-        if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
-        
-        targetHoles.forEach(h => { 
-            if (!h.score) return; 
-            totalStrokes += h.score; 
-            totalHolesCount++; 
-            
-            if (h.par) {
-                const d = h.score - h.par; 
-                if (h.par === 3) { p3Tot += h.score; p3Cnt++; } if (h.par === 4) { p4Tot += h.score; p4Cnt++; } if (h.par === 5) { p5Tot += h.score; p5Cnt++; } 
-                if(h.score===1) s.hio++; else if(d===-3) s.alb++; else if(d===-2) s.egl++; else if(d===-1) s.brd++; else if(d===0) s.par++; else if(d===1) s.bog++; else if(d===2) s.dbl++; else if(d===3) s.tpl++; else if(d>=4) s.qd++; 
+            <div id="course-setup-container" style="display: none; margin-top: 20px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Select Tee Box</label>
+                        <select id="tee-select" onchange="handleTeeChange()" style="width: 100%;"></select>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Round Type</label>
+                        <select id="round-type-select" style="width: 100%;">
+                            <option value="REAL">⛳ Real Round</option>
+                            <option value="SIM">🎮 Simulator</option>
+                            <option value="RANGE">🏌️‍♂️ Driving Range</option>
+                        </select>
+                    </div>
+                </div>
                 
-                if(h.hole_number <= 9) { f9Strokes += h.score; f9Par += h.par; } else { b9Strokes += h.score; b9Par += h.par; }
-            }
+                <div class="setup-row" id="manual-tee-row" style="display: none; margin-top: 10px;">
+                    <div class="setup-group"><label>Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue" autocomplete="off"></div>
+                </div>
+            </div>
             
-            if(h.putts !== null && h.putts !== "") {
-                s.putts+=h.putts; s.pHP++; 
-                s.tpOpp++; if(h.putts < 3) s.tpHit++;
-                
-                if(h.putt_1_ft > 0) {
-                    let exp = getExpectedPutts(h.putt_1_ft);
-                    s.sgTot += (exp - h.putts);
-                    s.sgCnt++;
-                }
-            } 
-            if(h.drops) s.drp+=h.drops; 
-            if(h.fir==='hit'||h.fir==='miss') { s.fT++; if(h.fir==='hit') s.fH++; } 
-            if(h.gir==='hit'||h.gir==='miss') { 
-                s.gT++; 
-                if(h.gir==='hit') s.gH++; 
-                if(h.gir==='miss') { s.scramOpp++; if(h.score <= h.par) s.scramHit++; }
-            } 
-            if(h.sand_save==='yes'||h.sand_save==='no') { s.ssT++; if(h.sand_save==='yes') s.ssH++; } 
-        }) 
-    });
-    
-    if(totalHolesCount === 0) { t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg</th><th>%</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No data matches these filters.<br><span style="font-size:11px;color:var(--text-muted);">Total Rounds on Account: ${masterAnalyticsData.length}</span></td></tr></tbody>`; return; }
-    const cA = (tot) => ((tot / totalHolesCount) * 18).toFixed(1); const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
-    t.innerHTML = `<thead><tr><th>Metric</th><th>Total</th><th>Avg / 18-Holes</th><th>Hole %</th></tr></thead><tbody>
-        <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING</td></tr>
-        <tr onclick="openStatGraph('Hole Score', 'score')"><td>${actHoles.length < 18 ? 'Hole Score' : 'Total Score'}</td><td>${totalStrokes}</td><td>${cA(totalStrokes)}</td><td>-</td></tr>
-        <tr onclick="openStatGraph('Hole in One', 'hio')"><td>Hole in One</td><td>${s.hio}</td><td>${cA(s.hio)}</td><td>${cP(s.hio)}</td></tr>
-        <tr onclick="openStatGraph('Eagle', 'egl')"><td>Eagle</td><td>${s.egl}</td><td>${cA(s.egl)}</td><td>${cP(s.egl)}</td></tr>
-        <tr onclick="openStatGraph('Birdie', 'brd')"><td>Birdie</td><td>${s.brd}</td><td>${cA(s.brd)}</td><td>${cP(s.brd)}</td></tr>
-        <tr onclick="openStatGraph('Par', 'par')"><td>Par</td><td>${s.par}</td><td>${cA(s.par)}</td><td>${cP(s.par)}</td></tr>
-        <tr onclick="openStatGraph('Bogey', 'bog')"><td>Bogey</td><td>${s.bog}</td><td>${cA(s.bog)}</td><td>${cP(s.bog)}</td></tr>
-        <tr onclick="openStatGraph('Double Bogey', 'dbl')"><td>Double Bogey</td><td>${s.dbl}</td><td>${cA(s.dbl)}</td><td>${cP(s.dbl)}</td></tr>
-        <tr onclick="openStatGraph('Triple Bogey', 'tpl')"><td>Triple Bogey</td><td>${s.tpl}</td><td>${cA(s.tpl)}</td><td>${cP(s.tpl)}</td></tr>
-        <tr onclick="openStatGraph('Quad+ Bogey', 'qd')"><td>Quad+ Bogey</td><td>${s.qd}</td><td>${cA(s.qd)}</td><td>${cP(s.qd)}</td></tr>
-        <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">SCORING AVERAGES</td></tr>
-        <tr onclick="openStatGraph('Par 3 Avg', 'p3')"><td>Scoring Avg (Par 3)</td><td>-</td><td>${p3Cnt > 0 ? (p3Tot/p3Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-        <tr onclick="openStatGraph('Par 4 Avg', 'p4')"><td>Scoring Avg (Par 4)</td><td>-</td><td>${p4Cnt > 0 ? (p4Tot/p4Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-        <tr onclick="openStatGraph('Par 5 Avg', 'p5')"><td>Scoring Avg (Par 5)</td><td>-</td><td>${p5Cnt > 0 ? (p5Tot/p5Cnt).toFixed(2) : '-'}</td><td>-</td></tr>
-        <tr><td>Front 9 Scoring (+/- Par)</td><td>-</td><td>${f9Par > 0 ? getRelativeParString(f9Strokes, f9Par) : '-'}</td><td>-</td></tr>
-        <tr><td>Back 9 Scoring (+/- Par)</td><td>-</td><td>${b9Par > 0 ? getRelativeParString(b9Strokes, b9Par) : '-'}</td><td>-</td></tr>
-        <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);"><td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td></tr>
-        <tr onclick="openStatGraph('Strokes Gained: Putts', 'sgPutt')"><td style="color:var(--accent-green);">Strokes Gained (Putts)</td><td>-</td><td>${s.sgCnt > 0 ? (s.sgTot > 0 ? '+'+s.sgTot.toFixed(2) : s.sgTot.toFixed(2)) : '-'}</td><td>-</td></tr>
-        <tr onclick="openStatGraph('Putts', 'putts')"><td>Putts</td><td>${s.putts}</td><td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td><td>-</td></tr>
-        <tr onclick="openStatGraph('3-Putt Avoidance %', 'tpAvoid')"><td>3-Putt Avoidance</td><td>${s.tpHit} / ${s.tpOpp}</td><td>-</td><td>${s.tpOpp > 0 ? ((s.tpHit / s.tpOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-        <tr onclick="openStatGraph('Accuracy (FIR + GIR)', 'acc')"><td>Accuracy (FIR + GIR)</td><td>${s.fH + s.gH} / ${s.fT + s.gT}</td><td>-</td><td>${(s.fT + s.gT) > 0 ? (((s.fH + s.gH) / (s.fT + s.gT)) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-        <tr onclick="openStatGraph('FIR %', 'fir')"><td>FIR</td><td>${s.fH} / ${s.fT}</td><td>${s.fT > 0 ? ((s.fH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.fT > 0 ? ((s.fH / s.fT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-        <tr onclick="openStatGraph('GIR %', 'gir')"><td>GIR</td><td>${s.gH} / ${s.gT}</td><td>${s.gT > 0 ? ((s.gH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-        <tr onclick="openStatGraph('Scrambling %', 'scram')"><td>Scrambling (Missed GIR)</td><td>${s.scramHit} / ${s.scramOpp}</td><td>-</td><td>${s.scramOpp > 0 ? ((s.scramHit / s.scramOpp) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-        <tr onclick="openStatGraph('Sand Save %', 'ss')"><td>Sand Saves</td><td>${s.ssH} / ${s.ssT}</td><td>${s.ssT > 0 ? ((s.ssH / totalHolesCount) * 18).toFixed(1) : '0.0'}</td><td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td></tr>
-        <tr onclick="openStatGraph('Drops', 'drops')"><td>Drops (Penalty)</td><td>${s.drp}</td><td>${cA(s.drp)}</td><td>-</td></tr>
-    </tbody>`;
-}
+            <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
+        </div>
 
-initializeApp();
+        <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
+            <div class="card">
+                <div class="scorecard-header
