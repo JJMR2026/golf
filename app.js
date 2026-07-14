@@ -70,8 +70,8 @@ function applyTheme(themeName) {
     if (selector) selector.value = themeName;
 }
 
-let savedTheme = localStorage.getItem('golf_theme');
-if (savedTheme) applyTheme(savedTheme);
+let savedTheme = localStorage.getItem('golf_theme') || 'dark';
+applyTheme(savedTheme);
 
 async function initializeApp() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -111,6 +111,21 @@ async function initializeApp() {
             } 
         }
     });
+
+    let htmlList = "";
+    for(let i=1; i<=18; i++) {
+        htmlList += `<label class="checkbox-container"><input type="checkbox" class="hole-cb" value="${i}" autocomplete="off" onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole ${i}</label>`;
+    }
+    const hBox = document.getElementById('hole-checkbox-list');
+    if(hBox) hBox.innerHTML += htmlList;
+
+    let monthHtml = "";
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    for(let i=1; i<=12; i++) {
+        monthHtml += `<label class="checkbox-container"><input type="checkbox" class="month-cb" value="${i}" autocomplete="off" onchange="checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> ${months[i-1]}</label>`;
+    }
+    const mBox = document.getElementById('month-checkbox-list');
+    if(mBox) mBox.innerHTML += monthHtml;
 }
 
 async function handleAuth(type) {
@@ -930,7 +945,7 @@ function buildModalGrid(holesCount, startOffset) {
             else if(r.type === 'par') c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
             else if(['score','putts','drive'].includes(r.type)) c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
             else if(r.type === 'drops') { let cVal = parseInt(modalRoundData[i].drops) || 0; c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`; }
-            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':'-')):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
+            else { let v = modalRoundData[i][r.type]; let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':(v==='stuck'?'STUCK':'-'))):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); let hc = (v==='hit'||v==='yes')?'hit':''; c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; }
             grid.appendChild(c);
         }
     });
@@ -1160,6 +1175,107 @@ function calculateHcpHistory(rounds) {
         history.push({ date: chrono[i].date_played, hcp: h });
     }
     return history;
+}
+
+function generateInsights(fRounds) {
+    let insights = [], p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, putts=0, holesPutted=0, threePutts=0, drops=0, dropsOB=0, dropsWater=0, dropsLost=0, firMisses=0, firMissLeft=0, firMissRight=0, totalFir=0, firHit=0, girMisses=0, girMissShort=0, totalGir=0, girHit=0, bbOpp=0, bbHit=0, bbMajorOpp=0, bbMajorHit=0;
+    let hAvg = {}, f9 = {s:0, p:0}, late = {s:0, p:0};
+    
+    fRounds.forEach(r => { 
+        if(!r.hole_scores || r.hole_scores.length === 0) {
+            if(r.total_putts) { putts += r.total_putts; holesPutted += 18; if(r.total_putts >= 36) threePutts++; } return;
+        }
+        
+        let hs = r.hole_scores.slice().sort((a,b) => a.hole_number - b.hole_number);
+        for(let i=0; i<hs.length - 1; i++) {
+            let curr = hs[i], next = hs[i+1];
+            if(curr.score && curr.par && next.score && next.par) {
+                let prevDiff = curr.score - curr.par;
+                let nextDiff = next.score - next.par;
+                if(prevDiff === 1) { bbOpp++; if(nextDiff <= 0) bbHit++; }
+                if(prevDiff >= 2) { bbMajorOpp++; if(nextDiff <= 1) bbMajorHit++; }
+            }
+        }
+
+        hs.forEach(h => {
+            if(h.score && h.par) { 
+                let diff = h.score - h.par; 
+                if(h.par===3){p3+=diff; p3c++;} if(h.par===4){p4+=diff; p4c++;} if(h.par===5){p5+=diff; p5c++;} 
+                
+                if(!hAvg[h.hole_number]) hAvg[h.hole_number] = {tot:0, cnt:0};
+                hAvg[h.hole_number].tot += diff; hAvg[h.hole_number].cnt++;
+
+                if(h.hole_number >= 1 && h.hole_number <= 6) { f9.s += h.score; f9.p += h.par; }
+                if(h.hole_number >= 13 && h.hole_number <= 18) { late.s += h.score; late.p += h.par; }
+            }
+            if(h.putts !== null && h.putts !== "") { putts += h.putts; holesPutted++; if(h.putts >= 3) threePutts++; }
+            
+            if(h.drops && h.drops_adv) {
+                drops += h.drops;
+                let dArr = h.drops_adv.split(',');
+                dArr.forEach(d => {
+                    if(d === 'OB') dropsOB++;
+                    if(d === 'WATER') dropsWater++;
+                    if(d === 'LOST') dropsLost++;
+                });
+            } else if (h.drops) {
+                drops += h.drops;
+            }
+
+            if(h.fir === 'hit' || h.fir === 'miss') { 
+                totalFir++; 
+                if(h.fir === 'hit') firHit++; 
+                else { 
+                    firMisses++; 
+                    let fA = h.fir_adv || "";
+                    if(fA.includes('LEFT')) firMissLeft++; 
+                    if(fA.includes('RIGHT')) firMissRight++; 
+                } 
+            }
+            
+            if(h.gir === 'hit' || h.gir === 'miss') { 
+                totalGir++; 
+                if(h.gir === 'hit') girHit++; 
+                else { 
+                    girMisses++; 
+                    let gA = h.gir_adv || "";
+                    if(gA.includes('SHORT')) girMissShort++; 
+                } 
+            }
+        }); 
+    });
+    
+    let averages = [];
+    if (p3c > 0) averages.push({type: 'Par 3s', val: p3/p3c}); if (p4c > 0) averages.push({type: 'Par 4s', val: p4/p4c}); if (p5c > 0) averages.push({type: 'Par 5s', val: p5/p5c});
+    if (averages.length > 0) { averages.sort((a,b) => b.val - a.val); let worst = averages[0]; let best = averages[averages.length - 1]; insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${worst.type}</b>, averaging +${worst.val.toFixed(1)} to par.</div></div>`); if (averages.length > 1 && best.val < worst.val) { insights.push(`<div class="insight-btn" onclick="openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Scoring Strength:</b> You excel on <b>${best.type}</b>, playing them efficiently at +${best.val.toFixed(1)} to par.</div></div>`); } }
+    
+    let dHole = {num:0, val:-99};
+    for(let i=1; i<=18; i++) { if(hAvg[i] && hAvg[i].cnt > 0) { let avg = hAvg[i].tot / hAvg[i].cnt; if(avg > dHole.val) { dHole.val = avg; dHole.num = i; } } }
+    if (dHole.num > 0 && dHole.val > 0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Danger Holes')"><span style="font-size:18px;">🏴‍☠️</span><div><b>Danger Hole:</b> Historically, <b>Hole ${dHole.num}</b> costs you the most strokes (+${dHole.val.toFixed(1)} to par).</div></div>`);
+
+    if(f9.p > 0 && late.p > 0) {
+        let e1 = (f9.s - f9.p) / (f9.p / 6); 
+        let e3 = (late.s - late.p) / (late.p / 6); 
+        if(e3 > e1 + 0.3) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Fatigue')"><span style="font-size:18px;">📉</span><div><b>Late Round Fatigue:</b> You bleed strokes late, scoring significantly worse on holes 13-18 compared to holes 1-6.</div></div>`);
+    }
+
+    if (bbOpp > 0 || bbMajorOpp > 0) { 
+        let bbPct = bbOpp > 0 ? (bbHit / bbOpp) * 100 : 0; 
+        let icon = bbPct >= 30 ? '🔥' : '🧠';
+        insights.push(`<div class="insight-btn" onclick="openInsightDetail('Mental Toughness')"><span style="font-size:18px;">${icon}</span><div><b>Mental Toughness:</b> You successfully salvage Par or better immediately following a Bogey ${bbPct.toFixed(0)}% of the time.</div></div>`); 
+    }
+
+    if (holesPutted > 0) { let avgPutts = putts / holesPutted; let threePuttRate = (threePutts / holesPutted) * 100; if (avgPutts > 2.0) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🔴</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">🟢</span><div><b>Putting:</b> You average ${avgPutts.toFixed(1)} putts per hole.</div></div>`); if (threePuttRate > 10) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Putting')"><span style="font-size:18px;">⚠️</span><div><b>3-Putts:</b> ${threePuttRate.toFixed(0)}% of your holes result in a 3-putt.</div></div>`); }
+    if (totalFir > 0) { let firPct = (firHit / totalFir) * 100; if (firPct < 40) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🔴</span><div><b>Driving Accuracy:</b> Hitting only ${firPct.toFixed(0)}% of fairways.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🟢</span><div><b>Driving Accuracy:</b> Hitting ${firPct.toFixed(0)}% of fairways.</div></div>`); if (firMisses > 0) { let leftPct = (firMissLeft / firMisses) * 100; let rightPct = (firMissRight / firMisses) * 100; if (leftPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${leftPct.toFixed(0)}% are to the <b>LEFT</b>.</div></div>`); if (rightPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Driving Accuracy')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Directional Bias:</b> When missing fairways, ${rightPct.toFixed(0)}% are to the <b>RIGHT</b>.</div></div>`); } }
+    if (totalGir > 0) { let girPct = (girHit / totalGir) * 100; if (girPct < 30) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🔴</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); else insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🟢</span><div><b>Approach Shots:</b> Hitting ${girPct.toFixed(0)}% of greens in regulation.</div></div>`); if (girMisses > 0 && girMissShort > 0) { let shortPct = (girMissShort / girMisses) * 100; if (shortPct >= 50) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Approach Shots')"><span style="font-size:18px;">🎯</span><div><b>Distance Control:</b> ${shortPct.toFixed(0)}% of your missed greens land <b>SHORT</b>.</div></div>`); } }
+    if (drops > 0) { 
+        let dropsPerRound = drops / fRounds.length; 
+        if (dropsPerRound >= 2) insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span style="font-size:18px;">⚠️</span><div><b>Course Management:</b> You average ${dropsPerRound.toFixed(1)} penalty drops per round.</div></div>`); 
+        let dType = []; if(dropsOB > 0) dType.push({t:'OB', v:dropsOB}); if(dropsWater > 0) dType.push({t:'Water', v:dropsWater}); if(dropsLost > 0) dType.push({t:'Lost Ball', v:dropsLost});
+        if (dType.length > 0) { dType.sort((a,b)=>b.v - a.v); insights.push(`<div class="insight-btn" onclick="openInsightDetail('Penalties')"><span style="font-size:18px;">🏌️‍♂️</span><div><b>Penalties:</b> Your most common penalty type is <b>${dType[0].t.toUpperCase()}</b>.</div></div>`); }
+    }
+    
+    if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
 }
 
 function getRelativeParString(score, par) {
