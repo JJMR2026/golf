@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=7.0">
+    <link rel="stylesheet" href="styles.css?v=8.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -117,14 +117,15 @@
 
 <!-- PUTT MAPPER MODAL -->
 <div id="putt-map-modal" class="modal-overlay" style="display: none;">
-    <div class="auth-card" style="max-width: 400px;">
-        <h2 style="color: var(--accent-green); margin-top: 0;">🎯 MAP PUTT</h2>
-        <p style="font-size: 12px; color: var(--text-muted);">Tap the pin location, then tap your ball location.</p>
-        <div style="width: 100%; height: 300px; background: #064e3b; border-radius: 12px; border: 2px solid var(--accent-green); position: relative; margin-bottom: 15px; overflow: hidden;" id="putt-canvas-container">
-            <!-- Canvas will go here -->
+    <div class="auth-card" style="max-width: 400px; padding: 20px;">
+        <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 5px;">🎯 MAP PUTT</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Tap once for Flag ⛳. Tap again for Ball ⚪.</p>
+        <div style="display:flex; justify-content:center; margin-bottom: 15px;">
+            <canvas id="putt-canvas" width="300" height="300" style="background: #064e3b; border-radius: 50%; border: 2px solid var(--accent-green); cursor: crosshair; touch-action: none;"></canvas>
         </div>
+        <div id="putt-distance-display" style="font-size: 24px; font-weight: bold; color: var(--text-main); margin-bottom: 15px; text-align: center;">-- ft</div>
         <div style="display: flex; gap: 10px;">
-            <button class="view-toggle-btn" style="flex:1;" onclick="document.getElementById('putt-map-modal').style.display='none'">Cancel</button>
+            <button class="view-toggle-btn" style="flex:1;" onclick="clearPuttMap()">Reset</button>
             <button class="primary" style="flex:1;" onclick="savePuttMap()">Save Distance</button>
         </div>
     </div>
@@ -166,27 +167,76 @@
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div class="nav-buttons">
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">Play</button>
-            <button class="nav-btn" onclick="switchView('view-range', this)">Range</button>
+            <button class="nav-btn" onclick="switchView('view-range', this)">Range / Sim</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
-            <button class="view-toggle-btn" onclick="openSettings()">⚙️ Account</button>
         </div>
+        <!-- COMPACT GEAR ICON FOR SETTINGS -->
+        <button class="view-toggle-btn" onclick="openSettings()" style="padding: 10px; margin-left: 5px; border-radius: 50%; font-size: 16px;">⚙️</button>
     </div>
 
-    <!-- RANGE VIEW -->
+    <!-- RANGE / SIM VIEW -->
     <div id="view-range" class="view-container">
         <div class="card">
-            <h3 style="color: var(--accent-green); margin-top: 0; text-transform: uppercase;">Driving Range / Simulator</h3>
-            <p style="font-size: 13px; color: var(--text-muted);">Range and Simulator tracking dashboard is currently in development. This will allow you to log club distances and shot dispersion without affecting your handicap.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: var(--accent-green); margin: 0; text-transform: uppercase;">Practice Dashboard</h3>
+                <select id="practice-type-select" style="width: auto; padding: 8px; font-size: 12px; background: rgba(0,0,0,0.2); border-color: var(--border-color); color: var(--text-main); border-radius: 6px;" onchange="togglePracticeMode()">
+                    <option value="RANGE">Driving Range</option>
+                    <option value="SIM">Simulator</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">CLUB</label>
+                    <select id="range-club" style="width: 100%;">
+                        <option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="5W">5 Wood</option><option value="Hybrid">Hybrid</option>
+                        <option value="4i">4 Iron</option><option value="5i">5 Iron</option><option value="6i">6 Iron</option><option value="7i">7 Iron</option><option value="8i">8 Iron</option><option value="9i">9 Iron</option><option value="PW">PW</option><option value="GW">GW</option><option value="SW">SW</option><option value="LW">LW</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DISTANCE (YDS)</label>
+                    <input type="number" id="range-dist" placeholder="Total Yds" style="width: 100%;">
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">STRIKE QUALITY</label>
+                    <select id="range-strike" style="width: 100%;">
+                        <option value="Pure">🎯 Pure</option><option value="Thin">⬇️ Thin</option><option value="Fat">⬆️ Fat</option><option value="Toe">➡️ Toe</option><option value="Heel">⬅️ Heel</option>
+                    </select>
+                </div>
+                
+                <!-- EXTRA SIM METRICS -->
+                <div class="sim-metric" style="display: none;">
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">BALL SPEED</label>
+                    <input type="number" id="sim-ball-speed" placeholder="mph" style="width: 100%;">
+                </div>
+                <div class="sim-metric" style="display: none;">
+                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">SPIN RATE</label>
+                    <input type="number" id="sim-spin" placeholder="rpm" style="width: 100%;">
+                </div>
+            </div>
+            
+            <button class="primary" style="width: 100%; margin-bottom: 20px;" onclick="logPracticeShot()">LOG SHOT</button>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <h4 style="margin-top: 0; color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Session Averages</h4>
+                <div id="practice-session-table" style="overflow-x: auto;">
+                    <table class="stats-table">
+                        <thead><tr><th>Club</th><th>Avg Yds</th><th>Shots</th></tr></thead>
+                        <tbody id="practice-session-body"><tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No shots logged this session.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- NEW ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
+        <!-- SETUP CARD: HIDDEN ONCE ROUND STARTS -->
         <div class="card" id="search-card">
-            <div class="search-header">SEARCH GOLF COURSES</div>
+            <div class="search-header">COURSE SETUP</div>
             <div class="search-row">
-                <input type="text" id="course-search-input" placeholder="Search..." autocomplete="off">
+                <input type="text" id="course-search-input" placeholder="Search Database..." autocomplete="off">
                 <button class="primary" id="fetch-course-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
                 <ul id="search-dropdown" class="dropdown-list"></ul>
             </div>
@@ -197,27 +247,20 @@
                         <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Select Tee Box</label>
                         <select id="tee-select" onchange="handleTeeChange()" style="width: 100%;"></select>
                     </div>
-                    <div style="flex: 1; min-width: 150px;">
-                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Round Type</label>
-                        <select id="round-type-select" style="width: 100%;">
-                            <option value="Regular">⛳ Real Round</option>
-                            <option value="SIM">🎮 Simulator Round</option>
-                        </select>
-                    </div>
                 </div>
-                
                 <div class="setup-row" id="manual-tee-row" style="display: none; margin-top: 10px;">
-                    <div class="setup-group"><label>Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue" autocomplete="off"></div>
+                    <div class="setup-group"><label>Manual Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue" autocomplete="off"></div>
                 </div>
+                <button class="primary" style="width: 100%; margin-top: 20px; font-size: 16px; padding: 15px;" onclick="startRound()">START ROUND</button>
             </div>
             
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <form id="golf-entry-form" onsubmit="return false;" style="width:100%;">
+        <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: none;">
             <div class="card">
                 <div class="scorecard-header">
-                    <h3 id="current-course-display">NO COURSE</h3>
+                    <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE (Tap to edit)</h3>
                     <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
                         <div class="hole-toggle-wrapper">
                             <button type="button" id="btn-18-holes" class="hole-toggle-btn active" onclick="setHoleCount(18)">18</button>
@@ -234,7 +277,6 @@
                 
                 <!-- DESKTOP FLEX WRAPPER -->
                 <div class="desktop-flex-wrapper">
-                    
                     <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                     
                     <div id="play-mode-container" style="display:none; max-width: 600px; margin: 0 auto; width: 100%;">
@@ -263,11 +305,11 @@
                         <div class="play-row">
                             <div class="play-label">PUTTS</div>
                             <div style="display:flex; gap:10px; align-items:center;">
-                                <div class="play-input-box" style="width: 80px; position:relative;">
+                                <div class="play-input-box" style="width: 70px; position:relative;">
                                     <input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" placeholder="Ft.">
-                                    <button type="button" onclick="document.getElementById('putt-map-modal').style.display='flex';" style="position:absolute; right:-35px; top:50%; transform:translateY(-50%); background:transparent; border:none; font-size:18px;">🎯</button>
+                                    <button type="button" onclick="openPuttMapper()" style="position:absolute; right:-30px; top:50%; transform:translateY(-50%); background:transparent; border:none; font-size:18px;">🎯</button>
                                 </div>
-                                <div class="tap-input-group" style="margin-left: 30px;">
+                                <div class="tap-input-group" style="margin-left: 25px;">
                                     <button type="button" class="tap-btn" onclick="adjustStat('putts', -1)">-</button>
                                     <input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)">
                                     <button type="button" class="tap-btn" onclick="adjustStat('putts', 1)">+</button>
@@ -282,10 +324,15 @@
                                     <button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button>
                                     <button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
                                 </div>
-                                <div style="display:flex; gap:5px;">
+                                <!-- DYNAMIC FIR SUB-MENU -->
+                                <div id="fir-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
+                                    <button type="button" class="adv-btn sub-miss" id="fir-adv-left" onclick="toggleAdv('fir', 'LEFT')">LEFT</button>
+                                    <button type="button" class="adv-btn sub-miss" id="fir-adv-right" onclick="toggleAdv('fir', 'RIGHT')">RIGHT</button>
+                                </div>
+                                <div style="display:flex; gap:5px; margin-top:5px;">
                                     <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width:60px;">
                                     <select class="play-sub-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)">
-                                        <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="Iron">Iron</option>
+                                        <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="5W">5 Wood</option><option value="Iron">Iron</option>
                                     </select>
                                 </div>
                             </div>
@@ -298,7 +345,14 @@
                                     <button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button>
                                     <button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button>
                                 </div>
-                                <div style="display:flex; gap:5px;">
+                                <!-- DYNAMIC GIR SUB-MENU -->
+                                <div id="gir-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%; flex-wrap: wrap;">
+                                    <button type="button" class="adv-btn sub-miss" id="gir-adv-short" onclick="toggleAdv('gir', 'SHORT')">SHORT</button>
+                                    <button type="button" class="adv-btn sub-miss" id="gir-adv-long" onclick="toggleAdv('gir', 'LONG')">LONG</button>
+                                    <button type="button" class="adv-btn sub-miss" id="gir-adv-left" onclick="toggleAdv('gir', 'LEFT')">LEFT</button>
+                                    <button type="button" class="adv-btn sub-miss" id="gir-adv-right" onclick="toggleAdv('gir', 'RIGHT')">RIGHT</button>
+                                </div>
+                                <div style="display:flex; gap:5px; margin-top:5px;">
                                     <input type="number" class="play-sub-select" id="play-approach-dist" placeholder="Yds" onchange="syncPlayToState('appDist', this.value)" style="width:60px;">
                                     <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
                                         <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
@@ -308,14 +362,24 @@
                         </div>
 
                         <div class="play-row">
-                            <div class="play-label">SAND TRACKING</div>
-                            <button type="button" id="sand-cycle-btn" class="adv-btn" style="flex:none; width: 150px; padding: 12px; margin:0;" onclick="cycleSand()">SAND: NONE</button>
+                            <div class="play-label">BUNKER STROKES</div>
+                            <button type="button" id="sand-cycle-btn" class="adv-btn" style="flex:none; width: 150px; padding: 12px; margin:0;" onclick="cycleSand()">0 (NONE)</button>
                         </div>
 
-                        <div class="play-row">
-                            <div class="play-label">PENALTY DROPS</div>
-                            <div class="play-input-box" style="background:transparent; border:none;">
-                                <button type="button" id="play-drops-btn" onclick="toggleGridDrops(currentPlayHole)" style="width:100%; height:100%; background:transparent; border:none; color:var(--accent-green); font-size:28px; font-weight:bold; padding:0; cursor:pointer;">-</button>
+                        <div class="play-row" style="flex-direction: column; align-items: flex-end;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div class="play-label">PENALTY DROPS</div>
+                                <div class="tap-input-group" style="height: 35px;">
+                                    <button type="button" class="tap-btn" style="width:35px;" onclick="adjustDrop(-1)">-</button>
+                                    <input type="number" id="play-drops-display" value="0" readonly style="width:40px; font-size: 16px;">
+                                    <button type="button" class="tap-btn" style="width:35px;" onclick="adjustDrop(1)">+</button>
+                                </div>
+                            </div>
+                            <!-- DYNAMIC DROP SUB-MENU -->
+                            <div id="drop-sub-menu" style="display:none; gap:5px; margin-top:10px; width: 100%;">
+                                <button type="button" class="adv-btn sub-miss" id="drop-water" onclick="toggleDropType('WATER')">WATER</button>
+                                <button type="button" class="adv-btn sub-miss" id="drop-ob" onclick="toggleDropType('OB')">OB</button>
+                                <button type="button" class="adv-btn sub-miss" id="drop-lost" onclick="toggleDropType('LOST')">LOST BALL</button>
                             </div>
                         </div>
 
@@ -440,10 +504,15 @@
                         <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
                     </div>
                     
-                    <div class="chart-container" style="grid-column: 1 / -1;"><canvas id="missRadarChart"></canvas></div>
+                    <div class="chart-container" style="grid-column: 1 / -1;">
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">DIRECTIONAL MISS BIAS</div>
+                        <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Tracks where you bleed strokes off the tee (FIR) and on approach (GIR).</div>
+                        <div style="position: relative; height: 180px;"><canvas id="missRadarChart"></canvas></div>
+                    </div>
 
                     <div class="chart-container" style="grid-column: 1 / -1;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">CLIMATE IMPACT (SCORE vs TEMPERATURE)</div>
+                        <div style="font-size:10px; color:var(--text-muted); margin-top:-5px; margin-bottom:10px;">Plots Average Strokes to Par against temperature buckets.</div>
                         <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
                     </div>
                 </div>
@@ -461,7 +530,7 @@
     </div>
 </div>
 
-<script src="app.js?v=7.0"></script>
+<script src="app.js?v=8.0"></script>
 
 </body>
 </html>
