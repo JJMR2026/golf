@@ -1,19 +1,26 @@
+// --- DATABASE INITIALIZATION WITH FALLBACKS ---
 const SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_KLpYENB7bIa_8SkAWN90uA_12BcxJKC"; 
 
 let supabaseClient = null;
 try {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (typeof supabase !== 'undefined') {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        console.warn("Supabase library not detected. App running in offline/guest mode only.");
+    }
 } catch (e) {
     console.error("Supabase failed to initialize:", e);
 }
 
 const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY_HERE"; 
 
-Chart.defaults.color = '#9ca3af'; 
-Chart.defaults.borderColor = '#2a2a2a';
+if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#9ca3af'; 
+    Chart.defaults.borderColor = '#2a2a2a';
+}
 
-// Global Variables
+// --- GLOBAL VARIABLES ---
 let currentUser = null;
 let currentHoleCount = 18;
 let currentHoleOffset = 0;
@@ -25,7 +32,6 @@ let roundData = Array.from({length: 18}, () => ({
     drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", 
     puttDist: "", driveClub: "", appClub: "", appDist: "" 
 }));
-
 let masterAnalyticsData = [];
 let availableTees = [];
 let selectedTee = null;
@@ -77,47 +83,52 @@ let savedTheme = localStorage.getItem('golf_theme') || 'dark';
 window.applyTheme(savedTheme);
 
 window.initializeApp = async function() {
-    if (!supabaseClient) return;
-
     try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        
-        if (session) { 
-            currentUser = session.user; 
-            localStorage.removeItem('golf_guest_mode'); 
-            document.getElementById('auth-overlay').style.display = 'none'; 
-            window.loadLocalState(); 
-            window.buildGrid(); 
-            window.processOfflineQueue(); 
-        } else if (localStorage.getItem('golf_guest_mode') === 'true') { 
-            document.getElementById('auth-overlay').style.display = 'none'; 
-            window.loadLocalState(); 
-            window.buildGrid(); 
-        } else { 
-            document.getElementById('auth-overlay').style.display = 'flex'; 
-        }
-
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (event === 'PASSWORD_RECOVERY') { 
-                document.getElementById('auth-overlay').style.display = 'none'; 
-                window.openSettings(); 
-                document.getElementById('settings-msg').innerText = "Security token authenticated."; 
-            } else if (event === 'SIGNED_IN' && session) { 
+        if (supabaseClient) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) { 
                 currentUser = session.user; 
                 localStorage.removeItem('golf_guest_mode'); 
                 document.getElementById('auth-overlay').style.display = 'none'; 
                 window.loadLocalState(); 
                 window.buildGrid(); 
                 window.processOfflineQueue(); 
-            } else if (event === 'SIGNED_OUT') { 
-                currentUser = null; 
-                if (localStorage.getItem('golf_guest_mode') !== 'true') {
-                    document.getElementById('auth-overlay').style.display = 'flex'; 
-                }
+            } else if (localStorage.getItem('golf_guest_mode') === 'true') { 
+                document.getElementById('auth-overlay').style.display = 'none'; 
+                window.loadLocalState(); 
+                window.buildGrid(); 
+            } else { 
+                document.getElementById('auth-overlay').style.display = 'flex'; 
             }
-        });
+
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'PASSWORD_RECOVERY') { 
+                    document.getElementById('auth-overlay').style.display = 'none'; 
+                    window.openSettings(); 
+                    document.getElementById('settings-msg').innerText = "Security token authenticated."; 
+                } else if (event === 'SIGNED_IN' && session) { 
+                    currentUser = session.user; 
+                    localStorage.removeItem('golf_guest_mode'); 
+                    document.getElementById('auth-overlay').style.display = 'none'; 
+                    window.loadLocalState(); 
+                    window.buildGrid(); 
+                    window.processOfflineQueue(); 
+                } else if (event === 'SIGNED_OUT') { 
+                    currentUser = null; 
+                    if (localStorage.getItem('golf_guest_mode') !== 'true') {
+                        document.getElementById('auth-overlay').style.display = 'flex'; 
+                    }
+                }
+            });
+        } else if (localStorage.getItem('golf_guest_mode') === 'true') {
+            document.getElementById('auth-overlay').style.display = 'none'; 
+            window.loadLocalState(); 
+            window.buildGrid(); 
+        } else {
+            document.getElementById('auth-overlay').style.display = 'flex'; 
+        }
     } catch (error) {
-        console.error("Initialization error:", error);
+        console.error("Initialization logic bypassed:", error);
     }
 
     let htmlList = ""; 
@@ -148,20 +159,35 @@ window.initializeApp = async function() {
 window.handleAuth = async function(type) {
     const cleanInput = document.getElementById('auth-nickname').value.trim().replace(/\s+/g, ''); 
     const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local"; 
+    const passInput = document.getElementById('auth-password').value;
     const btn = document.getElementById(type === 'signup' ? 'signup-btn' : 'login-btn');
+    
+    if (!supabaseClient) {
+        alert("Database connection failed. Please check your internet connection or adblocker.");
+        return;
+    }
+
     const originalText = btn.innerText; 
     btn.innerText = "⏳..."; 
     btn.disabled = true;
 
     try { 
-        let res = type === 'signup' 
-            ? await supabaseClient.auth.signUp({ email, password: document.getElementById('auth-password').value }) 
-            : await supabaseClient.auth.signInWithPassword({ email, password: document.getElementById('auth-password').value }); 
+        let res;
+        if (type === 'signup') {
+            res = await supabaseClient.auth.signUp({ email: email, password: passInput });
+        } else {
+            res = await supabaseClient.auth.signInWithPassword({ email: email, password: passInput });
+        }
         
-        if(res.error) throw res.error; 
+        if (res.error) throw res.error; 
     } catch (e) { 
-        document.getElementById('auth-error').style.color = "#ef4444"; 
-        document.getElementById('auth-error').innerText = e.message; 
+        const errEl = document.getElementById('auth-error');
+        if (errEl) {
+            errEl.style.color = "#ef4444"; 
+            errEl.innerText = e.message; 
+        } else {
+            alert(e.message);
+        }
     } finally { 
         btn.innerText = originalText; 
         btn.disabled = false; 
@@ -173,8 +199,9 @@ window.handleForgotPassword = async function() {
     const email = cleanInput.includes('@') ? cleanInput : cleanInput.toLowerCase() + "@golf.local";
     
     if (!email || !email.includes('@') || email.includes('@golf.local')) {
-        return alert("Recovery mapping requires valid verification email layout.");
+        return alert("Recovery mapping requires a valid verification email structure.");
     }
+    if (!supabaseClient) return alert("Database connection unavailable.");
 
     try { 
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname }); 
@@ -188,6 +215,7 @@ window.handleForgotPassword = async function() {
 };
 
 window.changePassword = async function() { 
+    if (!supabaseClient) return;
     const { error } = await supabaseClient.auth.updateUser({ password: document.getElementById('new-password').value }); 
     document.getElementById('settings-msg').innerText = error ? "❌ " + error.message : "✅ Updated."; 
 };
@@ -195,7 +223,9 @@ window.changePassword = async function() {
 window.logOut = async function() { 
     localStorage.removeItem('golf_guest_mode'); 
     localStorage.removeItem('golf_round_state'); 
-    await supabaseClient.auth.signOut(); 
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut(); 
+    }
     location.reload(); 
 };
 
@@ -205,11 +235,15 @@ window.openSettings = function() {
 };
 
 window.continueAsGuest = function() { 
-    currentUser = null; 
-    localStorage.setItem('golf_guest_mode', 'true'); 
-    document.getElementById('auth-overlay').style.display = 'none'; 
-    window.loadLocalState(); 
-    window.buildGrid(); 
+    try {
+        currentUser = null; 
+        localStorage.setItem('golf_guest_mode', 'true'); 
+        document.getElementById('auth-overlay').style.display = 'none'; 
+        window.loadLocalState(); 
+        window.buildGrid(); 
+    } catch (e) {
+        alert("Failed to initiate guest mode: " + e.message);
+    }
 };
 
 window.switchView = function(viewId, btn) { 
@@ -238,6 +272,11 @@ window.checkHarvesterStatus = async function() {
     document.getElementById('insight-detail-content').innerHTML = "⏳ Pinging database...";
     document.getElementById('insight-modal').style.display = 'flex';
     
+    if (!supabaseClient) {
+        document.getElementById('insight-detail-content').innerHTML = "❌ Database Offline.";
+        return;
+    }
+
     try {
         const { data, error } = await supabaseClient.from('course_tees').select('course_name');
         if(error) throw error;
@@ -509,6 +548,7 @@ window.loadLocalState = function() {
 };
 
 window.processOfflineQueue = async function() {
+    if (!supabaseClient) return;
     const queueStr = localStorage.getItem('golf_offline_queue');
     if (queueStr && currentUser) {
         try {
@@ -542,13 +582,20 @@ if (searchInputEl) {
         }
         
         searchTimeout = setTimeout(async () => { 
+            if (!supabaseClient) return;
             try { 
                 const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${query}%`).limit(100); 
                 if(error) throw error;
                 
-                const uniqueCourses = [...new Set(data.map(item => item.course_name.trim()))].slice(0, 10);
-                if (uniqueCourses.length > 0) { 
-                    dropdown.innerHTML = uniqueCourses.map(c => `<li onclick="window.selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
+                const uniqueCourses = [];
+                data.forEach(item => {
+                    let c = item.course_name.trim();
+                    if (!uniqueCourses.includes(c)) uniqueCourses.push(c);
+                });
+                
+                let limitCourses = uniqueCourses.slice(0, 10);
+                if (limitCourses.length > 0) { 
+                    dropdown.innerHTML = limitCourses.map(c => `<li onclick="window.selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
                     dropdown.classList.add('active'); 
                 } else { 
                     dropdown.classList.remove('active'); 
@@ -647,8 +694,9 @@ window.adjustDrop = function(amount) {
 
 window.toggleDropType = function(type) {
     let adv = roundData[currentPlayHole].dropsAdv || []; 
-    if(adv.includes(type)) {
-        adv = adv.filter(v => v !== type); 
+    let index = adv.indexOf(type);
+    if (index > -1) {
+        adv.splice(index, 1);
     } else {
         adv.push(type);
     }
@@ -657,7 +705,13 @@ window.toggleDropType = function(type) {
     
     ['WATER', 'OB', 'LOST', 'UNPLAYABLE'].forEach(id => { 
         const btn = document.getElementById(`drop-${id.toLowerCase()}`); 
-        if(btn) btn.classList.toggle('active', adv.includes(id)); 
+        if(btn) {
+            if (adv.indexOf(id) > -1) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
     }); 
     
     window.saveLocalState();
@@ -673,7 +727,11 @@ window.setPlayToggle = function(type, status) {
     const gridCell = document.getElementById(`grid-${type}-${currentPlayHole}`);
     if(gridCell) { 
         gridCell.innerText = nextStatus === "" ? "-" : nextStatus.toUpperCase(); 
-        gridCell.classList.toggle('hit', nextStatus === 'hit'); 
+        if (nextStatus === 'hit') {
+            gridCell.classList.add('hit');
+        } else {
+            gridCell.classList.remove('hit');
+        }
     }
     
     window.updatePlayModeUI(); 
@@ -682,8 +740,9 @@ window.setPlayToggle = function(type, status) {
 
 window.toggleAdv = function(type, val) {
     let arr = roundData[currentPlayHole][type + 'Adv'] || []; 
-    if(arr.includes(val)) {
-        arr = arr.filter(v => v !== val); 
+    let index = arr.indexOf(val);
+    if (index > -1) {
+        arr.splice(index, 1);
     } else {
         arr.push(val);
     }
@@ -701,7 +760,11 @@ window.cycleSand = function() {
     const gridCell = document.getElementById(`grid-sandSave-${currentPlayHole}`);
     if(gridCell) { 
         gridCell.innerText = next === "" ? "-" : next; 
-        gridCell.classList.toggle('hit', next === "1"); 
+        if (next === "1") {
+            gridCell.classList.add('hit');
+        } else {
+            gridCell.classList.remove('hit');
+        }
     }
     
     window.updatePlayModeUI(); 
@@ -764,13 +827,23 @@ window.updatePlayModeUI = function() {
     if (state.score === "") {
         if (par == 4 || par == 5) { 
             if (state.driveClub === "") { 
-                let dClubs = masterAnalyticsData.flatMap(r => (r.hole_scores||[]).filter(h => h.par == par && h.drive_club).map(h => h.drive_club)); 
+                let dClubs = [];
+                masterAnalyticsData.forEach(r => {
+                    (r.hole_scores||[]).forEach(h => {
+                        if (h.par == par && h.drive_club) dClubs.push(h.drive_club);
+                    });
+                });
                 state.driveClub = dClubs.length ? dClubs.sort((a,b) => dClubs.filter(v => v===a).length - dClubs.filter(v => v===b).length).pop() : "Driver"; 
             } 
         }
         if (par == 3) { 
             if (state.appClub === "") { 
-                let aClubs = masterAnalyticsData.flatMap(r => (r.hole_scores||[]).filter(h => h.par == 3 && h.approach_club).map(h => h.approach_club)); 
+                let aClubs = [];
+                masterAnalyticsData.forEach(r => {
+                    (r.hole_scores||[]).forEach(h => {
+                        if (h.par == 3 && h.approach_club) aClubs.push(h.approach_club);
+                    });
+                });
                 state.appClub = aClubs.length ? aClubs.sort((a,b) => aClubs.filter(v => v===a).length - aClubs.filter(v => v===b).length).pop() : "Iron"; 
             } 
             state.fir = "hit"; 
@@ -803,7 +876,13 @@ window.updatePlayModeUI = function() {
         let adv = state.dropsAdv || []; 
         ['WATER', 'OB', 'LOST', 'UNPLAYABLE'].forEach(id => { 
             const btn = document.getElementById(`drop-${id.toLowerCase()}`); 
-            if(btn) btn.classList.toggle('active', adv.includes(id)); 
+            if(btn) {
+                if (adv.indexOf(id) > -1) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            }
         }); 
     } else { 
         document.getElementById('drop-sub-menu').style.display = 'none'; 
@@ -815,14 +894,22 @@ window.updatePlayModeUI = function() {
         let subMenu = document.getElementById(`${type}-sub-menu`); 
         let advArr = state[type + 'Adv'] || [];
         
-        if(hb) hb.classList.toggle('active', state[type] === 'hit'); 
-        if(mb) mb.classList.toggle('active', state[type] === 'miss');
+        if(hb) {
+            if (state[type] === 'hit') hb.classList.add('active'); else hb.classList.remove('active');
+        }
+        if(mb) {
+            if (state[type] === 'miss') mb.classList.add('active'); else mb.classList.remove('active');
+        }
         
         if(subMenu) { 
             subMenu.style.display = state[type] === 'miss' ? 'flex' : 'none'; 
             document.querySelectorAll(`#${type}-sub-menu .sub-miss`).forEach(btn => { 
                 let val = btn.id.split('-').pop().toUpperCase(); 
-                btn.classList.toggle('active', advArr.includes(val)); 
+                if (advArr.indexOf(val) > -1) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
             }); 
         }
     });
@@ -849,6 +936,13 @@ window.fetchCourseDetails = async function() {
     fetchBtn.innerText = "⏳..."; 
     fetchBtn.disabled = true; 
     document.getElementById('api-status').innerText = "Loading...";
+
+    if (!supabaseClient) {
+        document.getElementById('api-status').innerText = "⚠️ Offline mode. Type course and hit Start Round.";
+        fetchBtn.innerText = originalText; 
+        fetchBtn.disabled = false;
+        return;
+    }
 
     try {
         let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`).limit(100); 
@@ -900,7 +994,7 @@ window.fetchCourseDetails = async function() {
     
     document.getElementById('current-course-display').innerText = query.toUpperCase(); 
     document.getElementById('current-course-display').style.color = 'var(--accent-green)'; 
-    document.getElementById('api-status').innerText = "ℹ️ Course not found in database. Please enter manually.";
+    document.getElementById('api-status').innerText = "ℹ️ Course not found. Please enter pars manually.";
     
     currentCoursePars = Array(18).fill(""); 
     currentYardages = Array(18).fill(""); 
@@ -971,15 +1065,23 @@ window.startRound = function() {
 
 window.setHoleCount = function(count) { 
     currentHoleCount = count; 
-    document.getElementById('btn-18-holes').classList.toggle('active', count === 18); 
-    document.getElementById('btn-9-holes').classList.toggle('active', count === 9); 
+    
+    let btn18 = document.getElementById('btn-18-holes');
+    let btn9 = document.getElementById('btn-9-holes');
+    if (count === 18) {
+        btn18.classList.add('active');
+        btn9.classList.remove('active');
+    } else {
+        btn18.classList.remove('active');
+        btn9.classList.add('active');
+    }
     
     let toggleBox = document.getElementById('front-back-toggle');
     if (count === 9) { 
         toggleBox.style.display = 'inline-flex'; 
         currentHoleOffset = 0; 
-        document.getElementById('btn-front-9').classList.toggle('active', currentHoleOffset === 0); 
-        document.getElementById('btn-back-9').classList.toggle('active', currentHoleOffset === 9); 
+        document.getElementById('btn-front-9').classList.add('active'); 
+        document.getElementById('btn-back-9').classList.remove('active'); 
     } else { 
         toggleBox.style.display = 'none'; 
         currentHoleOffset = 0; 
@@ -1033,15 +1135,22 @@ window.buildGrid = function() {
         
         for (let i = currentHoleOffset; i < endIndex; i++) {
             const cell = document.createElement('div');
+            
+            let pVal = currentCoursePars[i];
+            pVal = (pVal !== undefined && pVal !== null) ? pVal : '';
+            
+            let yVal = currentYardages[i];
+            yVal = (yVal !== undefined && yVal !== null) ? yVal : '';
+            
             if (row.type === 'header') { 
                 cell.className = 'cell hole-header'; 
                 cell.innerHTML = `<button type="button" onclick="window.jumpToPlayMode(${i})" style="width:100%;height:100%;background:transparent;border:none;color:var(--text-muted);font-weight:bold;cursor:pointer;padding:0;">${i + 1}</button>`; 
             } else if (row.type === 'par') { 
                 cell.className = 'cell'; 
-                cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${currentCoursePars[i] ?? ''}" onchange="window.updatePar(${i}, this.value)">`; 
+                cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${pVal}" onchange="window.updatePar(${i}, this.value)">`; 
             } else if (row.type === 'yardage') { 
                 cell.className = 'cell'; 
-                cell.innerHTML = `<input type="number" inputmode="numeric" value="${currentYardages[i] ?? ''}" onchange="currentYardages[${i}] = this.value; window.updatePlayModeUI(); window.saveLocalState();">`; 
+                cell.innerHTML = `<input type="number" inputmode="numeric" value="${yVal}" onchange="currentYardages[${i}] = this.value; window.updatePlayModeUI(); window.saveLocalState();">`; 
             } else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { 
                 cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; 
                 cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; 
@@ -1054,7 +1163,9 @@ window.buildGrid = function() {
                 cell.className = 'cell'; 
                 let cVal = roundData[i][row.type]; 
                 let btnText = row.type === 'sandSave' ? (cVal === "" ? "-" : cVal) : (cVal === 'hit' ? 'HIT' : (cVal === 'miss' ? 'MISS' : '-')); 
-                cell.innerHTML = `<button type="button" class="toggle-btn ${cVal === 'hit' || cVal === '1' ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="window.toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; 
+                let isHit = false;
+                if (cVal === 'hit' || cVal === '1') isHit = true;
+                cell.innerHTML = `<button type="button" class="toggle-btn ${isHit ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="window.toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; 
             }
             grid.appendChild(cell);
         }
@@ -1089,7 +1200,11 @@ window.toggleGridHit = function(index, type) {
         btn.innerText = ns === "" ? "-" : ns.toUpperCase(); 
     }
     
-    if(ns === 'hit' || ns === '1') btn.classList.add('hit'); else btn.classList.remove('hit'); 
+    if(ns === 'hit' || ns === '1') {
+        btn.classList.add('hit'); 
+    } else {
+        btn.classList.remove('hit'); 
+    }
     roundData[index][type] = ns === "-" ? "" : ns; 
     
     if(currentPlayHole === index) window.updatePlayModeUI(); 
@@ -1175,7 +1290,7 @@ window.forceSubmitRound = async function() {
     
     if (teeVal === 'new') { 
         teeName = document.getElementById('setup-tee').value.trim(); 
-        if (teeName) { 
+        if (teeName && supabaseClient) { 
             try { 
                 await supabaseClient.from('course_tees').insert([{ course_name: courseName, tee_name: teeName, pars: currentCoursePars, yardages: currentYardages }]); 
             } catch(e) {} 
@@ -1222,6 +1337,8 @@ window.forceSubmitRound = async function() {
     if(submitBtn) { submitBtn.innerText = "⏳ SAVING..."; submitBtn.disabled = true; }
 
     try {
+        if (!supabaseClient) throw new Error("Offline");
+        
         const { data: roundHeader, error: headerError } = await supabaseClient.from('logged_rounds').insert([{ user_id: currentUser.id, course_name: courseName, total_score: totalScore, total_putts: totalPutts, tee_name: finalTeeName, weather_temp: roundWeather.temp, weather_wind: roundWeather.wind }]).select('id').single();
         if (headerError) throw headerError;
         
@@ -1244,7 +1361,7 @@ window.forceSubmitRound = async function() {
 };
 
 window.fetchHistory = function() {
-    if(!currentUser) return;
+    if(!currentUser || !supabaseClient) return;
     supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => {
         if(!data || data.length === 0) { document.getElementById('history-list').innerHTML = '<div class="empty-state">No arrays found.</div>'; return; }
         const activeTabBtn = document.querySelector('#view-history .analytics-tabs button.active');
@@ -1254,15 +1371,34 @@ window.fetchHistory = function() {
 };
 
 window.filterHistoryList = function(type, btn) {
-    document.querySelectorAll('#view-history .analytics-tabs button').forEach(el => el.classList.remove('active')); btn.classList.add('active');
-    supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => { if(data) window.renderHistoryList(data, type); });
+    document.querySelectorAll('#view-history .analytics-tabs button').forEach(el => el.classList.remove('active')); 
+    btn.classList.add('active');
+    
+    if(!supabaseClient) return;
+    supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => { 
+        if(data) window.renderHistoryList(data, type); 
+    });
 };
 
 window.renderHistoryList = function(allData, type) {
-    let data = allData.filter(r => { let tName = r.tee_name || ""; if (type === 'RANGE') return tName.includes('[RANGE]'); if (type === 'SIM') return tName.includes('[SIM]'); return !tName.includes('[RANGE]') && !tName.includes('[SIM]'); });
-    const tbody = document.getElementById('history-list'); if(data.length === 0) { tbody.innerHTML = '<div class="empty-state">No saved records here.</div>'; return; }
+    let data = allData.filter(r => { 
+        let tName = r.tee_name || ""; 
+        if (type === 'RANGE') return tName.includes('[RANGE]'); 
+        if (type === 'SIM') return tName.includes('[SIM]'); 
+        return !tName.includes('[RANGE]') && !tName.includes('[SIM]'); 
+    });
+    
+    const tbody = document.getElementById('history-list'); 
+    if(data.length === 0) { tbody.innerHTML = '<div class="empty-state">No saved records here.</div>'; return; }
+    
     let html = "";
-    const grouped = data.reduce((acc, round) => { const year = new Date(round.date_played).getUTCFullYear(); if(!acc[year]) acc[year] = []; acc[year].push(round); return acc; }, {});
+    const grouped = data.reduce((acc, round) => { 
+        const year = new Date(round.date_played).getUTCFullYear(); 
+        if(!acc[year]) acc[year] = []; 
+        acc[year].push(round); 
+        return acc; 
+    }, {});
+    
     Object.keys(grouped).sort((a,b) => b-a).forEach((year, index) => {
         const rounds = grouped[year];
         html += `<details class="year-folder" ${index === 0 ? 'open' : ''}><summary>${year} Season <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">${rounds.length} Rounds</span></summary><div class="folder-content">`;
@@ -1297,6 +1433,8 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
         document.getElementById('modal-scorecard-grid').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Bulk imported rounds do not contain hole-by-hole data.</div>'; 
         return; 
     }
+    
+    if (!supabaseClient) return;
     
     const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
     
@@ -1351,6 +1489,7 @@ window.buildModalGrid = function(holesCount, startOffset) {
         for(let i=0; i<holesCount; i++) {
             const c = document.createElement('div'); 
             c.className = 'cell';
+            
             if(r.type === 'header') { 
                 c.className = 'cell hole-header'; c.innerText = i+1+startOffset; 
             } else if(r.type === 'par') {
@@ -1363,8 +1502,9 @@ window.buildModalGrid = function(holesCount, startOffset) {
             } else { 
                 let v = modalRoundData[i][r.type]; 
                 let t = r.type==='sandSave'?(v==='yes'?'SAVE':(v==='no'?'MISS':(v==='stuck'?'STUCK':'-'))):(v==='hit'?'HIT':(v==='miss'?'MISS':'-')); 
-                let hc = (v==='hit'||v==='yes'||v==='1')?'hit':''; 
-                c.innerHTML = `<button type="button" class="toggle-btn ${hc}" onclick="window.toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; 
+                let isHit = false;
+                if (v==='hit'||v==='yes'||v==='1') isHit = true;
+                c.innerHTML = `<button type="button" class="toggle-btn ${isHit ? 'hit' : ''}" onclick="window.toggleModalHit(this, ${i}, '${r.type}')">${t}</button>`; 
             }
             grid.appendChild(c);
         }
@@ -1382,9 +1522,21 @@ window.toggleModalDrops = function(btn, i) {
 };
 
 window.toggleModalHit = function(b, i, t) { 
-    let ns = t==='sandSave'?(b.innerText==="MISS"?"": (b.innerText==="SAVE"?"no":"yes")):(b.innerText==="MISS"?"hit":"miss"); 
-    b.innerText=ns==="-"?"-":(ns==='yes'?'SAVE':(ns==='no'?'MISS':ns.toUpperCase())); 
-    if(ns==='hit'||ns==='yes')b.classList.add('hit'); else b.classList.remove('hit'); 
+    let ns = "";
+    if (t === 'sandSave') {
+        let cur = b.innerText; 
+        ns = cur === "-" ? "1" : (cur === "1" ? "2" : (cur === "2" ? "3+" : "")); 
+        b.innerText = ns === "" ? "-" : ns;
+    } else {
+        ns = b.innerText === "MISS" ? "hit" : "miss"; 
+        b.innerText = ns === "" ? "-" : ns.toUpperCase();
+    }
+    
+    if(ns==='hit'||ns==='1') {
+        b.classList.add('hit'); 
+    } else {
+        b.classList.remove('hit'); 
+    }
     modalRoundData[i][t] = ns==="-"?"":ns; 
 };
 
@@ -1401,6 +1553,8 @@ window.saveModalChanges = async function(id, holesCount) {
     saveBtn.innerText = "⏳ Saving..."; saveBtn.disabled = true;
     
     try {
+        if (!supabaseClient) throw new Error("Database offline.");
+        
         for(let i=0; i<holesCount; i++) { 
             const hd=modalRoundData[i]; 
             const s=parseInt(hd.score); 
@@ -1430,6 +1584,7 @@ window.saveModalChanges = async function(id, holesCount) {
 
 window.deleteActiveRound = async function(id) { 
     if(id && confirm("Delete round?")) { 
+        if (!supabaseClient) return;
         await supabaseClient.from('logged_rounds').delete().eq('id', id); 
         alert("🗑️ Deleted."); 
         window.fetchHistory(); 
@@ -1684,20 +1839,46 @@ window.generateInsights = function(fRounds) {
 
 window.updateAnalytics = function() {
     try {
-        let actCrs = Array.from(document.querySelectorAll('.course-cb:checked')).map(cb => cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
-        let actYrs = Array.from(document.querySelectorAll('.year-cb:checked')).map(cb => cb.value);
-        let actMonths = Array.from(document.querySelectorAll('.month-cb:checked')).map(cb => cb.value);
-        let actPars = Array.from(document.querySelectorAll('.par-cb:checked')).map(cb => cb.value);
-        let actHoles = Array.from(document.querySelectorAll('.hole-cb:checked')).map(cb => cb.value);
+        let actCrs = [];
+        document.querySelectorAll('.course-cb:checked').forEach(cb => {
+            actCrs.push(cb.value.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+        });
+        
+        let actYrs = [];
+        document.querySelectorAll('.year-cb:checked').forEach(cb => { actYrs.push(cb.value); });
+        
+        let actMonths = [];
+        document.querySelectorAll('.month-cb:checked').forEach(cb => { actMonths.push(cb.value); });
+        
+        let actPars = [];
+        document.querySelectorAll('.par-cb:checked').forEach(cb => { actPars.push(cb.value); });
+        
+        let actHoles = [];
+        document.querySelectorAll('.hole-cb:checked').forEach(cb => { actHoles.push(cb.value); });
 
-        if(actCrs.length === 0) actCrs = [...new Set(masterAnalyticsData.map(r => (r.course_name || "").trim()))];
-        if(actYrs.length === 0) actYrs = [...new Set(masterAnalyticsData.map(r => r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString()))];
+        if(actCrs.length === 0) {
+            masterAnalyticsData.forEach(r => {
+                let c = (r.course_name || "").trim();
+                if (!actCrs.includes(c)) actCrs.push(c);
+            });
+        }
+        
+        if(actYrs.length === 0) {
+            masterAnalyticsData.forEach(r => {
+                let y = r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString();
+                if (!actYrs.includes(y)) actYrs.push(y);
+            });
+        }
+        
         if(actMonths.length === 0) actMonths = ["1","2","3","4","5","6","7","8","9","10","11","12"];
         if(actPars.length === 0) actPars = ["3","4","5","6"];
-        if(actHoles.length === 0) { actHoles = []; for(let i=1; i<=18; i++) actHoles.push(i.toString()); }
+        if(actHoles.length === 0) { for(let i=1; i<=18; i++) actHoles.push(i.toString()); }
 
-        const timeframe = document.getElementById('filter-timeframe') ? document.getElementById('filter-timeframe').value : 'season'; 
-        const holeFilter = document.getElementById('filter-hole-count') ? document.getElementById('filter-hole-count').value : 'all'; 
+        let tfEl = document.getElementById('filter-timeframe');
+        const timeframe = tfEl ? tfEl.value : 'season'; 
+        
+        let hfEl = document.getElementById('filter-hole-count');
+        const holeFilter = hfEl ? hfEl.value : 'all'; 
         
         let fRounds = masterAnalyticsData.filter(r => { 
             if (!actCrs.includes((r.course_name || "").trim())) return false; 
@@ -1717,24 +1898,36 @@ window.updateAnalytics = function() {
         if(fRounds.length === 0) { 
             if(t) t.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No logs match selected filters.</td></tr></tbody>`; 
             if(typeof window.renderCharts === 'function') window.renderCharts([], [], []);
-            document.getElementById('ai-insights-box').innerHTML = "Not enough data.";
-            document.getElementById('hcp-display').innerText = "--.-";
-            document.getElementById('trophy-room-box').innerHTML = "";
+            let aiBox = document.getElementById('ai-insights-box');
+            if (aiBox) aiBox.innerHTML = "Not enough data.";
+            let hcpBox = document.getElementById('hcp-display');
+            if (hcpBox) hcpBox.innerText = "--.-";
+            let trBox = document.getElementById('trophy-room-box');
+            if (trBox) trBox.innerHTML = "";
             return; 
         }
 
-        if (timeframe.startsWith('last')) fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
+        if (timeframe.startsWith('last')) {
+            fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', '')));
+        }
         
         let hcDisplay = document.getElementById('hcp-display');
         if (hcDisplay && typeof window.calculateHandicap === 'function') {
             hcDisplay.innerText = window.calculateHandicap(fRounds); 
         }
         
-        if(typeof window.renderCharts === 'function') window.renderCharts(fRounds, actHoles, actPars); 
-        if(typeof window.generateInsights === 'function') {
-            document.getElementById('ai-insights-box').innerHTML = window.generateInsights(fRounds);
+        if(typeof window.renderCharts === 'function') {
+            window.renderCharts(fRounds, actHoles, actPars); 
         }
-        if(typeof window.updateTrophyRoom === 'function') window.updateTrophyRoom(fRounds);
+        
+        if(typeof window.generateInsights === 'function') {
+            let aiBox = document.getElementById('ai-insights-box');
+            if (aiBox) aiBox.innerHTML = window.generateInsights(fRounds);
+        }
+        
+        if(typeof window.updateTrophyRoom === 'function') {
+            window.updateTrophyRoom(fRounds);
+        }
         
         let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; 
         let totalStrokes = 0; let totalHolesCount = 0;
@@ -1807,6 +2000,11 @@ window.loadAnalyticsData = async function() {
     const table = document.getElementById('analytics-data-table'); 
     table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
     
+    if (!supabaseClient) {
+        table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Database Offline. Analytics unavailable.</td></tr></tbody>`;
+        return;
+    }
+
     try {
         const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
         if(error) throw error; 
@@ -1821,10 +2019,22 @@ window.loadAnalyticsData = async function() {
 };
 
 window.populateFilters = function() {
-    const uC = [...new Set(masterAnalyticsData.map(r => (r.course_name || "").trim()))].sort();
+    let uC = [];
+    masterAnalyticsData.forEach(r => {
+        let c = (r.course_name || "").trim();
+        if (!uC.includes(c)) uC.push(c);
+    });
+    uC.sort();
+    
     document.getElementById('course-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" autocomplete="off" checked onchange="window.checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" autocomplete="off" checked onchange="window.checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
     
-    const uY = [...new Set(masterAnalyticsData.map(r => r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString()))].sort((a,b)=>b-a);
+    let uY = [];
+    masterAnalyticsData.forEach(r => {
+        let y = r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString();
+        if (!uY.includes(y)) uY.push(y);
+    });
+    uY.sort((a,b)=>b-a);
+    
     document.getElementById('year-checkbox-list').innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
 };
 
@@ -1841,11 +2051,19 @@ window.toggleGroupToggles = function(mainCb, childClass, btnTextId, defaultText)
 
 window.checkGroupToggles = function(childClass, mainId, btnTextId, defaultText) { 
     const cbs = Array.from(document.querySelectorAll(childClass)); 
-    const allChecked = cbs.every(b => b.checked); 
-    const checkedCount = cbs.filter(b => b.checked).length; 
+    let allChecked = true;
+    let checkedCount = 0;
+    
+    cbs.forEach(b => {
+        if (!b.checked) allChecked = false;
+        else checkedCount++;
+    });
     
     document.getElementById(mainId).checked = allChecked; 
-    document.getElementById(btnTextId).innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); 
+    let btnTextEl = document.getElementById(btnTextId);
+    if (btnTextEl) {
+        btnTextEl.innerText = allChecked ? `All ${defaultText}s` : (checkedCount === 1 ? `1 ${defaultText}` : `${checkedCount} ${defaultText}s`); 
+    }
     window.updateAnalytics(); 
 };
 
@@ -1856,11 +2074,11 @@ window.toggleFilterDropdown = function(id) {
 
 window.forceSyncFilters = function() {
     document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => { cb.checked = true; });
-    document.getElementById('month-btn-text').innerText = 'All Months'; 
-    document.getElementById('year-btn-text').innerText = 'All Years';
-    document.getElementById('course-btn-text').innerText = 'All Courses'; 
-    document.getElementById('par-btn-text').innerText = 'All Pars'; 
-    document.getElementById('hole-btn-text').innerText = 'All Holes';
+    let monthBtn = document.getElementById('month-btn-text'); if(monthBtn) monthBtn.innerText = 'All Months'; 
+    let yearBtn = document.getElementById('year-btn-text'); if(yearBtn) yearBtn.innerText = 'All Years';
+    let courseBtn = document.getElementById('course-btn-text'); if(courseBtn) courseBtn.innerText = 'All Courses'; 
+    let parBtn = document.getElementById('par-btn-text'); if(parBtn) parBtn.innerText = 'All Pars'; 
+    let holeBtn = document.getElementById('hole-btn-text'); if(holeBtn) holeBtn.innerText = 'All Holes';
 };
 
 window.renderCharts = function(filteredRounds, actHoles, actPars) {
@@ -1883,19 +2101,26 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     if (filteredRounds.length === 0) return;
     
     const chartData = [...filteredRounds].reverse(); 
-    const activeOverlay = document.getElementById('primary-chart-metric') ? document.getElementById('primary-chart-metric').value : 'none'; 
+    let metricEl = document.getElementById('primary-chart-metric');
+    const activeOverlay = metricEl ? metricEl.value : 'none'; 
     let baseScores = [];
     
     chartData.forEach(r => { 
         let targetHoles = r.hole_scores || []; 
-        if (actHoles.length < 18) targetHoles = targetHoles.filter(h => actHoles.includes(h.hole_number.toString())); 
-        if (actPars.length < 4) targetHoles = targetHoles.filter(h => actPars.includes(h.par.toString())); 
+        
+        let filteredHoles = [];
+        targetHoles.forEach(h => {
+            if (actHoles.includes(h.hole_number.toString()) && actPars.includes(h.par.toString())) {
+                filteredHoles.push(h);
+            }
+        });
+        targetHoles = filteredHoles;
         
         let rs = 0; 
         if (targetHoles.length === 0 && (!r.hole_scores || r.hole_scores.length === 0)) {
             rs = r.total_score; 
         } else {
-            rs = targetHoles.reduce((sum, h) => sum + (h.score || 0), 0);
+            targetHoles.forEach(h => { rs += (h.score || 0); });
         }
         baseScores.push(rs); 
     });
@@ -1918,8 +2143,14 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         chartData.forEach(r => {
             let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, sgTot=0, sgCnt=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, dTot=0, dCnt=0, f9=0, b9=0, tpA_H=0, tpA_T=0;
             let th = r.hole_scores || []; 
-            if (actHoles.length < 18) th = th.filter(h => actHoles.includes(h.hole_number.toString())); 
-            if (actPars.length < 4) th = th.filter(h => actPars.includes(h.par.toString()));
+            
+            let filteredHoles = [];
+            th.forEach(h => {
+                if (actHoles.includes(h.hole_number.toString()) && actPars.includes(h.par.toString())) {
+                    filteredHoles.push(h);
+                }
+            });
+            th = filteredHoles;
             
             th.forEach(h => {
                 if(h.hole_number <= 9) f9 += h.score; else b9 += h.score;
@@ -1963,16 +2194,46 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     }
     
     try { 
-        if(tCtx) trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlay !== 'none', position: 'right', grid: { drawOnChartArea: false } } } } }); 
+        if(tCtx && typeof Chart !== 'undefined') {
+            trendChart = new Chart(tCtx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), datasets: trendDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(context) { if (context.dataset.label === 'Trendline') return null; return context.dataset.label + ': ' + context.raw; } } }, legend: { display: activeOverlay !== 'none', labels: {color: '#9ca3af', font: {size: 10}} }, title: { display: false } }, scales: { x: { display: false }, y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { type: 'linear', display: activeOverlay !== 'none', position: 'right', grid: { drawOnChartArea: false } } } } }); 
+        }
     } catch(e){}
 
     let tpBrd = 0, tpPar = 0, tpBog = 0, tpDbl = 0;
-    chartData.forEach(r => { (r.hole_scores||[]).forEach(h => { if (h.score && h.par) { let d = h.score - h.par; if (d <= -1) tpBrd++; else if (d === 0) tpPar++; else if (d === 1) tpBog++; else tpDbl++; } }); });
-    try { if(pC) scorePieChart = new Chart(pC.getContext('2d'), { type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } }); } catch(e){}
+    chartData.forEach(r => { 
+        (r.hole_scores||[]).forEach(h => { 
+            if (h.score && h.par) { 
+                let d = h.score - h.par; 
+                if (d <= -1) tpBrd++; 
+                else if (d === 0) tpPar++; 
+                else if (d === 1) tpBog++; 
+                else tpDbl++; 
+            } 
+        }); 
+    });
+    try { 
+        if(pC && typeof Chart !== 'undefined') {
+            scorePieChart = new Chart(pC.getContext('2d'), { type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } }); 
+        }
+    } catch(e){}
 
     let dW=0, dOB=0, dL=0, dU=0; 
-    chartData.forEach(r => { (r.hole_scores||[]).forEach(h => { let dA = h.drops_adv || ""; if(h.drops && h.drops > 0) { if(dA.includes('WATER')) dW++; if(dA.includes('OB')) dOB++; if(dA.includes('LOST')) dL++; if(dA.includes('UNPLAYABLE')) dU++; } }); });
-    try { if(pCtx) penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['Water', 'OB', 'Lost', 'Unplayable'], datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } }); } catch(e){}
+    chartData.forEach(r => { 
+        (r.hole_scores||[]).forEach(h => { 
+            let dA = h.drops_adv || ""; 
+            if(h.drops && h.drops > 0) { 
+                if(dA.includes('WATER')) dW++; 
+                if(dA.includes('OB')) dOB++; 
+                if(dA.includes('LOST')) dL++; 
+                if(dA.includes('UNPLAYABLE')) dU++; 
+            } 
+        }); 
+    });
+    try { 
+        if(pCtx && typeof Chart !== 'undefined') {
+            penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { type: 'doughnut', data: { labels: ['Water', 'OB', 'Lost', 'Unplayable'], datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } }); 
+        }
+    } catch(e){}
 
     let accLabels = [], firData = [], girData = [];
     chartData.forEach(r => {
@@ -1985,7 +2246,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         firData.push(fT > 0 ? Math.round((fH/fT)*100) : null); 
         girData.push(gT > 0 ? Math.round((gH/gT)*100) : null);
     });
-    try { if(aCtx) accuracyChart = new Chart(aCtx.getContext('2d'), { type: 'line', data: { labels: accLabels, datasets: [{ label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+    try { 
+        if(aCtx && typeof Chart !== 'undefined') {
+            accuracyChart = new Chart(aCtx.getContext('2d'), { type: 'line', data: { labels: accLabels, datasets: [{ label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+        }
+    } catch(e){}
 
     let p3T=0, p3C=0, p4T=0, p4C=0, p5T=0, p5C=0;
     chartData.forEach(r => { 
@@ -1997,7 +2262,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             } 
         }); 
     });
-    try { if(psCtx) parScoringChart = new Chart(psCtx.getContext('2d'), { type: 'bar', data: { labels: ['Par 3', 'Par 4', 'Par 5'], datasets: [{ label: 'Avg Strokes', data: [p3C>0?(p3T/p3C).toFixed(2):0, p4C>0?(p4T/p4C).toFixed(2):0, p5C>0?(p5T/p5C).toFixed(2):0], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+    try { 
+        if(psCtx && typeof Chart !== 'undefined') {
+            parScoringChart = new Chart(psCtx.getContext('2d'), { type: 'bar', data: { labels: ['Par 3', 'Par 4', 'Par 5'], datasets: [{ label: 'Avg Strokes', data: [p3C>0?(p3T/p3C).toFixed(2):0, p4C>0?(p4T/p4C).toFixed(2):0, p5C>0?(p5T/p5C).toFixed(2):0], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+        }
+    } catch(e){}
 
     let clubStats = {}; 
     chartData.forEach(r => { 
@@ -2022,7 +2291,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     
     let cLabels = Object.keys(clubStats).sort((a,b) => (clubStats[b].tot/clubStats[b].cnt) - (clubStats[a].tot/clubStats[a].cnt)); 
     let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
-    try { if(cCtx) clubChart = new Chart(cCtx.getContext('2d'), { type: 'bar', data: { labels: cLabels, datasets: [{ data: cData, backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false } }); } catch(e){}
+    try { 
+        if(cCtx && typeof Chart !== 'undefined') {
+            clubChart = new Chart(cCtx.getContext('2d'), { type: 'bar', data: { labels: cLabels, datasets: [{ data: cData, backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false } }); 
+        }
+    } catch(e){}
 
     let wBuckets = { cold: {tot:0, cnt:0}, optimal: {tot:0, cnt:0}, hot: {tot:0, cnt:0} };
     chartData.forEach(r => { 
@@ -2037,7 +2310,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             } 
         } 
     });
-    try { if(wCtx) weatherChart = new Chart(wCtx.getContext('2d'), { type: 'bar', data: { labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], datasets: [{ data: [wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0], backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Avg: ${c.raw > 0 ? '+'+c.raw : (c.raw===0?'E':c.raw)}` } } }, scales: { y: { title: { display: true, text: 'Avg Strokes To Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } }); } catch(e){}
+    try { 
+        if(wCtx && typeof Chart !== 'undefined') {
+            weatherChart = new Chart(wCtx.getContext('2d'), { type: 'bar', data: { labels: ['Cold (<15°C)', 'Optimal (15-25°C)', 'Hot (>25°C)'], datasets: [{ data: [wBuckets.cold.cnt>0?(wBuckets.cold.tot/wBuckets.cold.cnt):0, wBuckets.optimal.cnt>0?(wBuckets.optimal.tot/wBuckets.optimal.cnt):0, wBuckets.hot.cnt>0?(wBuckets.hot.tot/wBuckets.hot.cnt):0], backgroundColor: ['#3b82f6', '#10b981', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Avg: ${c.raw > 0 ? '+'+c.raw : (c.raw===0?'E':c.raw)}` } } }, scales: { y: { title: { display: true, text: 'Avg Strokes To Par', color:'#9ca3af', font:{size:10} }, grid: { color: '#2a2a2a' } }, x: { grid: { display: false } } } }); 
+        }
+    } catch(e){}
 
     let fL=0, fR=0, fS=0, fTotMiss=0; let gL=0, gR=0, gS=0, gLg=0, gTotMiss=0;
     chartData.forEach(r => { 
@@ -2063,14 +2340,22 @@ window.openStatGraph = function(title, statKey) {
     currentStatKey = statKey; 
     currentStatTitle = title;
     
-    let tf = document.getElementById('filter-timeframe').value; 
-    document.getElementById('modal-filter-timeframe').value = tf;
+    let tfEl = document.getElementById('filter-timeframe');
+    if (tfEl) {
+        let tf = tfEl.value; 
+        let modTfEl = document.getElementById('modal-filter-timeframe');
+        if (modTfEl) modTfEl.value = tf;
+    }
+    
     window.refreshModalGraph();
 };
 
 window.refreshModalGraph = function() {
     if(!currentStatKey) return;
-    let tFilter = document.getElementById('modal-filter-timeframe').value;
+    
+    let modTfEl = document.getElementById('modal-filter-timeframe');
+    let tFilter = modTfEl ? modTfEl.value : 'season';
+    
     let plotData = []; 
     let rList = [...currentFilteredRounds];
     
@@ -2081,12 +2366,24 @@ window.refreshModalGraph = function() {
     rList.forEach(r => {
         let val = 0; let valid = false; let targetHoles = r.hole_scores || [];
         
-        if(currentStatKey === 'score') { val = targetHoles.reduce((sum,h)=>sum+(h.score||0),0); valid=true; }
-        if(currentStatKey === 'putts') { let th=0, tp=0; targetHoles.forEach(h=>{if(h.putts!==null){tp+=h.putts; th++;}}); if(th>0) { val=(tp/th)*18; valid=true;} }
-        if(currentStatKey === 'fir') { let th=0, tf=0; targetHoles.forEach(h=>{if(h.fir==='hit'||h.fir==='miss'){tf++; if(h.fir==='hit')th++;}}); if(tf>0) { val=(th/tf)*100; valid=true;} }
-        if(currentStatKey === 'gir') { let th=0, tg=0; targetHoles.forEach(h=>{if(h.gir==='hit'||h.gir==='miss'){tg++; if(h.gir==='hit')th++;}}); if(tg>0) { val=(th/tg)*100; valid=true;} }
-        if(currentStatKey === 'drops') { val = targetHoles.reduce((sum,h)=>sum+(h.drops||0),0); valid=true; }
-        if(currentStatKey === 'scram') { let th=0, ts=0; targetHoles.forEach(h=>{if(h.gir==='miss'){ts++; if(h.score<=h.par)th++;}}); if(ts>0) { val=(th/ts)*100; valid=true;} }
+        if(currentStatKey === 'score') { 
+            let sSum = 0; targetHoles.forEach(h => { sSum += (h.score||0); }); val = sSum; valid=true; 
+        }
+        if(currentStatKey === 'putts') { 
+            let th=0, tp=0; targetHoles.forEach(h=>{if(h.putts!==null){tp+=h.putts; th++;}}); if(th>0) { val=(tp/th)*18; valid=true;} 
+        }
+        if(currentStatKey === 'fir') { 
+            let th=0, tf=0; targetHoles.forEach(h=>{if(h.fir==='hit'||h.fir==='miss'){tf++; if(h.fir==='hit')th++;}}); if(tf>0) { val=(th/tf)*100; valid=true;} 
+        }
+        if(currentStatKey === 'gir') { 
+            let th=0, tg=0; targetHoles.forEach(h=>{if(h.gir==='hit'||h.gir==='miss'){tg++; if(h.gir==='hit')th++;}}); if(tg>0) { val=(th/tg)*100; valid=true;} 
+        }
+        if(currentStatKey === 'drops') { 
+            let dSum = 0; targetHoles.forEach(h => { dSum += (h.drops||0); }); val = dSum; valid=true; 
+        }
+        if(currentStatKey === 'scram') { 
+            let th=0, ts=0; targetHoles.forEach(h=>{if(h.gir==='miss'){ts++; if(h.score<=h.par)th++;}}); if(ts>0) { val=(th/ts)*100; valid=true;} 
+        }
         
         if(currentStatKey === 'sgPutt') { 
             let sgTot=0, sgCnt=0;
@@ -2149,26 +2446,29 @@ window.refreshModalGraph = function() {
         if(valid) plotData.push({x: new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}), y: val});
     });
 
+    let sgTitle = document.getElementById('stat-graph-title');
     if(currentStatKey === 'sgPutt') {
         let shortSg = 0, medSg = 0, longSg = 0;
         rList.forEach(r => {
-            r.hole_scores && r.hole_scores.forEach(h => {
-                if(h.putts !== null && h.putt_1_ft > 0) {
-                    let diff = window.getExpectedPutts(h.putt_1_ft) - h.putts;
-                    if(h.putt_1_ft < 10) shortSg += diff;
-                    else if(h.putt_1_ft <= 20) medSg += diff;
-                    else longSg += diff;
-                }
-            });
+            if(r.hole_scores) {
+                r.hole_scores.forEach(h => {
+                    if(h.putts !== null && h.putt_1_ft > 0) {
+                        let diff = window.getExpectedPutts(h.putt_1_ft) - h.putts;
+                        if(h.putt_1_ft < 10) shortSg += diff;
+                        else if(h.putt_1_ft <= 20) medSg += diff;
+                        else longSg += diff;
+                    }
+                });
+            }
         });
-        document.getElementById('stat-graph-title').innerHTML = `STROKES GAINED MATRIX<br><span style='font-size:11px; color:var(--text-muted); font-weight:normal;'>Short (<10ft): ${shortSg > 0 ? '+' : ''}${shortSg.toFixed(2)} | Medium (10-20ft): ${medSg > 0 ? '+' : ''}${medSg.toFixed(2)} | Long (20ft+): ${longSg > 0 ? '+' : ''}${longSg.toFixed(2)}</span>`;
+        if(sgTitle) sgTitle.innerHTML = `STROKES GAINED MATRIX<br><span style='font-size:11px; color:var(--text-muted); font-weight:normal;'>Short (<10ft): ${shortSg > 0 ? '+' : ''}${shortSg.toFixed(2)} | Medium (10-20ft): ${medSg > 0 ? '+' : ''}${medSg.toFixed(2)} | Long (20ft+): ${longSg > 0 ? '+' : ''}${longSg.toFixed(2)}</span>`;
     } else {
-        document.getElementById('stat-graph-title').innerText = currentStatTitle.toUpperCase();
+        if(sgTitle) sgTitle.innerText = currentStatTitle.toUpperCase();
     }
 
     if(statDetailChartObj) statDetailChartObj.destroy();
     let cEl = document.getElementById('statDetailChart'); 
-    if(!cEl) return;
+    if(!cEl || typeof Chart === 'undefined') return;
     
     statDetailChartObj = new Chart(cEl.getContext('2d'), { 
         type: 'line', 
@@ -2194,6 +2494,7 @@ window.refreshModalGraph = function() {
     });
 };
 
+// Safe Initialization Bypass 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', window.initializeApp);
 } else {
