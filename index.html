@@ -38,7 +38,7 @@
             <button class="view-toggle-btn" id="signup-btn" onclick="handleAuth('signup')" style="flex:1;">Register</button>
         </div>
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest (Single Session Only)</button>
+            <button class="view-toggle-btn" style="width: 100%;" onclick="continueAsGuest()">🏌️‍♂️ Continue as Guest</button>
         </div>
         <div id="auth-error" style="color: #ef4444; font-size: 12px; margin-top: 15px; font-weight: bold;"></div>
     </div>
@@ -82,6 +82,26 @@
     </div>
 </div>
 
+<div id="stat-graph-modal" class="modal-overlay" style="display: none; z-index: 30000;">
+    <div class="auth-card" style="max-width: 800px; text-align: left; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-right: 50px;">
+            <h2 id="stat-graph-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">STAT TREND</h2>
+        </div>
+        <div style="margin-bottom: 15px; display:flex; gap:10px;">
+            <select class="filter-select" id="modal-filter-timeframe" onchange="refreshModalGraph()" style="width:auto; padding:8px; font-size:12px;">
+                <option value="last10" selected>Last 10 Rounds</option>
+                <option value="last20">Last 20 Rounds</option>
+                <option value="season">This Season</option>
+                <option value="full">All Time</option>
+            </select>
+        </div>
+        <button type="button" class="close-modal-btn" onclick="document.getElementById('stat-graph-modal').style.display='none'">✕</button>
+        <div style="height: 300px; width: 100%; position: relative;">
+            <canvas id="statDetailChart"></canvas>
+        </div>
+    </div>
+</div>
+
 <div id="putt-map-modal" class="modal-overlay" style="display: none; z-index: 30000;">
     <div class="auth-card" style="max-width: 400px; padding: 20px;">
         <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 5px;">🎯 MAP PUTT</h2>
@@ -109,24 +129,24 @@
     </div>
 </div>
 
-<div id="history-modal" class="modal-overlay" style="display: none; z-index: 40000;">
-    <form class="modal-content card" style="margin-top: 40px;" onsubmit="return false;">
+<div id="history-modal" class="modal-overlay" style="display: none; z-index: 50000; background: rgba(0,0,0,0.96);">
+    <div class="modal-content card" style="max-width: 1200px; margin: 20px auto; width: 95%; position: relative;">
         <button type="button" class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
-        <div class="scorecard-header" style="margin-bottom: 5px; padding-right: 50px; position: relative;">
-            <h3 id="modal-course-title" style="color: var(--accent-green); line-height: 1.4;">COURSE NAME</h3>
-            <div class="badge" id="modal-course-date" style="background: transparent; border: none; color: var(--text-muted); font-size: 13px;">Date</div>
+        <div class="scorecard-header" style="margin-bottom: 15px;">
+            <h3 id="modal-course-title" style="color: var(--accent-green); margin: 0;">COURSE TITLE</h3>
+            <div id="modal-course-date" style="color: var(--text-muted); font-size: 13px;">Round Date</div>
         </div>
-        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -5px; margin-bottom: 15px;"></div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+        <div id="modal-weather" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 15px;"></div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-green);">Score: <span id="modal-total-score">--</span></div>
-            <div id="modal-wind-dir" style="font-size:14px; color:var(--text-muted); font-weight:bold;"></div>
+            <div id="modal-wind-dir" style="font-size: 13px; color: var(--text-muted);"></div>
         </div>
         <div class="matrix-wrapper"><div class="matrix-grid" id="modal-scorecard-grid"></div></div>
-        <div style="margin-top: 30px; display: flex; justify-content: space-between; gap: 10px;">
-            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete</button>
-            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Changes</button>
+        <div style="margin-top: 30px; display: flex; gap: 10px;">
+            <button type="button" class="danger-btn" style="flex: 1;" id="modal-delete-btn">🗑️ Delete Round</button>
+            <button type="button" class="primary" style="flex: 2;" id="modal-save-btn">💾 Save Corrections</button>
         </div>
-    </form>
+    </div>
 </div>
 
 <div class="container">
@@ -136,7 +156,7 @@
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">Play</button>
             <button class="nav-btn" onclick="switchView('view-range', this)">Practice</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
-            <button class="nav-btn" onclick="switchView('view-analytics', this)">Analytics</button>
+            <button class="nav-btn" onclick="switchView('view-analytics', this)">Stats</button>
         </div>
         <button class="view-toggle-btn" onclick="openSettings()" style="padding: 10px; margin-left: auto; border-radius: 50%; font-size: 18px; background: rgba(0,0,0,0.3); border-color: var(--border-color);">⚙️</button>
     </div>
@@ -223,6 +243,13 @@
                         <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Select Tee Box</label>
                         <select id="tee-select" onchange="handleTeeChange()" style="width: 100%;"></select>
                     </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Round Type</label>
+                        <select id="round-type-select" style="width: 100%;">
+                            <option value="Regular">⛳ Real Round</option>
+                            <option value="SIM">🎮 Simulator Round</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="setup-row" id="manual-tee-row" style="display: none; margin-top: 10px;">
                     <div class="setup-group"><label>Manual Tee Name</label><input type="text" id="setup-tee" placeholder="e.g. Blue" autocomplete="off"></div>
@@ -232,7 +259,8 @@
             <div id="api-status" style="margin-top: 10px; font-size: 12px; color: var(--accent-green);"></div>
         </div>
 
-        <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: none;">
+        <!-- FORM IS DISPLAY: BLOCK SO GRID IS VISIBLE ON LOAD -->
+        <form id="golf-entry-form" onsubmit="return false;" style="width:100%; display: block;">
             <div class="card">
                 <div class="scorecard-header">
                     <h3 id="current-course-display" style="cursor: pointer;" onclick="document.getElementById('search-card').style.display='block';">NO COURSE (Tap to edit)</h3>
@@ -250,6 +278,7 @@
                 <div id="weather-display" style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-top: -10px; margin-bottom: 15px;"></div>
                 <div class="view-toggle-row desktop-hide"><button type="button" class="view-toggle-btn primary" id="btn-grid-mode" onclick="togglePlayMode(false)">Scorecard</button><button type="button" class="view-toggle-btn" id="btn-play-mode" onclick="togglePlayMode(true)">Play Mode</button></div>
                 
+                <!-- DESKTOP FLEX WRAPPER -->
                 <div class="desktop-flex-wrapper">
                     <div id="grid-mode-container" class="matrix-wrapper"><div class="matrix-grid" id="scorecard-grid"></div></div>
                     
@@ -363,7 +392,7 @@
         </form>
     </div>
 
-    <!-- ROUND HISTORY VIEW -->
+    <!-- HISTORY VIEW -->
     <div id="view-history" class="view-container">
         <div class="card">
             <div class="scorecard-header">
@@ -445,7 +474,6 @@
                 </div>
             </div>
 
-            <!-- ORGANIZATIONAL STANDARD: ALL CHARTS HERE -->
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
                     
@@ -481,7 +509,7 @@
                     </div>
 
                     <div class="chart-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; width:100%; text-align:left;">SCORING DISTRIBUTION</div>
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; width:100%; text-align:left;">SCORING PIE PERCENTAGES</div>
                         <div style="position: relative; height: 180px; width:220px;"><canvas id="scoringPieChart"></canvas></div>
                     </div>
                     
@@ -515,7 +543,7 @@
 
             <div id="analytics-tab-insights" style="display:none;">
                 <div class="insights-card" style="margin-top:0; margin-bottom: 20px;">
-                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">SPATIAL MISS & BOUNDARY HAZARD BREAKDOWNS</div>
+                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">SPATIAL MISSEST & BOUNDARY HAZARD BREAKDOWNS</div>
                     <div id="miss-penalty-stats" style="font-size: 13px; color: var(--text-main); line-height: 1.8;"></div>
                 </div>
                 <div class="insights-card" style="margin-top:0;">
