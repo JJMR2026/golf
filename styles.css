@@ -10,7 +10,6 @@
     --cell-border: #333; 
 }
 
-/* Touch-action kills double-tap zoom but allows pinch to zoom */
 body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; transition: background-color 0.3s, color 0.3s; touch-action: manipulation; }
 .container { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; width: 100%; box-sizing: border-box; transition: background-color 0.3s, border-color 0.3s; }
@@ -55,12 +54,13 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
 .view-toggle-row { display: flex; gap: 10px; margin-bottom: 15px; }
 .view-toggle-btn { padding: 8px 12px; font-size: 12px; flex: none; border-radius: 6px; }
 
-.matrix-wrapper { overflow-x: auto; padding-bottom: 10px; }
-.matrix-grid { display: grid; gap: 6px; min-width: 1000px; }
+/* FIXED MATRIX GRID FOR DESKTOP */
+.matrix-wrapper { overflow-x: auto; padding-bottom: 10px; width: 100%; }
+.matrix-grid { display: grid; gap: 4px; min-width: max-content; }
 .row-label { display: flex; align-items: center; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
-.cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; transition: background-color 0.3s, border-color 0.3s; }
+.cell { background-color: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 6px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; transition: background-color 0.3s, border-color 0.3s; padding: 0 2px; }
 .cell.hole-header { background-color: rgba(0,0,0,0.3); color: var(--text-muted); border: none; }
-.cell input { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; font-size: 14px; padding: 0;}
+.cell input { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-main); text-align: center; font-weight: bold; font-size: 13px; padding: 0;}
 .cell input::placeholder { font-size: 11px; font-weight: normal; color: #555; }
 .toggle-btn { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 11px; cursor: pointer; border-radius: 6px; }
 .toggle-btn.hit { color: var(--accent-green); }
@@ -92,12 +92,12 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
 #play-warning-banner { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; padding: 10px 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;}
 #play-pace-tracker { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-main); background: var(--cell-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); }
 
-/* DESKTOP SIDE-BY-SIDE VIEW */
+/* DESKTOP SIDE-BY-SIDE VIEW FIX */
 @media(min-width: 1000px) {
     .desktop-hide { display: none !important; }
-    .desktop-flex-wrapper { display: flex; gap: 30px; flex-direction: row-reverse; align-items: flex-start;}
-    #grid-mode-container { display: block !important; flex: 1.5; overflow-x: auto;}
-    #play-mode-container { display: flex !important; flex: 1; max-width: 400px; position: sticky; top: 20px;}
+    .desktop-flex-wrapper { display: flex; gap: 20px; flex-direction: row-reverse; align-items: flex-start;}
+    #grid-mode-container { display: block !important; flex: 1; overflow-x: auto;}
+    #play-mode-container { display: flex !important; flex: 0 0 320px; position: sticky; top: 20px;}
 }
 
 /* MOBILE BOTTOM NAV FIXES */
@@ -107,7 +107,7 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
     .bottom-nav button { flex: 1; background: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 4px; border-radius: 8px;}
     .bottom-nav button.active { color: var(--accent-green); background: rgba(16, 185, 129, 0.1);}
     .bottom-nav button span { font-size: 20px; margin-bottom: 2px;}
-    .container { padding-bottom: 80px; } /* Prevent footer overlap */
+    .container { padding-bottom: 80px; } 
 }
 
 .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; border-radius: 8px; background-color: var(--card-bg); margin-bottom: 5px;}
