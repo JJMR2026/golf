@@ -83,6 +83,8 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
 .adv-btn.active { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
 .sub-miss { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;}
 .sub-miss.active { background: #ef4444; color: #fff; border-color: #ef4444;}
+.sub-hit { background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981; }
+.sub-hit.active { background: #10b981; color: #000; }
 
 .play-sub-select { background: var(--cell-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; padding: 8px; outline: none; }
 
