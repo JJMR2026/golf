@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     
-    <link rel="stylesheet" href="styles.css?v=18.0">
+    <link rel="stylesheet" href="styles.css?v=19.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -53,13 +53,33 @@
                 <option value="light">Light Mode</option>
             </select>
         </div>
+        <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">MY BAG (CLUB FILTER)</label>
+            <div id="bag-checkboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="Driver" checked> Driver</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="3 Wood" checked> 3 Wood</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="5 Wood"> 5 Wood</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="5 Hybrid" checked> 5 Hybrid</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="4 Iron"> 4 Iron</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="5 Iron"> 5 Iron</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="6 Iron" checked> 6 Iron</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="7 Iron" checked> 7 Iron</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="8 Iron" checked> 8 Iron</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="9 Iron" checked> 9 Iron</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="Pitching Wedge" checked> Pitching</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="Gap Wedge" checked> Gap Wedge</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="Sand Wedge"> Sand Wedge</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="56 Degree" checked> 56 Degree</label>
+                <label class="checkbox-container"><input type="checkbox" class="bag-club" value="60 Degree"> 60 Degree</label>
+            </div>
+        </div>
         <div id="password-change-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px; display: block; text-align: left;">SECURITY</label>
             <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 10px;">
             <button class="primary" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Password</button>
             <div id="settings-msg" style="font-size: 12px; margin-top: 10px;"></div>
         </div>
-<div id="admin-harvester-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px; display: none;">
+        <div id="admin-harvester-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px; display: none;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DATABASE ADMIN</label>
             <button class="view-toggle-btn" style="width: 100%; padding: 10px;" onclick="checkHarvesterStatus()">📡 Live Harvester Monitor</button>
         </div>
@@ -95,21 +115,6 @@
         <button type="button" class="close-modal-btn" onclick="document.getElementById('stat-graph-modal').style.display='none'">✕</button>
         <div style="height: 300px; width: 100%; position: relative;">
             <canvas id="statDetailChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<div id="putt-map-modal" class="modal-overlay" style="display: none; z-index: 30000;">
-    <div class="auth-card" style="max-width: 400px; padding: 20px;">
-        <h2 style="color: var(--accent-green); margin-top: 0; margin-bottom: 5px;">🎯 MAP PUTT</h2>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Tap once for Flag ⛳. Tap again for Ball ⚪.</p>
-        <div style="display:flex; justify-content:center; margin-bottom: 15px;">
-            <canvas id="putt-canvas" width="300" height="300" style="background: #064e3b; border-radius: 8px; border: 2px solid var(--border-color); cursor: crosshair; touch-action: none;"></canvas>
-        </div>
-        <div id="putt-distance-display" style="font-size: 24px; font-weight: bold; color: var(--text-main); margin-bottom: 15px; text-align: center;">-- ft</div>
-        <div style="display: flex; gap: 10px;">
-            <button class="view-toggle-btn" style="flex:1;" onclick="clearPuttMap()">Reset</button>
-            <button class="primary" style="flex:1;" onclick="savePuttMap()">Save Distance</button>
         </div>
     </div>
 </div>
@@ -226,7 +231,7 @@
     <!-- PLAY ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
-            <div class="search-header">COURSE SETUP</div>
+            <div class="search-header">COURSE SEARCH</div>
             <div class="search-row">
                 <input type="text" id="course-search-input" placeholder="Search Database..." autocomplete="off">
                 <button class="primary" id="fetch-course-btn" style="flex: 0 0 auto;" onclick="fetchCourseDetails()">Fetch</button>
@@ -282,11 +287,9 @@
                 <div id="play-mode-container" style="display:none; max-width: 600px; margin: 0 auto; width: 100%;">
                     <div id="play-pace-tracker">
                         <span id="pace-score-display">Strokes: 0 (E)</span>
-                        <span id="pace-projected-display">Pace: --</span>
+                        <span id="pace-projected-display"></span>
                     </div>
-                    <div id="play-warning-banner" style="display: none;">
-                        <span id="play-warning-text" style="width: 100%;">⚠️ Missing Stats</span>
-                    </div>
+                    
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px;">
                         <span id="play-hole-title" style="color: var(--accent-green); font-size: 24px; font-weight: bold;">HOLE 1</span>
                         <span id="play-par-title" style="color: var(--text-muted); font-size: 14px; font-weight: bold;">PAR - • - YDS</span>
@@ -303,16 +306,10 @@
 
                     <div class="play-row">
                         <div class="play-label">PUTTS</div>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <div class="play-input-box" style="width: 70px; position:relative;">
-                                <input type="number" id="play-putt-dist" onchange="syncPlayToState('puttDist', this.value)" placeholder="Ft.">
-                                <button type="button" onclick="openPuttMapper()" style="position:absolute; right:-30px; top:50%; transform:translateY(-50%); background:transparent; border:none; font-size:18px;">🎯</button>
-                            </div>
-                            <div class="tap-input-group" style="margin-left: 25px;">
-                                <button type="button" class="tap-btn" onclick="adjustStat('putts', -1)">-</button>
-                                <input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)">
-                                <button type="button" class="tap-btn" onclick="adjustStat('putts', 1)">+</button>
-                            </div>
+                        <div class="tap-input-group">
+                            <button type="button" class="tap-btn" onclick="adjustStat('putts', -1)">-</button>
+                            <input type="number" id="play-putts" onchange="syncPlayToState('putts', this.value)">
+                            <button type="button" class="tap-btn" onclick="adjustStat('putts', 1)">+</button>
                         </div>
                     </div>
 
@@ -321,10 +318,12 @@
                         <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
                             <div style="display:flex; gap:5px;">
                                 <button type="button" class="adv-btn" id="fir-hit-btn" onclick="setPlayToggle('fir', 'hit')">HIT</button>
-                                <button type="button" class="adv-btn" id="fir-under-btn" onclick="setPlayToggle('fir', 'drv grn')">DRV GRN</button>
                                 <button type="button" class="adv-btn" id="fir-miss-btn" onclick="setPlayToggle('fir', 'miss')">MISS</button>
                             </div>
-                            <div id="fir-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
+                            <div id="fir-hit-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
+                                <button type="button" class="adv-btn sub-hit" onclick="toggleAdv('fir', 'DRV GRN')">DRV GRN</button>
+                            </div>
+                            <div id="fir-miss-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
                                 <button type="button" class="adv-btn sub-miss" id="fir-adv-left" onclick="toggleAdv('fir', 'LEFT')">LEFT</button>
                                 <button type="button" class="adv-btn sub-miss" id="fir-adv-right" onclick="toggleAdv('fir', 'RIGHT')">RIGHT</button>
                                 <button type="button" class="adv-btn sub-miss" id="fir-adv-short" onclick="toggleAdv('fir', 'SHORT')">SHORT</button>
@@ -343,19 +342,19 @@
                         <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
                             <div style="display:flex; gap:5px;">
                                 <button type="button" class="adv-btn" id="gir-hit-btn" onclick="setPlayToggle('gir', 'hit')">HIT</button>
-                                <button type="button" class="adv-btn" id="gir-under-btn" onclick="setPlayToggle('gir', 'under')">UNDER</button>
                                 <button type="button" class="adv-btn" id="gir-miss-btn" onclick="setPlayToggle('gir', 'miss')">MISS</button>
                             </div>
-                            <div id="gir-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%; flex-wrap: wrap;">
+                            <div id="gir-hit-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%;">
+                                <button type="button" class="adv-btn sub-hit" onclick="toggleAdv('gir', 'UNDER REG')">UNDER REG</button>
+                            </div>
+                            <div id="gir-miss-sub-menu" style="display:none; gap:5px; margin-top:5px; width: 100%; flex-wrap: wrap;">
                                 <button type="button" class="adv-btn sub-miss" id="gir-adv-short" onclick="toggleAdv('gir', 'SHORT')">SHORT</button>
                                 <button type="button" class="adv-btn sub-miss" id="gir-adv-long" onclick="toggleAdv('gir', 'LONG')">LONG</button>
                                 <button type="button" class="adv-btn sub-miss" id="gir-adv-left" onclick="toggleAdv('gir', 'LEFT')">LEFT</button>
                                 <button type="button" class="adv-btn sub-miss" id="gir-adv-right" onclick="toggleAdv('gir', 'RIGHT')">RIGHT</button>
                             </div>
                             <div style="display:flex; gap:5px; margin-top:5px;">
-                                <input type="number" class="play-sub-select" id="play-approach-dist" placeholder="Yds to Pin" style="width:80px;" onchange="syncPlayToState('appDist', this.value)">
                                 <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
-                                    <option value="">Club...</option><option value="Wedge">Wedge</option><option value="9i">9 Iron</option><option value="8i">8 Iron</option><option value="7i">7 Iron</option><option value="6i">6 Iron</option><option value="5i">5 Iron</option><option value="4i">4 Iron</option><option value="Hybrid">Wood/Hyb</option>
                                 </select>
                             </div>
                         </div>
@@ -413,6 +412,56 @@
     
     <!-- ADVANCED STATISTICS VIEW -->
     <div id="view-analytics" class="view-container">
+        <div class="card" style="margin-bottom: 15px;">
+            <details class="year-folder" style="margin-bottom: 0;">
+                <summary style="font-size:12px; padding:10px;">⚙️ ADJUST ANALYTICS FILTERS</summary>
+                <div class="folder-content">
+                    <div class="filter-row" style="margin-bottom: 0;">
+                        <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                            <option value="season" selected>This Season</option>
+                            <option value="last1">Last Round</option>
+                            <option value="last2">Last 2 Rounds</option>
+                            <option value="last3">Last 3 Rounds</option>
+                            <option value="last4">Last 4 Rounds</option>
+                            <option value="last5">Last 5 Rounds</option>
+                            <option value="last10">Last 10 Rounds</option>
+                            <option value="last20">Last 20 Rounds</option>
+                            <option value="full">All Time</option>
+                        </select>
+                        <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
+                            <option value="18" selected>18-Holes Only</option>
+                            <option value="9">9-Holes Only</option>
+                            <option value="all">All Rounds</option>
+                        </select>
+                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
+                        <div class="multi-select-container">
+                            <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
+                            <div class="multi-select-dropdown" id="month-checkbox-list">
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                            </div>
+                        </div>
+                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
+                        <div class="multi-select-container">
+                            <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
+                            <div class="multi-select-dropdown" id="par-checkbox-list">
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
+                            </div>
+                        </div>
+                        <div class="multi-select-container">
+                            <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
+                            <div class="multi-select-dropdown" id="hole-checkbox-list">
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
+
         <div class="card">
             <div class="analytics-tabs">
                 <button class="active" onclick="switchAnalyticsTab('summary', this)">Summary</button>
@@ -420,7 +469,7 @@
                 <button onclick="switchAnalyticsTab('insights', this)">Insights</button>
             </div>
 
-            <!-- TAB 1: SUMMARY (HCP CARD MOVED EXCLUSIVELY HERE) -->
+            <!-- TAB 1: SUMMARY -->
             <div id="analytics-tab-summary" style="display:block;">
                 <div class="hcp-badge" style="border-bottom: none; margin-bottom: 10px;"><div class="hcp-label">Handicap Index</div><div class="hcp-value" id="hcp-display">--.-</div></div>
                 <div id="trophy-room-box" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:20px;"></div>
@@ -441,7 +490,6 @@
                                 <select id="primary-chart-metric" onchange="updateAnalytics()" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; padding: 4px 8px; border-radius: 4px; outline: none;">
                                     <option value="none">-- Select Overlay --</option>
                                     <option value="hcp" selected>Handicap Index</option>
-                                    <option value="sg">Strokes Gained: Putting</option>
                                     <option value="putts">Total Putts</option>
                                     <option value="tpAvoid">3-Putt Avoidance %</option>
                                     <option value="driveDist">Avg Drive Distance</option>
@@ -510,51 +558,6 @@
                 </div>
             </div>
             
-            <details class="year-folder" style="margin-top: 20px;">
-                <summary style="font-size:12px; padding:10px;">⚙️ ADJUST ANALYTICS FILTERS</summary>
-                <div class="folder-content">
-                    <div class="filter-row">
-                        <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
-                            <option value="season" selected>This Season</option>
-                            <option value="last1">Last Round</option>
-                            <option value="last2">Last 2 Rounds</option>
-                            <option value="last3">Last 3 Rounds</option>
-                            <option value="last4">Last 4 Rounds</option>
-                            <option value="last5">Last 5 Rounds</option>
-                            <option value="full">All Time</option>
-                        </select>
-                        <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
-                            <option value="18" selected>18-Holes Only</option>
-                            <option value="9">9-Holes Only</option>
-                            <option value="all">All Rounds</option>
-                        </select>
-                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
-                        <div class="multi-select-container">
-                            <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
-                            <div class="multi-select-dropdown" id="month-checkbox-list">
-                                <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                            </div>
-                        </div>
-                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
-                        <div class="multi-select-container">
-                            <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
-                            <div class="multi-select-dropdown" id="par-checkbox-list">
-                                <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
-                            </div>
-                        </div>
-                        <div class="multi-select-container">
-                            <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
-                            <div class="multi-select-dropdown" id="hole-checkbox-list">
-                                <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </details>
         </div>
     </div>
 </div>
@@ -566,6 +569,6 @@
     <button class="nav-btn" onclick="switchView('view-analytics', this)"><span>📊</span>Stats</button>
 </div>
 
-<script src="app.js?v=18.0"></script>
+<script src="app.js?v=19.0"></script>
 </body>
 </html>
