@@ -956,7 +956,6 @@ window.forceSubmitRound = async function() {
         if (!isNaN(s)) {
             totalScore += s; 
             
-            // STRICT INTEGER PARSING TO PREVENT 0-AVERAGING BUGS
             let validPutts = roundData[i].putts !== "" ? parseInt(roundData[i].putts) : null;
             let validDrive = roundData[i].drive !== "" ? parseInt(roundData[i].drive) : null;
 
@@ -1125,17 +1124,12 @@ window.saveModalChanges = async function(id, holesCount) {
     } catch(e) { alert("❌ Error saving changes."); } finally { saveBtn.innerText = originalText; saveBtn.disabled = false; }
 };
 
-window.deleteActiveRound = async function(id) { 
-    if(id && confirm("Delete round?")) { if (!supabaseClient) return; await supabaseClient.from('logged_rounds').delete().eq('id', id); alert("🗑️ Deleted."); window.fetchHistory(); window.closeHistoryModal(); window.loadAnalyticsData(); } 
-};
-
 // --- ANALYTICS ---
 window.getRelativeParString = function(score, par) { 
     if(par === 0 || score === 0) return ""; let diff = score - par; return diff > 0 ? `(+${diff})` : (diff === 0 ? `(E)` : `(${diff})`); 
 };
 
 window.calculateHandicap = function(allRounds) {
-    // If no course rating exists, fall back to simple math: (Total Score - Course Par) * 0.96.
     let validRounds = allRounds.filter(r => !(r.tee_name && r.tee_name.includes('[SIM]')) && !(r.tee_name && r.tee_name.includes('[RANGE]'))).slice(0, 20);
     const n = validRounds.length; 
     if (n < 3) return "--.-";
@@ -1192,7 +1186,6 @@ window.updateTrophyRoom = function(fRounds) {
                 else if (r.total_score === minScore) { lowScores.push({c: (r.course_name||"").trim(), d: dStr, p: coursePar}); } 
             }
             
-            // Re-calculate putts explicitly ignoring zeros to fix old data
             let truePutts = 0; let hp = 0;
             r.hole_scores.forEach(h => { if(h.putts !== null && h.putts > 0) { truePutts += h.putts; hp++; } });
             
@@ -1233,10 +1226,8 @@ window.generateInsights = function(fRounds) {
     if (fRounds.length === 0) return "Gathering data...";
     let insights = [];
     
-    // Split recent vs global
     let recentRounds = fRounds.slice(0, 5);
     
-    // Aggregator function
     const agg = (arr) => {
         let stats = { p3:0, p3c:0, p4:0, p4c:0, p5:0, p5c:0, putts:0, hp:0, f9s:0, f9p:0, b9s:0, b9p:0, sOpp:0, sHit:0, wind:[], temp:[], sc:[] };
         arr.forEach(r => {
@@ -1251,7 +1242,6 @@ window.generateInsights = function(fRounds) {
                     if(h.par===3){stats.p3+=d; stats.p3c++;} if(h.par===4){stats.p4+=d; stats.p4c++;} if(h.par===5){stats.p5+=d; stats.p5c++;} 
                     if(h.hole_number <= 9) { stats.f9s += h.score; stats.f9p += h.par; } else { stats.b9s += h.score; stats.b9p += h.par; }
                 }
-                // IGNORING ZEROS
                 if(h.putts !== null && h.putts > 0) { stats.putts += h.putts; stats.hp++; }
                 if(h.gir === 'miss' && h.score && h.par) { stats.sOpp++; if(h.score <= h.par) stats.sHit++; }
             }); 
@@ -1262,7 +1252,6 @@ window.generateInsights = function(fRounds) {
     let glob = agg(fRounds);
     let rec = agg(recentRounds);
 
-    // Putting Trend
     if (glob.hp > 0 && rec.hp > 0 && fRounds.length > 3) { 
         let gAvg = (glob.putts / glob.hp); let rAvg = (rec.putts / rec.hp); 
         let diff = rAvg - gAvg;
@@ -1270,7 +1259,6 @@ window.generateInsights = function(fRounds) {
         else if (diff < -0.2) insights.push(`<div class="insight-btn"><span style="font-size:18px;">🟢</span><div><b>Putting Heat:</b> You are averaging ${rAvg.toFixed(1)} putts/hole recently, beating your global ${gAvg.toFixed(1)} avg.</div></div>`); 
     }
     
-    // Hole Averages
     let avgs = [];
     if (glob.p3c > 0) avgs.push({type: 'Par 3s', val: glob.p3/glob.p3c}); 
     if (glob.p4c > 0) avgs.push({type: 'Par 4s', val: glob.p4/glob.p4c}); 
@@ -1280,7 +1268,6 @@ window.generateInsights = function(fRounds) {
         insights.push(`<div class="insight-btn"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${avgs[0].type}</b> (+${avgs[0].val.toFixed(1)} to par).</div></div>`); 
     }
     
-    // Stamina
     if (glob.f9p > 0 && glob.b9p > 0) {
         let f9Avg = glob.f9s - glob.f9p; let b9Avg = glob.b9s - glob.b9p;
         if (b9Avg > f9Avg + 1) insights.push(`<div class="insight-btn"><span style="font-size:18px;">🔴</span><div><b>Stamina Fade:</b> You average +${b9Avg.toFixed(1)} on the Back 9 compared to +${f9Avg.toFixed(1)} on the Front 9.</div></div>`); 
@@ -1470,7 +1457,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     
     let trendDatasets = [{ label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', pointBorderColor: '#10b981', fill: true, yAxisID: 'y', tension: 0.3 }];
-    const oColors = { hcp: '#f59e0b', putts: '#3b82f6', driveDist: '#8b5cf6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', sand: '#eab308', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308', sg: '#38bdf8', birdies: '#10b981', pars: '#9ca3af', bogeys: '#ef4444', tpAvoid: '#2dd4bf', acc: '#a855f7', f9: '#facc15', b9: '#fb923c' };
+    const oColors = { hcp: '#f59e0b', putts: '#3b82f6', driveDist: '#8b5cf6', fir: '#8b5cf6', gir: '#d946ef', scram: '#10b981', sand: '#eab308', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', p5: '#eab308', birdies: '#10b981', pars: '#9ca3af', bogeys: '#ef4444', tpAvoid: '#2dd4bf', acc: '#a855f7', f9: '#facc15', b9: '#fb923c' };
 
     if (activeOverlay === 'hcp') {
         let hcpHist = window.calculateHcpHistory(filteredRounds); 
@@ -1479,7 +1466,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     } else if (activeOverlay !== 'none') {
         let oData = [];
         chartData.forEach(r => {
-            let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, sgTot=0, sgCnt=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, dTot=0, dCnt=0, f9=0, b9=0, tpA_H=0, tpA_T=0;
+            let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, p3=0, p3c=0, p4=0, p4c=0, p5=0, p5c=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, dTot=0, dCnt=0, f9=0, b9=0, tpA_H=0, tpA_T=0;
             let th = r.hole_scores || []; 
             let filteredHoles = [];
             th.forEach(h => { if (actHoles.includes(h.hole_number.toString()) && actPars.includes(h.par.toString())) { filteredHoles.push(h); } });
