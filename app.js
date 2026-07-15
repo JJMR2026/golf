@@ -898,7 +898,7 @@ window.updateDriveDistances = function() {
         const container = document.getElementById(`drive-container-${i}`); 
         
         if(input && container) { 
-            if (currentCoursePars[i] === 3) { 
+            if (parseInt(currentCoursePars[i]) === 3) { 
                 input.value = ""; 
                 input.disabled = true; 
                 input.placeholder = "N/A"; 
@@ -910,7 +910,134 @@ window.updateDriveDistances = function() {
             } 
         } 
     } 
-};window.updatePlayModeUI = function() {
+};
+
+window.handleTeeChange = function() {
+    const val = document.getElementById('tee-select').value; 
+    const manualRow = document.getElementById('manual-tee-row');
+    
+    if (val === 'new') { 
+        manualRow.style.display = 'flex'; 
+        selectedTee = null; 
+        currentCoursePars = Array(18).fill("");
+        currentYardages = Array(18).fill(""); 
+    } else if (val === "") { 
+        manualRow.style.display = 'none'; 
+        selectedTee = null; 
+        currentCoursePars = Array(18).fill("");
+        currentYardages = Array(18).fill(""); 
+    } else { 
+        manualRow.style.display = 'none'; 
+        selectedTee = availableTees.find(t => t.id == val); 
+        
+        if (selectedTee) { 
+            let p = selectedTee.pars; 
+            if(typeof p === 'string') {
+                try {
+                    p = JSON.parse(p.replace(/{/g,'[').replace(/}/g,']'));
+                } catch(e) {}
+            }
+            
+            let y = selectedTee.yardages; 
+            if(typeof y === 'string') {
+                try {
+                    y = JSON.parse(y.replace(/{/g,'[').replace(/}/g,']'));
+                } catch(e) {}
+            }
+            
+            currentCoursePars = Array.isArray(p) && p.length > 0 ? [...p] : currentCoursePars; 
+            currentYardages = Array.isArray(y) && y.length > 0 ? [...y] : Array(18).fill(""); 
+        } 
+    }
+    
+    while (currentCoursePars.length < 18) currentCoursePars.push("");
+    while (currentYardages.length < 18) currentYardages.push("");
+
+    window.buildGrid(); 
+    window.updatePlayModeUI(); 
+    window.saveLocalState();
+};window.startRound = function() { 
+    document.getElementById('search-card').style.display = 'none'; 
+    window.togglePlayMode(true); 
+};
+
+window.setHoleCount = function(count) { 
+    if (!window.checkActiveRoundSafeguard()) return;
+    
+    currentHoleCount = count; 
+    
+    let btn18 = document.getElementById('btn-18-holes');
+    let btn9 = document.getElementById('btn-9-holes');
+    
+    if (btn18 && btn9) {
+        if (count === 18) {
+            btn18.classList.add('active');
+            btn9.classList.remove('active');
+        } else {
+            btn18.classList.remove('active');
+            btn9.classList.add('active');
+        }
+    }
+    
+    let toggleBox = document.getElementById('front-back-toggle');
+    
+    if (count === 9) { 
+        if (toggleBox) {
+            toggleBox.style.display = 'inline-flex'; 
+        }
+        currentHoleOffset = 0; 
+        
+        let bf = document.getElementById('btn-front-9');
+        let bb = document.getElementById('btn-back-9');
+        if (bf && bb) {
+            bf.classList.add('active'); 
+            bb.classList.remove('active'); 
+        }
+    } else { 
+        if (toggleBox) {
+            toggleBox.style.display = 'none'; 
+        }
+        currentHoleOffset = 0; 
+    }
+    
+    currentPlayHole = currentHoleOffset; 
+    window.buildGrid(); 
+    window.updatePlayModeUI(); 
+    window.saveLocalState(); 
+};
+
+window.setNineSide = function(side) {
+    if (!window.checkActiveRoundSafeguard()) return;
+    
+    let bf = document.getElementById('btn-front-9');
+    let bb = document.getElementById('btn-back-9');
+    
+    if (side === 'front') { 
+        currentHoleOffset = 0; 
+        if (bf && bb) { 
+            bf.classList.add('active'); 
+            bb.classList.remove('active'); 
+        }
+    } else { 
+        currentHoleOffset = 9; 
+        if (bf && bb) { 
+            bf.classList.remove('active'); 
+            bb.classList.add('active'); 
+        }
+    }
+    
+    currentPlayHole = currentHoleOffset; 
+    window.buildGrid(); 
+    window.updatePlayModeUI(); 
+    window.saveLocalState(); 
+};
+
+window.jumpToPlayMode = function(index) { 
+    currentPlayHole = index; 
+    window.togglePlayMode(true); 
+};
+
+window.updatePlayModeUI = function() {
     window.populateClubDropdowns();
 
     const par = currentCoursePars[currentPlayHole]; 
@@ -922,15 +1049,15 @@ window.updateDriveDistances = function() {
     let currPar = 0;
     let endIndex = currentHoleOffset + currentHoleCount;
     
-    for(let i = currentHoleOffset; i < endIndex; i++) { 
+    for (let i = currentHoleOffset; i < endIndex; i++) { 
         let s = parseInt(roundData[i].score); 
         let p = parseInt(currentCoursePars[i]); 
         
-        if(!isNaN(p)) {
+        if (!isNaN(p)) {
             totPar += p;
         }
         
-        if(s > 0) { 
+        if (s > 0) { 
             totScore += s; 
             currPar += (!isNaN(p) ? p : 4); 
         } 
@@ -940,7 +1067,7 @@ window.updateDriveDistances = function() {
     let relStr = relToPar > 0 ? `+${relToPar}` : (relToPar === 0 ? 'E' : relToPar);
     
     let paceScoreEl = document.getElementById('pace-score-display');
-    if(paceScoreEl) {
+    if (paceScoreEl) {
         paceScoreEl.innerText = `Strokes: ${totScore} (${relStr})`; 
     }
 
@@ -950,7 +1077,7 @@ window.updateDriveDistances = function() {
             if (state.driveClub === "") { 
                 let dClubs = [];
                 masterAnalyticsData.forEach(r => {
-                    (r.hole_scores||[]).forEach(h => {
+                    (r.hole_scores || []).forEach(h => {
                         if (h.par == par && h.drive_club && bag.includes(h.drive_club)) {
                             dClubs.push(h.drive_club);
                         }
@@ -963,7 +1090,7 @@ window.updateDriveDistances = function() {
             if (state.appClub === "") { 
                 let aClubs = [];
                 masterAnalyticsData.forEach(r => {
-                    (r.hole_scores||[]).forEach(h => {
+                    (r.hole_scores || []).forEach(h => {
                         if (h.par == 3 && h.approach_club && bag.includes(h.approach_club)) {
                             aClubs.push(h.approach_club);
                         }
@@ -973,49 +1100,49 @@ window.updateDriveDistances = function() {
             } 
             state.fir = "hit"; 
             const fCell = document.getElementById(`grid-fir-${currentPlayHole}`); 
-            if(fCell) {
+            if (fCell) {
                 fCell.innerText = "HIT"; 
             }
         }
     }
 
     let holeTitle = document.getElementById('play-hole-title');
-    if(holeTitle) {
+    if (holeTitle) {
         holeTitle.innerText = `HOLE ${currentPlayHole + 1}`; 
     }
     
     let parTitle = document.getElementById('play-par-title');
-    if(parTitle) {
+    if (parTitle) {
         parTitle.innerText = `PAR ${par || '-'} • ${yds} YDS`;
     }
     
     let playScore = document.getElementById('play-score');
-    if(playScore) {
+    if (playScore) {
         playScore.value = state.score; 
     }
     
     let playPutts = document.getElementById('play-putts');
-    if(playPutts) {
+    if (playPutts) {
         playPutts.value = state.putts; 
     }
     
     let playDrive = document.getElementById('play-drive');
-    if(playDrive) {
+    if (playDrive) {
         playDrive.value = state.drive; 
     }
     
     let playDriveClub = document.getElementById('play-drive-club');
-    if(playDriveClub) {
+    if (playDriveClub) {
         playDriveClub.value = state.driveClub || ""; 
     }
     
     let playAppClub = document.getElementById('play-approach-club');
-    if(playAppClub) {
+    if (playAppClub) {
         playAppClub.value = state.appClub || ""; 
     }
     
     let sBtn = document.getElementById('sand-cycle-btn');
-    if(sBtn) {
+    if (sBtn) {
         if (state.sandSave === "1") { 
             sBtn.innerText = "1 STROKE (SAVE)"; 
             sBtn.className = "adv-btn active"; 
@@ -1041,19 +1168,19 @@ window.updateDriveDistances = function() {
 
     let dropsVal = parseInt(state.drops) || 0; 
     let dropsDisp = document.getElementById('play-drops-display');
-    if(dropsDisp) {
+    if (dropsDisp) {
         dropsDisp.value = dropsVal;
     }
     
     let dropSub = document.getElementById('drop-sub-menu');
     if (dropsVal > 0) { 
-        if(dropSub) {
+        if (dropSub) {
             dropSub.style.display = 'flex'; 
         }
         let adv = state.dropsAdv || []; 
         ['WATER', 'OB', 'LOST', 'UNPLAYABLE'].forEach(id => { 
             const btn = document.getElementById(`drop-${id.toLowerCase()}`); 
-            if(btn) {
+            if (btn) {
                 if (adv.indexOf(id) > -1) {
                     btn.classList.add('active');
                 } else {
@@ -1062,57 +1189,34 @@ window.updateDriveDistances = function() {
             }
         }); 
     } else { 
-        if(dropSub) {
+        if (dropSub) {
             dropSub.style.display = 'none'; 
         }
     }
 
     ['fir', 'gir'].forEach(type => {
         let hb = document.getElementById(`${type}-hit-btn`); 
+        let ub = document.getElementById(`${type}-under-btn`); 
         let mb = document.getElementById(`${type}-miss-btn`); 
         let subMenu = document.getElementById(`${type}-sub-menu`); 
         let advArr = state[type + 'Adv'] || [];
+        let stateVal = state[type];
         
-        if(hb) {
-            let stateVal = state[type];
-            if (stateVal === 'hit' || stateVal === 'drv grn' || stateVal === 'under') {
-                hb.classList.add('active'); 
-                if (stateVal === 'drv grn') {
-                    hb.innerText = "DRV GRN";
-                } else if (stateVal === 'under') {
-                    hb.innerText = "UNDER REG";
-                } else {
-                    hb.innerText = "HIT";
-                }
-            } else {
-                hb.classList.remove('active');
-                hb.innerText = "HIT";
-            }
-        }
+        if (hb) hb.classList.toggle('active', stateVal === 'hit');
+        if (ub) ub.classList.toggle('active', stateVal === 'drv grn' || stateVal === 'under');
+        if (mb) mb.classList.toggle('active', stateVal === 'miss');
         
-        if(mb) {
-            if (state[type] === 'miss') {
-                mb.classList.add('active'); 
-            } else {
-                mb.classList.remove('active');
-            }
-        }
-        
-        if(subMenu) { 
-            subMenu.style.display = state[type] === 'miss' ? 'flex' : 'none'; 
+        if (subMenu) { 
+            subMenu.style.display = stateVal === 'miss' ? 'flex' : 'none'; 
             document.querySelectorAll(`#${type}-sub-menu .sub-miss`).forEach(btn => { 
                 let val = btn.id.split('-').pop().toUpperCase(); 
-                if (advArr.indexOf(val) > -1) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
+                btn.classList.toggle('active', advArr.indexOf(val) > -1);
             }); 
         }
     });
     
     let dBlock = document.getElementById('play-fir-block'); 
-    if(dBlock) { 
+    if (dBlock) { 
         document.querySelectorAll('#play-fir-block button, #play-fir-block input, #play-fir-block select').forEach(el => {
             el.disabled = (par == 3);
         }); 
@@ -1121,7 +1225,7 @@ window.updateDriveDistances = function() {
 
     let tmplBtn = document.getElementById('admin-save-template-btn');
     if (currentUser && currentUser.email === 'jordanrohel@yahoo.ca') {
-        if(!tmplBtn) {
+        if (!tmplBtn) {
             tmplBtn = document.createElement('button');
             tmplBtn.id = 'admin-save-template-btn';
             tmplBtn.className = 'primary';
@@ -1132,7 +1236,7 @@ window.updateDriveDistances = function() {
             tmplBtn.innerText = '💾 ADMIN: PUSH OVERRIDES TO DB';
             tmplBtn.onclick = window.saveCourseTemplate;
             const submitBtn = document.getElementById('submit-round-btn');
-            if(submitBtn) {
+            if (submitBtn) {
                 submitBtn.after(tmplBtn);
             }
         }
@@ -1207,269 +1311,157 @@ window.saveCourseTemplate = async function() {
     }
 };
 
-window.selectCourseFromDropdown = function(courseName) { 
-    if (!window.checkActiveRoundSafeguard()) return;
-    
-    document.getElementById('course-search-input').value = courseName.toUpperCase(); 
-    document.getElementById('search-dropdown').classList.remove('active'); 
-    window.fetchCourseDetails(); 
+window.discardRound = function() {
+    if (confirm("Are you sure you want to discard this round? All current scorecard data will be lost.")) {
+        localStorage.removeItem('golf_round_state');
+        localStorage.removeItem('golf_last_hole');
+        location.reload();
+    }
 };
 
-window.fetchCourseDetails = async function() {
-    if (!window.checkActiveRoundSafeguard()) return;
-    
-    const query = document.getElementById('course-search-input').value.trim(); 
-    if(!query) return;
-    
-    const fetchBtn = document.getElementById('fetch-course-btn'); 
-    const originalText = fetchBtn.innerText;
-    fetchBtn.innerText = "⏳..."; 
-    fetchBtn.disabled = true; 
-    document.getElementById('api-status').innerText = "Loading...";
+// ==========================================
+// SCORECARD GRID ENGINE
+// ==========================================
 
-    if (!supabaseClient) {
-        document.getElementById('api-status').innerText = "⚠️ Offline mode. Type course and hit Start Round.";
-        fetchBtn.innerText = originalText; 
-        fetchBtn.disabled = false;
-        return;
+window.buildGrid = function() {
+    const grid = document.getElementById('scorecard-grid'); 
+    if(!grid) return;
+    
+    grid.innerHTML = ''; 
+    grid.style.gridTemplateColumns = `70px repeat(${currentHoleCount}, 48px)`; 
+    
+    const rows = [
+        { label: 'HOLE', type: 'header' }, { label: 'PAR', type: 'par' }, 
+        { label: 'YDS', type: 'yardage' }, { label: 'SCORE', type: 'score' }, 
+        { label: 'PUTTS', type: 'putts' }, { label: 'FIR', type: 'fir' }, 
+        { label: 'GIR', type: 'gir' }, { label: 'DRIVE', type: 'drive' }, 
+        { label: 'DROPS', type: 'drops' }, { label: 'SAND', type: 'sandSave' }
+    ];
+    
+    let endIndex = currentHoleOffset + currentHoleCount;
+    
+    // FAILSAFE: Ensure roundData always has 18 slots before rendering
+    if (!roundData || roundData.length < 18) {
+        roundData = Array.from({length: 18}, () => ({ 
+            score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], 
+            drive: "", driveException: "", drops: 0, dropsAdv: [], 
+            sandSave: "", driveClub: "", appClub: "", appDist: "" 
+        }));
     }
 
-    try {
-        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`).limit(100); 
+    rows.forEach(row => {
+        const labelCell = document.createElement('div'); 
+        labelCell.className = 'row-label'; 
+        labelCell.innerText = row.label; 
+        grid.appendChild(labelCell);
         
-        if (teeData) {
-            let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase().includes(query.toUpperCase()) || query.toUpperCase().includes(t.course_name.trim().toUpperCase()));
+        for (let i = currentHoleOffset; i < endIndex; i++) {
+            const cell = document.createElement('div');
             
-            if (!matchedCourse && teeData.length > 0) {
-                matchedCourse = teeData[0];
-            }
+            // FAILSAFE: Prevent 'undefined' crashes on corrupted arrays
+            let pVal = currentCoursePars[i] !== undefined && currentCoursePars[i] !== null ? currentCoursePars[i] : '';
+            let yVal = currentYardages[i] !== undefined && currentYardages[i] !== null ? currentYardages[i] : '';
+            let cellData = roundData[i] || {};
             
-            if (matchedCourse) {
-                const fetchedCourseName = matchedCourse.course_name.trim();
-                availableTees = teeData.filter(t => t.course_name.trim() === fetchedCourseName);
-                window.fetchWeatherForCourse(fetchedCourseName);
-                
-                let parsedPars = availableTees[0].pars; 
-                if (typeof parsedPars === 'string') { 
-                    try { 
-                        parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); 
-                    } catch(e){} 
+            if (row.type === 'header') { 
+                cell.className = 'cell hole-header'; 
+                cell.innerHTML = `<button type="button" onclick="window.jumpToPlayMode(${i})" style="width:100%;height:100%;background:transparent;border:none;color:var(--text-muted);font-weight:bold;cursor:pointer;padding:0;">${i + 1}</button>`; 
+            } else if (row.type === 'par') { 
+                cell.className = 'cell'; 
+                cell.innerHTML = `<input type="number" id="par-input-${i}" inputmode="numeric" min="3" max="6" value="${pVal}" onchange="window.updatePar(${i}, this.value)">`; 
+            } else if (row.type === 'yardage') { 
+                cell.className = 'cell'; 
+                cell.innerHTML = `<input type="number" inputmode="numeric" value="${yVal}" onchange="currentYardages[${i}] = this.value; window.updatePlayModeUI(); window.saveLocalState();">`; 
+            } else if (row.type === 'score' || row.type === 'putts' || row.type === 'drive') { 
+                cell.className = row.type === 'drive' ? 'cell drive-cell' : 'cell'; 
+                cell.id = row.type === 'drive' ? `drive-container-${i}` : ''; 
+                let val = cellData[row.type] !== undefined ? cellData[row.type] : '';
+                cell.innerHTML = `<input type="number" id="grid-${row.type}-${i}" inputmode="numeric" value="${val}" onchange="window.syncGridToState(${i}, '${row.type}', this.value)">`; 
+            } else if (row.type === 'drops') { 
+                cell.className = 'cell'; 
+                let cVal = parseInt(cellData.drops) || 0; 
+                cell.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" id="grid-drops-${i}" onclick="window.toggleGridDrops(${i})">${cVal === 0 ? '-' : cVal}</button>`; 
+            } else { 
+                cell.className = 'cell'; 
+                let cVal = cellData[row.type] || ''; 
+                let btnText = "-";
+                if (row.type === 'sandSave') {
+                    btnText = cVal === "" ? "-" : cVal;
+                } else {
+                    if (cVal === 'hit') btnText = 'HIT';
+                    else if (cVal === 'miss') btnText = 'MISS';
+                    else if (cVal === 'drv grn') btnText = 'DRV GRN';
+                    else if (cVal === 'under') btnText = 'UNDER';
                 }
-                currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); 
                 
-                let y = availableTees[0].yardages;
-                if (typeof y === 'string') { 
-                    try { 
-                        if (y === "null" || y === "") {
-                            y = Array(18).fill(""); 
-                        } else {
-                            y = JSON.parse(y.replace(/{/g, '[').replace(/}/g, ']')); 
-                        }
-                    } catch(e) { 
-                        y = Array(18).fill(""); 
-                    } 
-                }
-                currentYardages = Array.isArray(y) && y.length > 0 ? [...y] : Array(18).fill(""); 
-                
-                roundData = Array.from({length: 18}, () => ({ 
-                    score: "", 
-                    putts: "", 
-                    fir: "", 
-                    firAdv: [], 
-                    gir: "", 
-                    girAdv: [], 
-                    drive: "", 
-                    driveException: "", 
-                    drops: 0, 
-                    dropsAdv: [], 
-                    sandSave: "", 
-                    driveClub: "", 
-                    appClub: "" 
-                }));
-                
-                dismissedWarnings = [];
-                
-                document.getElementById('current-course-display').innerText = fetchedCourseName.toUpperCase(); 
-                document.getElementById('current-course-display').style.color = 'var(--accent-green)';
-                
-                window.populateTeeDropdown(); 
-                document.getElementById('api-status').innerText = ""; 
-                window.buildGrid(); 
-                window.updatePlayModeUI(); 
-                window.saveLocalState(); 
-                return;
+                let isHit = (cVal === 'hit' || cVal === '1' || cVal === 'drv grn' || cVal === 'under');
+                cell.innerHTML = `<button type="button" class="toggle-btn ${isHit ? 'hit' : ''}" id="grid-${row.type}-${i}" onclick="window.toggleGridHit(${i}, '${row.type}')">${btnText}</button>`; 
             }
+            grid.appendChild(cell);
         }
-    } catch(e) { 
-        console.error(e); 
-    } finally { 
-        fetchBtn.innerText = originalText; 
-        fetchBtn.disabled = false; 
-    }
-    
-    document.getElementById('current-course-display').innerText = query.toUpperCase(); 
-    document.getElementById('current-course-display').style.color = 'var(--accent-green)'; 
-    document.getElementById('api-status').innerText = "ℹ️ Course not found. Please enter pars manually.";
-    
-    currentCoursePars = Array(18).fill(""); 
-    currentYardages = Array(18).fill(""); 
-    availableTees = []; 
-    
-    window.populateTeeDropdown(); 
-    window.buildGrid(); 
-    window.updatePlayModeUI(); 
-    window.saveLocalState();
-};
-
-window.populateTeeDropdown = function() {
-    const select = document.getElementById('tee-select'); 
-    document.getElementById('course-setup-container').style.display = 'block';
-    
-    const colorOrder = { 'Black': 1, 'Blue': 2, 'White': 3, 'Silver': 4, 'Red': 5 };
-    
-    availableTees.sort((a, b) => {
-        let yardA = 0, yardB = 0;
-        
-        try { 
-            let yaArr = typeof a.yardages === 'string' ? JSON.parse(a.yardages.replace(/{/g, '[').replace(/}/g, ']')) : a.yardages; 
-            if (Array.isArray(yaArr)) {
-                yardA = yaArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0); 
-            }
-        } catch(e) {}
-        
-        try { 
-            let ybArr = typeof b.yardages === 'string' ? JSON.parse(b.yardages.replace(/{/g, '[').replace(/}/g, ']')) : b.yardages; 
-            if (Array.isArray(ybArr)) {
-                yardB = ybArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0); 
-            }
-        } catch(e) {}
-        
-        if (yardA > 0 && yardB > 0 && yardA !== yardB) {
-            return yardB - yardA;
-        }
-        
-        let ca = colorOrder[a.tee_name.trim()] || 99; 
-        let cb = colorOrder[b.tee_name.trim()] || 99; 
-        return ca - cb;
     });
-    
-    select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
-    window.handleTeeChange();
+    window.updateDriveDistances();
 };
 
-window.handleTeeChange = function() {
-    const val = document.getElementById('tee-select').value; 
-    const manualRow = document.getElementById('manual-tee-row');
+window.toggleGridDrops = function(index) { 
+    let cVal = parseInt(roundData[index].drops) || 0; 
+    let newVal = cVal >= 10 ? 0 : cVal + 1; 
+    roundData[index].drops = newVal; 
     
-    if (val === 'new') { 
-        manualRow.style.display = 'flex'; 
-        selectedTee = null; 
-        currentYardages = Array(18).fill(""); 
-    } else if (val === "") { 
-        manualRow.style.display = 'none'; 
-        selectedTee = null; 
-        currentYardages = Array(18).fill(""); 
-    } else { 
-        manualRow.style.display = 'none'; 
-        selectedTee = availableTees.find(t => t.id == val); 
-        
-        if (selectedTee) { 
-            let p = selectedTee.pars; 
-            if(typeof p === 'string') {
-                try {
-                    p = JSON.parse(p.replace(/{/g,'[').replace(/}/g,']'));
-                } catch(e) {}
-            }
-            
-            let y = selectedTee.yardages; 
-            if(typeof y === 'string') {
-                try {
-                    y = JSON.parse(y.replace(/{/g,'[').replace(/}/g,']'));
-                } catch(e) {}
-            }
-            
-            currentCoursePars = Array.isArray(p) && p.length > 0 ? [...p] : currentCoursePars; 
-            currentYardages = Array.isArray(y) && y.length > 0 ? [...y] : Array(18).fill(""); 
-        } 
+    if (newVal === 0) {
+        roundData[index].dropsAdv = [];
     }
     
-    window.buildGrid(); 
-    window.updatePlayModeUI(); 
-    window.saveLocalState();
-};
-
-window.startRound = function() { 
-    document.getElementById('search-card').style.display = 'none'; 
-    window.togglePlayMode(true); 
-};
-
-window.setHoleCount = function(count) { 
-    if (!window.checkActiveRoundSafeguard()) return;
+    const btn = document.getElementById(`grid-drops-${index}`); 
+    if (btn) { 
+        btn.innerText = newVal === 0 ? "-" : newVal; 
+        btn.style.color = newVal > 0 ? "#ef4444" : "var(--text-muted)"; 
+    } 
     
-    currentHoleCount = count; 
-    
-    let btn18 = document.getElementById('btn-18-holes');
-    let btn9 = document.getElementById('btn-9-holes');
-    if(btn18 && btn9) {
-        if (count === 18) {
-            btn18.classList.add('active');
-            btn9.classList.remove('active');
-        } else {
-            btn18.classList.remove('active');
-            btn9.classList.add('active');
-        }
+    if (currentPlayHole === index) {
+        window.updatePlayModeUI(); 
     }
-    
-    let toggleBox = document.getElementById('front-back-toggle');
-    if (count === 9) { 
-        if(toggleBox) toggleBox.style.display = 'inline-flex'; 
-        currentHoleOffset = 0; 
-        let bf = document.getElementById('btn-front-9');
-        let bb = document.getElementById('btn-back-9');
-        if(bf && bb) {
-            bf.classList.add('active'); 
-            bb.classList.remove('active'); 
-        }
-    } else { 
-        if(toggleBox) toggleBox.style.display = 'none'; 
-        currentHoleOffset = 0; 
-    }
-    
-    currentPlayHole = currentHoleOffset; 
-    window.buildGrid(); 
-    window.updatePlayModeUI(); 
     window.saveLocalState(); 
 };
 
-window.setNineSide = function(side) {
-    if (!window.checkActiveRoundSafeguard()) return;
+window.toggleGridHit = function(index, type) { 
+    const btn = document.getElementById(`grid-${type}-${index}`); 
+    if (!btn) return;
     
-    let bf = document.getElementById('btn-front-9');
-    let bb = document.getElementById('btn-back-9');
+    let ns = "";
     
-    if (side === 'front') { 
-        currentHoleOffset = 0; 
-        if(bf && bb) { 
-            bf.classList.add('active'); 
-            bb.classList.remove('active'); 
-        }
+    if (type === 'sandSave') { 
+        let cur = btn.innerText; 
+        ns = cur === "-" ? "1" : (cur === "1" ? "2" : (cur === "2" ? "3+" : "")); 
+        btn.innerText = ns === "" ? "-" : ns; 
+    } else if (type === 'fir') {
+        let cur = btn.innerText;
+        if (cur === "-") ns = "hit";
+        else if (cur === "HIT") ns = "miss";
+        else if (cur === "MISS") ns = "drv grn";
+        else ns = "";
+        btn.innerText = ns === "" ? "-" : ns.toUpperCase();
     } else { 
-        currentHoleOffset = 9; 
-        if(bf && bb) { 
-            bf.classList.remove('active'); 
-            bb.classList.add('active'); 
-        }
+        let cur = btn.innerText;
+        if (cur === "-") ns = "hit";
+        else if (cur === "HIT") ns = "miss";
+        else if (cur === "MISS") ns = "under";
+        else ns = "";
+        btn.innerText = ns === "" ? "-" : ns.toUpperCase(); 
     }
     
-    currentPlayHole = currentHoleOffset; 
-    window.buildGrid(); 
-    window.updatePlayModeUI(); 
+    if (ns === 'hit' || ns === '1' || ns === 'drv grn' || ns === 'under') {
+        btn.classList.add('hit'); 
+    } else {
+        btn.classList.remove('hit'); 
+    }
+    
+    roundData[index][type] = ns === "-" ? "" : ns; 
+    
+    if (currentPlayHole === index) {
+        window.updatePlayModeUI(); 
+    }
     window.saveLocalState(); 
-};
-
-window.jumpToPlayMode = function(index) { 
-    currentPlayHole = index; 
-    window.togglePlayMode(true); 
 };
 
 window.attemptSubmitRound = function() {
@@ -1484,11 +1476,11 @@ window.attemptSubmitRound = function() {
     
     if (missingHoles.length > 0 && missingHoles.length < currentHoleCount) {
         let mBox = document.getElementById('incomplete-holes-list'); 
-        if(mBox) {
+        if (mBox) {
             mBox.innerHTML = missingHoles.map(h => `<button type="button" class="adv-btn" style="background:#b45309; color:#fff; border-color:#b45309; padding: 10px; font-size: 14px; min-width: 80px;" onclick="document.getElementById('incomplete-modal').style.display='none'; window.jumpToPlayMode(${h-1});">Hole ${h}</button>`).join('');
         }
         let iModal = document.getElementById('incomplete-modal');
-        if(iModal) {
+        if (iModal) {
             iModal.style.display = 'flex';
         }
     } else { 
@@ -1498,8 +1490,8 @@ window.attemptSubmitRound = function() {
 
 window.forceSubmitRound = async function() {
     let iModal = document.getElementById('incomplete-modal');
-    if(iModal) {
-        iModal.style.display='none';
+    if (iModal) {
+        iModal.style.display = 'none';
     }
     
     if (!currentUser) { 
@@ -1521,7 +1513,7 @@ window.forceSubmitRound = async function() {
     
     if (teeVal === 'new') { 
         let sTee = document.getElementById('setup-tee');
-        if(sTee) {
+        if (sTee) {
             teeName = sTee.value.trim(); 
         }
         if (teeName && supabaseClient) { 
@@ -1584,12 +1576,12 @@ window.forceSubmitRound = async function() {
         }
     }
     
-    if(holesPayload.length === 0) {
+    if (holesPayload.length === 0) {
         return alert("⚠️ No scores entered.");
     }
     
     if (missingCheck.length > 0) { 
-        if(!confirm(`⚠️ You are missing some stats (Putts/FIR/GIR/Drive) on the following holes:\n\nHole(s): ${missingCheck.join(', ')}\n\nSubmit scorecard anyway?`)) {
+        if (!confirm(`⚠️ You are missing some stats (Putts/FIR/GIR/Drive) on the following holes:\n\nHole(s): ${missingCheck.join(', ')}\n\nSubmit scorecard anyway?`)) {
             return; 
         }
     }
@@ -1597,7 +1589,7 @@ window.forceSubmitRound = async function() {
     const submitBtn = document.getElementById('submit-round-btn'); 
     const originalBtnText = submitBtn ? submitBtn.innerText : "COMPLETE ROUND";
     
-    if(submitBtn) { 
+    if (submitBtn) { 
         submitBtn.innerText = "⏳ SAVING..."; 
         submitBtn.disabled = true; 
     }
@@ -1645,7 +1637,7 @@ window.forceSubmitRound = async function() {
         localStorage.removeItem('golf_round_state'); 
         location.reload();
     } finally { 
-        if(submitBtn){ 
+        if (submitBtn) { 
             submitBtn.innerText = originalBtnText; 
             submitBtn.disabled = false; 
         } 
@@ -1653,12 +1645,12 @@ window.forceSubmitRound = async function() {
 };
 
 window.fetchHistory = function() {
-    if(!currentUser || !supabaseClient) return;
+    if (!currentUser || !supabaseClient) return;
     
     supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => {
-        if(!data || data.length === 0) { 
+        if (!data || data.length === 0) { 
             let hList = document.getElementById('history-list');
-            if(hList) {
+            if (hList) {
                 hList.innerHTML = '<div class="empty-state">No arrays found.</div>'; 
             }
             return; 
@@ -1675,14 +1667,14 @@ window.filterHistoryList = function(type, btn) {
         el.classList.remove('active');
     }); 
     
-    if(btn) {
+    if (btn) {
         btn.classList.add('active');
     }
     
-    if(!supabaseClient) return;
+    if (!supabaseClient) return;
     
     supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false }).then(({data}) => { 
-        if(data) {
+        if (data) {
             window.renderHistoryList(data, type); 
         }
     });
@@ -1697,9 +1689,9 @@ window.renderHistoryList = function(allData, type) {
     });
     
     const tbody = document.getElementById('history-list'); 
-    if(!tbody) return;
+    if (!tbody) return;
     
-    if(data.length === 0) { 
+    if (data.length === 0) { 
         tbody.innerHTML = '<div class="empty-state">No saved records here.</div>'; 
         return; 
     }
@@ -1707,7 +1699,7 @@ window.renderHistoryList = function(allData, type) {
     let html = "";
     const grouped = data.reduce((acc, round) => { 
         const year = new Date(round.date_played).getUTCFullYear(); 
-        if(!acc[year]) acc[year] = []; 
+        if (!acc[year]) acc[year] = []; 
         acc[year].push(round); 
         return acc; 
     }, {});
@@ -1735,30 +1727,30 @@ window.renderHistoryList = function(allData, type) {
 
 window.openHistoryModal = async function(id, name, date, score, holesPlayed, temp, wind) {
     let tEl = document.getElementById('modal-course-title'); 
-    if(tEl) tEl.innerText = name; 
+    if (tEl) tEl.innerText = name; 
     
     let sEl = document.getElementById('modal-total-score'); 
-    if(sEl) sEl.innerText = score; 
+    if (sEl) sEl.innerText = score; 
     
     let wEl = document.getElementById('modal-weather'); 
-    if(wEl) wEl.innerText = temp ? `⛅ ${temp}` : ''; 
+    if (wEl) wEl.innerText = temp ? `⛅ ${temp}` : ''; 
     
     let windEl = document.getElementById('modal-wind-dir'); 
-    if(windEl) windEl.innerText = wind ? `💨 ${wind}` : '';
+    if (windEl) windEl.innerText = wind ? `💨 ${wind}` : '';
     
     let dEl = document.getElementById('modal-course-date'); 
-    if(dEl) dEl.innerText = date;
+    if (dEl) dEl.innerText = date;
     
     activeModalRoundId = id; 
     
     let hMod = document.getElementById('history-modal');
-    if(hMod) hMod.style.display = 'flex'; 
+    if (hMod) hMod.style.display = 'flex'; 
     
     let gMod = document.getElementById('modal-scorecard-grid');
-    if(gMod) gMod.innerHTML = '⏳ Loading...';
+    if (gMod) gMod.innerHTML = '⏳ Loading...';
     
     if (holesPlayed === 0) { 
-        if(gMod) {
+        if (gMod) {
             gMod.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Bulk imported rounds do not contain hole-by-hole data.</div>'; 
         }
         return; 
@@ -1769,9 +1761,9 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
     const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
     
     let startHole = 0, endHole = 18;
-    if(data && data.length > 0 && data.length < 18) { 
+    if (data && data.length > 0 && data.length < 18) { 
         let firstHole = data[0].hole_number; 
-        if(firstHole > 9) { 
+        if (firstHole > 9) { 
             startHole = 9; 
             endHole = 18; 
         } else { 
@@ -1794,10 +1786,10 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
         sandSave: "" 
     }));
     
-    if(data) {
+    if (data) {
         data.forEach(h => { 
             const i = h.hole_number - 1 - startHole; 
-            if(i >= 0 && i < viewHoles){ 
+            if (i >= 0 && i < viewHoles) { 
                 modalCoursePars[i] = h.par || ""; 
                 modalRoundData[i] = {
                     id: h.id,
@@ -1820,7 +1812,7 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
 
 window.buildModalGrid = function(holesCount, startOffset) {
     const grid = document.getElementById('modal-scorecard-grid'); 
-    if(!grid) return;
+    if (!grid) return;
     
     grid.innerHTML = ''; 
     grid.style.gridTemplateColumns = `70px repeat(${holesCount}, 48px)`; 
@@ -1839,18 +1831,18 @@ window.buildModalGrid = function(holesCount, startOffset) {
         lc.innerText = r.label; 
         grid.appendChild(lc);
         
-        for(let i=0; i<holesCount; i++) {
+        for (let i = 0; i < holesCount; i++) {
             const c = document.createElement('div'); 
             c.className = 'cell';
             
-            if(r.type === 'header') { 
+            if (r.type === 'header') { 
                 c.className = 'cell hole-header'; 
                 c.innerText = i + 1 + startOffset; 
-            } else if(r.type === 'par') {
+            } else if (r.type === 'par') {
                 c.innerHTML = `<input type="number" value="${modalCoursePars[i]}" onchange="modalCoursePars[${i}] = this.value">`;
-            } else if(['score','putts','drive'].includes(r.type)) {
+            } else if (['score','putts','drive'].includes(r.type)) {
                 c.innerHTML = `<input type="number" value="${modalRoundData[i][r.type]}" onchange="modalRoundData[${i}]['${r.type}'] = this.value">`;
-            } else if(r.type === 'drops') { 
+            } else if (r.type === 'drops') { 
                 let cVal = parseInt(modalRoundData[i].drops) || 0; 
                 c.innerHTML = `<button type="button" class="toggle-btn" style="${cVal > 0 ? 'color:#ef4444;' : ''}" onclick="window.toggleModalDrops(this, ${i})">${cVal === 0 ? '-' : cVal}</button>`; 
             } else { 
@@ -1865,12 +1857,12 @@ window.buildModalGrid = function(holesCount, startOffset) {
     });
     
     let delBtn = document.getElementById('modal-delete-btn');
-    if(delBtn) {
+    if (delBtn) {
         delBtn.onclick = () => window.deleteActiveRound(activeModalRoundId); 
     }
     
     let saveBtn = document.getElementById('modal-save-btn');
-    if(saveBtn) {
+    if (saveBtn) {
         saveBtn.onclick = () => window.saveModalChanges(activeModalRoundId, holesCount);
     }
 };
@@ -1906,28 +1898,29 @@ window.toggleModalHit = function(b, i, t) {
         b.innerText = ns === "" ? "-" : ns.toUpperCase();
     }
     
-    if(ns === 'hit' || ns === '1' || ns === 'drv grn' || ns === 'under') {
+    if (ns === 'hit' || ns === '1' || ns === 'drv grn' || ns === 'under') {
         b.classList.add('hit'); 
     } else {
         b.classList.remove('hit'); 
     }
+    
     modalRoundData[i][t] = ns === "-" ? "" : ns; 
-};i][t] = ns === "-" ? "" : ns; 
 };
 
 window.closeHistoryModal = function() { 
     let hm = document.getElementById('history-modal');
-    if(hm) hm.style.display = 'none'; 
+    if (hm) hm.style.display = 'none'; 
     activeModalRoundId = null; 
 };
 
 window.saveModalChanges = async function(id, holesCount) {
-    if(!id) return; 
-    let tScore=0; 
-    let tPutts=0; 
+    if (!id) return; 
+    
+    let tScore = 0; 
+    let tPutts = 0; 
     
     const saveBtn = document.getElementById('modal-save-btn'); 
-    if(!saveBtn) return;
+    if (!saveBtn) return;
     
     const originalText = saveBtn.innerText; 
     saveBtn.innerText = "⏳ Saving..."; 
@@ -1936,18 +1929,18 @@ window.saveModalChanges = async function(id, holesCount) {
     try {
         if (!supabaseClient) throw new Error("Database offline.");
         
-        for(let i=0; i<holesCount; i++) { 
+        for (let i = 0; i < holesCount; i++) { 
             const hd = modalRoundData[i]; 
             const s = parseInt(hd.score); 
             
-            if(!isNaN(s)) {
+            if (!isNaN(s)) {
                 tScore += s; 
             }
-            if(!isNaN(parseInt(hd.putts))) {
+            if (!isNaN(parseInt(hd.putts))) {
                 tPutts += parseInt(hd.putts);
             }
             
-            if(hd.id) {
+            if (hd.id) {
                 await supabaseClient.from('hole_scores').update({ 
                     par: parseInt(modalCoursePars[i]) || null, 
                     score: s || null, 
@@ -1980,7 +1973,7 @@ window.saveModalChanges = async function(id, holesCount) {
 };
 
 window.deleteActiveRound = async function(id) { 
-    if(id && confirm("Delete round?")) { 
+    if (id && confirm("Delete round?")) { 
         if (!supabaseClient) return; 
         await supabaseClient.from('logged_rounds').delete().eq('id', id); 
         alert("🗑️ Deleted."); 
@@ -1992,7 +1985,7 @@ window.deleteActiveRound = async function(id) {
 
 // --- ANALYTICS & MATH GLOBAL ENGINE ---
 window.getRelativeParString = function(score, par) { 
-    if(par === 0 || score === 0) return ""; 
+    if (par === 0 || score === 0) return ""; 
     let diff = score - par; 
     return diff > 0 ? `(+${diff})` : (diff === 0 ? `(E)` : `(${diff})`); 
 };
@@ -2000,6 +1993,7 @@ window.getRelativeParString = function(score, par) {
 window.calculateHandicap = function(allRounds) {
     let validRounds = allRounds.filter(r => !(r.tee_name && r.tee_name.includes('[SIM]')) && !(r.tee_name && r.tee_name.includes('[RANGE]'))).slice(0, 20);
     const n = validRounds.length; 
+    
     if (n < 3) return "--.-";
     
     let diffs = validRounds.map(r => {
@@ -2045,11 +2039,11 @@ window.calculateHcpHistory = function(rounds) {
 
 window.pearsonCorrelation = function(x, y) {
     let n = x.length; 
-    if(n === 0) return 0;
+    if (n === 0) return 0;
     
     let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
     
-    for (let i=0; i<n; i++) { 
+    for (let i = 0; i < n; i++) { 
         sumX += x[i]; 
         sumY += y[i]; 
         sumXY += x[i]*y[i]; 
@@ -2065,10 +2059,14 @@ window.pearsonCorrelation = function(x, y) {
 };
 
 window.updateTrophyRoom = function(fRounds) {
-    let lowScores = []; let minScore = 999; 
-    let longDrives = []; let maxDrive = 0; 
-    let lowPuttsList = []; let minPutts = 999; 
-    let mostFirsList = []; let maxFir = 0;
+    let lowScores = []; 
+    let minScore = 999; 
+    let longDrives = []; 
+    let maxDrive = 0; 
+    let lowPuttsList = []; 
+    let minPutts = 999; 
+    let mostFirsList = []; 
+    let maxFir = 0;
 
     fRounds.forEach(r => {
         let dStr = r.date_played ? new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : "Unknown";
@@ -2090,7 +2088,7 @@ window.updateTrophyRoom = function(fRounds) {
             let hp = 0;
             
             r.hole_scores.forEach(h => { 
-                if(h.putts !== null && h.putts > 0) { 
+                if (h.putts !== null && h.putts > 0) { 
                     truePutts += h.putts; 
                     hp++; 
                 } 
@@ -2129,17 +2127,33 @@ window.updateTrophyRoom = function(fRounds) {
     });
 
     const tBox = document.getElementById('trophy-room-box'); 
-    if(!tBox) return;
+    if (!tBox) return;
     
     const tStyle = "flex: 1; min-width: 120px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
     let displayScore = minScore === 999 ? '--' : `${minScore} <span style="font-size:14px; opacity:0.8;">${window.getRelativeParString(minScore, lowScores[0].p)}</span>`;
     
     tBox.innerHTML = `
         <div style="width: 100%; font-size: 14px; font-weight: bold; color: var(--accent-green); text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
-        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Low Round</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${displayScore}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowScores.length ? `<strong>${lowScores[0].c}</strong><br><span style="opacity:0.6">${lowScores[0].d}</span>` : '--'}</div></div>
-        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Long Drive</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxDrive === 0 ? '--' : maxDrive + 'y'}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${longDrives.length ? `<strong>${longDrives[0].c}</strong><br><span style="opacity:0.6">${longDrives[0].d}</span>` : '--'}</div></div>
-        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Fewest Putts</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${minPutts === 999 ? '--' : minPutts}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowPuttsList.length ? `<strong>${lowPuttsList[0].c}</strong><br><span style="opacity:0.6">${lowPuttsList[0].d}</span>` : '--'}</div></div>
-        <div style="${tStyle}"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Most FIRs</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxFir}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${mostFirsList.length ? `<strong>${mostFirsList[0].c}</strong><br><span style="opacity:0.6">${mostFirsList[0].d}</span>` : '--'}</div></div>
+        <div style="${tStyle}">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Low Round</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${displayScore}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowScores.length ? `<strong>${lowScores[0].c}</strong><br><span style="opacity:0.6">${lowScores[0].d}</span>` : '--'}</div>
+        </div>
+        <div style="${tStyle}">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Long Drive</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxDrive === 0 ? '--' : maxDrive + 'y'}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${longDrives.length ? `<strong>${longDrives[0].c}</strong><br><span style="opacity:0.6">${longDrives[0].d}</span>` : '--'}</div>
+        </div>
+        <div style="${tStyle}">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Fewest Putts</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${minPutts === 999 ? '--' : minPutts}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowPuttsList.length ? `<strong>${lowPuttsList[0].c}</strong><br><span style="opacity:0.6">${lowPuttsList[0].d}</span>` : '--'}</div>
+        </div>
+        <div style="${tStyle}">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Most FIRs</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxFir}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${mostFirsList.length ? `<strong>${mostFirsList[0].c}</strong><br><span style="opacity:0.6">${mostFirsList[0].d}</span>` : '--'}</div>
+        </div>
     `;
 };
 
@@ -2153,28 +2167,40 @@ window.generateInsights = function(fRounds) {
         let stats = { p3:0, p3c:0, p4:0, p4c:0, p5:0, p5c:0, putts:0, hp:0, f9s:0, f9p:0, b9s:0, b9p:0, sOpp:0, sHit:0, wind:[], temp:[], sc:[] };
         
         arr.forEach(r => {
-            if(r.weather_temp && r.weather_wind && r.total_score > 0) {
+            if (r.weather_temp && r.weather_wind && r.total_score > 0) {
                 let t = parseInt(String(r.weather_temp).replace('°C', '')); 
                 let w = parseInt(String(r.weather_wind).replace('km/h', '')); 
                 let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72;
                 
-                if(!isNaN(t) && !isNaN(w)) { 
+                if (!isNaN(t) && !isNaN(w)) { 
                     stats.temp.push(t); 
                     stats.wind.push(w); 
                     stats.sc.push(r.total_score - par); 
                 }
             }
             
-            if(!r.hole_scores) return;
+            if (!r.hole_scores) return;
             
             r.hole_scores.forEach(h => {
-                if(h.score && h.par) { 
+                if (h.score && h.par) { 
                     let d = h.score - h.par; 
-                    if(h.par === 3) { stats.p3 += d; stats.p3c++; } 
-                    if(h.par === 4) { stats.p4 += d; stats.p4c++; } 
-                    if(h.par === 5) { stats.p5 += d; stats.p5c++; } 
                     
-                    if(h.hole_number <= 9) { 
+                    if (h.par === 3) { 
+                        stats.p3 += d; 
+                        stats.p3c++; 
+                    } 
+                    
+                    if (h.par === 4) { 
+                        stats.p4 += d; 
+                        stats.p4c++; 
+                    } 
+                    
+                    if (h.par === 5) { 
+                        stats.p5 += d; 
+                        stats.p5c++; 
+                    } 
+                    
+                    if (h.hole_number <= 9) { 
                         stats.f9s += h.score; 
                         stats.f9p += h.par; 
                     } else { 
@@ -2183,14 +2209,14 @@ window.generateInsights = function(fRounds) {
                     }
                 }
                 
-                if(h.putts !== null && h.putts > 0) { 
+                if (h.putts !== null && h.putts > 0) { 
                     stats.putts += h.putts; 
                     stats.hp++; 
                 }
                 
-                if(h.gir === 'miss' && h.score && h.par) { 
+                if (h.gir === 'miss' && h.score && h.par) { 
                     stats.sOpp++; 
-                    if(h.score <= h.par) {
+                    if (h.score <= h.par) {
                         stats.sHit++; 
                     }
                 }
@@ -2263,7 +2289,7 @@ window.updateAnalytics = function() {
             actHoles.push(cb.value); 
         });
 
-        if(actCrs.length === 0) { 
+        if (actCrs.length === 0) { 
             masterAnalyticsData.forEach(r => { 
                 let c = (r.course_name || "").trim(); 
                 if (!actCrs.includes(c)) {
@@ -2272,7 +2298,7 @@ window.updateAnalytics = function() {
             }); 
         }
         
-        if(actYrs.length === 0) { 
+        if (actYrs.length === 0) { 
             masterAnalyticsData.forEach(r => { 
                 let y = r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString(); 
                 if (!actYrs.includes(y)) {
@@ -2281,9 +2307,9 @@ window.updateAnalytics = function() {
             }); 
         }
         
-        if(actMonths.length === 0) actMonths = ["1","2","3","4","5","6","7","8","9","10","11","12"];
-        if(actPars.length === 0) actPars = ["3","4","5","6"];
-        if(actHoles.length === 0) { 
+        if (actMonths.length === 0) actMonths = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+        if (actPars.length === 0) actPars = ["3","4","5","6"];
+        if (actHoles.length === 0) { 
             for(let i=1; i<=18; i++) {
                 actHoles.push(i.toString()); 
             }
@@ -2304,7 +2330,7 @@ window.updateAnalytics = function() {
             
             if (timeframe !== 'season' && timeframe !== 'full' && !actYrs.includes(d.getUTCFullYear().toString())) return false; 
             
-            if(r.hole_scores && r.hole_scores.length > 0) {
+            if (r.hole_scores && r.hole_scores.length > 0) {
                 const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
                 if (holeFilter === '18' && playedHoles < 18) return false;
                 if (holeFilter === '9' && (playedHoles < 9 || playedHoles >= 18)) return false; 
@@ -2315,21 +2341,28 @@ window.updateAnalytics = function() {
         currentFilteredRounds = fRounds;
         const t = document.getElementById('analytics-data-table');
         
-        if(fRounds.length === 0) { 
-            if(t) {
+        if (fRounds.length === 0) { 
+            if (t) {
                 t.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No logs match selected filters.</td></tr></tbody>`; 
             }
-            if(typeof window.renderCharts === 'function') {
+            if (typeof window.renderCharts === 'function') {
                 window.renderCharts([], [], []);
             }
+            
             let aiBox = document.getElementById('ai-insights-box'); 
-            if (aiBox) aiBox.innerHTML = "Not enough data.";
+            if (aiBox) {
+                aiBox.innerHTML = "Not enough data.";
+            }
             
             let hcpBox = document.getElementById('hcp-display'); 
-            if (hcpBox) hcpBox.innerText = "--.-";
+            if (hcpBox) {
+                hcpBox.innerText = "--.-";
+            }
             
             let trBox = document.getElementById('trophy-room-box'); 
-            if (trBox) trBox.innerHTML = "";
+            if (trBox) {
+                trBox.innerHTML = "";
+            }
             return; 
         }
 
@@ -2342,18 +2375,18 @@ window.updateAnalytics = function() {
             hcDisplay.innerText = window.calculateHandicap(fRounds); 
         }
         
-        if(typeof window.renderCharts === 'function') { 
+        if (typeof window.renderCharts === 'function') { 
             window.renderCharts(fRounds, actHoles, actPars); 
         }
         
-        if(typeof window.generateInsights === 'function') { 
+        if (typeof window.generateInsights === 'function') { 
             let aiBox = document.getElementById('ai-insights-box'); 
             if (aiBox) {
                 aiBox.innerHTML = window.generateInsights(fRounds); 
             }
         }
         
-        if(typeof window.updateTrophyRoom === 'function') { 
+        if (typeof window.updateTrophyRoom === 'function') { 
             window.updateTrophyRoom(fRounds); 
         }
         
@@ -2376,28 +2409,30 @@ window.updateAnalytics = function() {
                     else if(d === 1) s.bog++; 
                 }
                 
-                if(h.putts !== null && h.putts > 0) { 
+                if (h.putts !== null && h.putts > 0) { 
                     s.putts += h.putts; 
                     s.pHP++; 
                 } 
                 
-                if(h.drops) s.drp += h.drops; 
+                if (h.drops) {
+                    s.drp += h.drops; 
+                }
                 
-                if(h.fir == 'hit' || h.fir == 'miss' || h.fir == 'drv grn') { 
+                if (h.fir == 'hit' || h.fir == 'miss' || h.fir == 'drv grn') { 
                     s.fT++; 
                     if(h.fir == 'hit' || h.fir == 'drv grn') {
                         s.fH++; 
                     }
                 } 
                 
-                if(h.gir == 'hit' || h.gir == 'miss' || h.gir == 'under') { 
+                if (h.gir == 'hit' || h.gir == 'miss' || h.gir == 'under') { 
                     s.gT++; 
                     if(h.gir == 'hit' || h.gir == 'under') {
                         s.gH++; 
                     }
                 } 
                 
-                if(h.sand_save === '1' || h.sand_save === 'yes') { 
+                if (h.sand_save === '1' || h.sand_save === 'yes') { 
                     s.ssT++; 
                     s.ssH++; 
                 } else if(h.sand_save === '2' || h.sand_save === '3+') { 
@@ -2409,7 +2444,7 @@ window.updateAnalytics = function() {
         const cA = (tot) => ((tot / totalHolesCount) * 18).toFixed(1); 
         const cP = (tot) => ((tot / totalHolesCount) * 100).toFixed(1) + '%';
         
-        if(t) {
+        if (t) {
             t.innerHTML = `
             <thead>
                 <tr>
@@ -2479,40 +2514,40 @@ window.updateAnalytics = function() {
     } catch(err) {
         console.error("Analytics Crash Detected: ", err);
         const t = document.getElementById('analytics-data-table');
-        if(t) {
+        if (t) {
             t.innerHTML = `<tbody><tr><td colspan="4" style="color:#ef4444; padding:20px; text-align:center;">❌ Analytics Sync Error: ${err.message}</td></tr></tbody>`;
         }
     }
 };
 
 window.loadAnalyticsData = async function() {
-    if(!currentUser) { 
+    if (!currentUser) { 
         let t = document.getElementById('analytics-data-table');
-        if(t) {
+        if (t) {
             t.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Please log in to view Analytics.</td></tr></tbody>'; 
         }
         return; 
     }
     
     let savedTime = localStorage.getItem('golf_filter_timeframe'); 
-    if(savedTime) {
+    if (savedTime) {
         let fTime = document.getElementById('filter-timeframe');
-        if(fTime) fTime.value = savedTime;
+        if (fTime) fTime.value = savedTime;
     }
     
     let savedHole = localStorage.getItem('golf_filter_hole_count'); 
-    if(savedHole) {
+    if (savedHole) {
         let fHole = document.getElementById('filter-hole-count');
-        if(fHole) fHole.value = savedHole;
+        if (fHole) fHole.value = savedHole;
     }
     
     const table = document.getElementById('analytics-data-table'); 
-    if(table) {
+    if (table) {
         table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
     }
     
     if (!supabaseClient) {
-        if(table) {
+        if (table) {
             table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Database Offline. Analytics unavailable.</td></tr></tbody>`;
         }
         return;
@@ -2520,14 +2555,14 @@ window.loadAnalyticsData = async function() {
 
     try {
         const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
-        if(error) throw error; 
+        if (error) throw error; 
         
         masterAnalyticsData = data || []; 
         window.populateFilters(); 
         window.forceSyncFilters(); 
         window.updateAnalytics(); 
     } catch(err) { 
-        if(table) {
+        if (table) {
             table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; 
         }
     }
@@ -2537,24 +2572,28 @@ window.populateFilters = function() {
     let uC = []; 
     masterAnalyticsData.forEach(r => { 
         let c = (r.course_name || "").trim(); 
-        if (!uC.includes(c)) uC.push(c); 
+        if (!uC.includes(c)) {
+            uC.push(c); 
+        }
     }); 
     uC.sort();
     
     let clBox = document.getElementById('course-checkbox-list');
-    if(clBox) {
+    if (clBox) {
         clBox.innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-courses" autocomplete="off" checked onchange="window.checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> <strong>All Courses</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uC.map(c => `<label class="checkbox-container"><input type="checkbox" class="course-cb" value="${c.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" autocomplete="off" checked onchange="window.checkGroupToggles('.course-cb', 'cb-all-courses', 'course-btn-text', 'Course')"> ${c}</label>`).join('');
     }
     
     let uY = []; 
     masterAnalyticsData.forEach(r => { 
         let y = r.date_played ? new Date(r.date_played).getUTCFullYear().toString() : new Date().getUTCFullYear().toString(); 
-        if (!uY.includes(y)) uY.push(y); 
+        if (!uY.includes(y)) {
+            uY.push(y); 
+        }
     }); 
     uY.sort((a,b)=>b-a);
     
     let yBox = document.getElementById('year-checkbox-list');
-    if(yBox) {
+    if (yBox) {
         yBox.innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
     }
 };
@@ -2580,7 +2619,7 @@ window.checkGroupToggles = function(childClass, mainId, btnTextId, defaultText) 
     });
     
     let mBox = document.getElementById(mainId);
-    if(mBox) {
+    if (mBox) {
         mBox.checked = allChecked; 
     }
     
@@ -2594,7 +2633,7 @@ window.checkGroupToggles = function(childClass, mainId, btnTextId, defaultText) 
 
 window.toggleFilterDropdown = function(id) { 
     const el = document.getElementById(id); 
-    if(el) {
+    if (el) {
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; 
     }
 };
@@ -2605,19 +2644,29 @@ window.forceSyncFilters = function() {
     });
     
     let monthBtn = document.getElementById('month-btn-text'); 
-    if(monthBtn) monthBtn.innerText = 'All Months'; 
+    if (monthBtn) {
+        monthBtn.innerText = 'All Months'; 
+    }
     
     let yearBtn = document.getElementById('year-btn-text'); 
-    if(yearBtn) yearBtn.innerText = 'All Years';
+    if (yearBtn) {
+        yearBtn.innerText = 'All Years';
+    }
     
     let courseBtn = document.getElementById('course-btn-text'); 
-    if(courseBtn) courseBtn.innerText = 'All Courses'; 
+    if (courseBtn) {
+        courseBtn.innerText = 'All Courses'; 
+    }
     
     let parBtn = document.getElementById('par-btn-text'); 
-    if(parBtn) parBtn.innerText = 'All Pars'; 
+    if (parBtn) {
+        parBtn.innerText = 'All Pars'; 
+    }
     
     let holeBtn = document.getElementById('hole-btn-text'); 
-    if(holeBtn) holeBtn.innerText = 'All Holes';
+    if (holeBtn) {
+        holeBtn.innerText = 'All Holes';
+    }
 };
 
 window.renderCharts = function(filteredRounds, actHoles, actPars) {
@@ -2660,7 +2709,9 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         if (targetHoles.length === 0 && (!r.hole_scores || r.hole_scores.length === 0)) { 
             rs = r.total_score; 
         } else { 
-            targetHoles.forEach(h => { rs += (h.score || 0); }); 
+            targetHoles.forEach(h => { 
+                rs += (h.score || 0); 
+            }); 
         }
         
         baseScores.push(rs); 
@@ -2703,6 +2754,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     if (activeOverlay === 'hcp') {
         let hcpHist = window.calculateHcpHistory(filteredRounds); 
         let hcpData = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
+        
         trendDatasets.push({ 
             label: 'Handicap Index', 
             data: hcpData, 
@@ -2730,69 +2782,79 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             th = filteredHoles;
             
             th.forEach(h => {
-                if(h.hole_number <= 9) f9 += h.score; else b9 += h.score;
-                
-                if(h.putts !== null && h.putts > 0) { 
-                    p += h.putts; 
-                    tpA_T++; 
-                    if(h.putts < 3) tpA_H++; 
+                if (h.hole_number <= 9) {
+                    f9 += h.score; 
+                } else {
+                    b9 += h.score;
                 }
                 
-                if(h.drops) dr += h.drops; 
+                if (h.putts !== null && h.putts > 0) { 
+                    p += h.putts; 
+                    tpA_T++; 
+                    if (h.putts < 3) {
+                        tpA_H++; 
+                    }
+                }
                 
-                if(h.fir === 'hit' || h.fir === 'drv grn') { 
+                if (h.drops) {
+                    dr += h.drops; 
+                }
+                
+                if (h.fir === 'hit' || h.fir === 'drv grn') { 
                     fT++; 
                     fH++; 
                 } else if (h.fir === 'miss') { 
                     fT++; 
                 }
                 
-                if(h.gir === 'hit' || h.gir === 'under') { 
+                if (h.gir === 'hit' || h.gir === 'under') { 
                     gT++; 
                     gH++; 
                 } else if (h.gir === 'miss') { 
                     gT++; 
                 }
                 
-                if(h.sand_save === 'yes' || h.sand_save === '1') { 
+                if (h.sand_save === 'yes' || h.sand_save === '1') { 
                     ssT++; 
                     ssH++; 
-                } else if(h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') { 
+                } else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') { 
                     ssT++; 
                 }
                 
-                if(h.score && h.par) { 
+                if (h.score && h.par) { 
                     let d = h.score - h.par; 
-                    if(h.par === 3){p3 += d; p3c++;} 
-                    if(h.par === 4){p4 += d; p4c++;} 
-                    if(h.par === 5){p5 += d; p5c++;} 
-                    if(d === -1) brd++; 
-                    if(d === 0) pr++; 
-                    if(d === 1) bog++; 
+                    
+                    if (h.par === 3) { p3 += d; p3c++; } 
+                    if (h.par === 4) { p4 += d; p4c++; } 
+                    if (h.par === 5) { p5 += d; p5c++; } 
+                    
+                    if (d === -1) brd++; 
+                    if (d === 0) pr++; 
+                    if (d === 1) bog++; 
                 }
                 
-                if(h.drive_distance > 0) { 
+                if (h.drive_distance > 0) { 
                     dTot += h.drive_distance; 
                     dCnt++; 
                 }
             });
             
-            if(activeOverlay === 'putts') oData.push(p); 
-            if(activeOverlay === 'drops') oData.push(dr); 
-            if(activeOverlay === 'fir') oData.push(fT > 0 ? Math.round((fH/fT)*100) : null); 
-            if(activeOverlay === 'gir') oData.push(gT > 0 ? Math.round((gH/gT)*100) : null);
-            if(activeOverlay === 'driveDist') oData.push(dCnt > 0 ? Math.round(dTot/dCnt) : null); 
-            if(activeOverlay === 'sand') oData.push(ssT > 0 ? Math.round((ssH/ssT)*100) : null); 
-            if(activeOverlay === 'birdies') oData.push(brd); 
-            if(activeOverlay === 'pars') oData.push(pr); 
-            if(activeOverlay === 'bogeys') oData.push(bog);
-            if(activeOverlay === 'p3') oData.push(p3c > 0 ? (p3/p3c).toFixed(2) : null); 
-            if(activeOverlay === 'p4') oData.push(p4c > 0 ? (p4/p4c).toFixed(2) : null); 
-            if(activeOverlay === 'p5') oData.push(p5c > 0 ? (p5/p5c).toFixed(2) : null);
-            if(activeOverlay === 'f9') oData.push(f9); 
-            if(activeOverlay === 'b9') oData.push(b9);
-            if(activeOverlay === 'tpAvoid') oData.push(tpA_T > 0 ? Math.round((tpA_H/tpA_T)*100) : null); 
-            if(activeOverlay === 'acc') oData.push((fT + gT) > 0 ? Math.round(((fH + gH) / (fT + gT)) * 100) : null);
+            if (activeOverlay === 'putts') oData.push(p); 
+            if (activeOverlay === 'drops') oData.push(dr); 
+            if (activeOverlay === 'fir') oData.push(fT > 0 ? Math.round((fH/fT)*100) : null); 
+            if (activeOverlay === 'gir') oData.push(gT > 0 ? Math.round((gH/gT)*100) : null);
+            if (activeOverlay === 'driveDist') oData.push(dCnt > 0 ? Math.round(dTot/dCnt) : null); 
+            if (activeOverlay === 'sand') oData.push(ssT > 0 ? Math.round((ssH/ssT)*100) : null); 
+            if (activeOverlay === 'birdies') oData.push(brd); 
+            if (activeOverlay === 'pars') oData.push(pr); 
+            if (activeOverlay === 'bogeys') oData.push(bog);
+            if (activeOverlay === 'p3') oData.push(p3c > 0 ? (p3/p3c).toFixed(2) : null); 
+            if (activeOverlay === 'p4') oData.push(p4c > 0 ? (p4/p4c).toFixed(2) : null); 
+            if (activeOverlay === 'p5') oData.push(p5c > 0 ? (p5/p5c).toFixed(2) : null);
+            if (activeOverlay === 'f9') oData.push(f9); 
+            if (activeOverlay === 'b9') oData.push(b9);
+            if (activeOverlay === 'tpAvoid') oData.push(tpA_T > 0 ? Math.round((tpA_H/tpA_T)*100) : null); 
+            if (activeOverlay === 'acc') oData.push((fT + gT) > 0 ? Math.round(((fH + gH) / (fT + gT)) * 100) : null);
         });
         
         trendDatasets.push({ 
@@ -2810,7 +2872,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     }
     
     try { 
-        if(tCtx && typeof Chart !== 'undefined') {
+        if (tCtx && typeof Chart !== 'undefined') {
             trendChart = new Chart(tCtx.getContext('2d'), { 
                 type: 'line', 
                 data: { 
@@ -2859,7 +2921,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     
     try { 
-        if(pC && typeof Chart !== 'undefined') { 
+        if (pC && typeof Chart !== 'undefined') { 
             scorePieChart = new Chart(pC.getContext('2d'), { 
                 type: 'doughnut', 
                 data: { 
@@ -2885,17 +2947,17 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     chartData.forEach(r => { 
         (r.hole_scores||[]).forEach(h => { 
             let dA = h.drops_adv || ""; 
-            if(h.drops && h.drops > 0) { 
-                if(dA.includes('WATER')) dW++; 
-                if(dA.includes('OB')) dOB++; 
-                if(dA.includes('LOST')) dL++; 
-                if(dA.includes('UNPLAYABLE')) dU++; 
+            if (h.drops && h.drops > 0) { 
+                if (dA.includes('WATER')) dW++; 
+                if (dA.includes('OB')) dOB++; 
+                if (dA.includes('LOST')) dL++; 
+                if (dA.includes('UNPLAYABLE')) dU++; 
             } 
         }); 
     });
     
     try { 
-        if(pCtx && typeof Chart !== 'undefined') { 
+        if (pCtx && typeof Chart !== 'undefined') { 
             penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { 
                 type: 'doughnut', 
                 data: { 
@@ -2920,9 +2982,21 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     let accLabels = [], firData = [], girData = [];
     chartData.forEach(r => {
         let fH = 0, fT = 0, gH = 0, gT = 0; 
+        
         (r.hole_scores || []).forEach(h => { 
-            if(h.fir === 'hit' || h.fir === 'drv grn') { fT++; fH++; } else if (h.fir === 'miss') { fT++; } 
-            if(h.gir === 'hit' || h.gir === 'under') { gT++; gH++; } else if (h.gir === 'miss') { gT++; } 
+            if (h.fir === 'hit' || h.fir === 'drv grn') { 
+                fT++; 
+                fH++; 
+            } else if (h.fir === 'miss') { 
+                fT++; 
+            } 
+            
+            if (h.gir === 'hit' || h.gir === 'under') { 
+                gT++; 
+                gH++; 
+            } else if (h.gir === 'miss') { 
+                gT++; 
+            } 
         });
         
         accLabels.push(new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'})); 
@@ -2931,7 +3005,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     });
     
     try { 
-        if(aCtx && typeof Chart !== 'undefined') { 
+        if (aCtx && typeof Chart !== 'undefined') { 
             accuracyChart = new Chart(aCtx.getContext('2d'), { 
                 type: 'line', 
                 data: { 
@@ -2950,15 +3024,15 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     chartData.forEach(r => { 
         (r.hole_scores || []).forEach(h => { 
             if (h.score && h.par) { 
-                if(h.par === 3) { p3T += h.score; p3C++; } 
-                if(h.par === 4) { p4T += h.score; p4C++; } 
-                if(h.par === 5) { p5T += h.score; p5C++; } 
+                if (h.par === 3) { p3T += h.score; p3C++; } 
+                if (h.par === 4) { p4T += h.score; p4C++; } 
+                if (h.par === 5) { p5T += h.score; p5C++; } 
             } 
         }); 
     });
     
     try { 
-        if(psCtx && typeof Chart !== 'undefined') { 
+        if (psCtx && typeof Chart !== 'undefined') { 
             parScoringChart = new Chart(psCtx.getContext('2d'), { 
                 type: 'bar', 
                 data: { 
@@ -2982,12 +3056,16 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     chartData.forEach(r => { 
         (r.hole_scores||[]).forEach(h => { 
             if (h.drive_club && h.drive_distance > 0) { 
-                if(!clubStats[h.drive_club]) clubStats[h.drive_club] = {tot:0, cnt:0}; 
+                if (!clubStats[h.drive_club]) {
+                    clubStats[h.drive_club] = {tot:0, cnt:0}; 
+                }
                 clubStats[h.drive_club].tot += h.drive_distance; 
                 clubStats[h.drive_club].cnt++; 
             } 
             if (h.approach_club && h.approach_yd > 0) { 
-                if(!clubStats[h.approach_club]) clubStats[h.approach_club] = {tot:0, cnt:0}; 
+                if (!clubStats[h.approach_club]) {
+                    clubStats[h.approach_club] = {tot:0, cnt:0}; 
+                }
                 clubStats[h.approach_club].tot += h.approach_yd; 
                 clubStats[h.approach_club].cnt++; 
             } 
@@ -2995,7 +3073,9 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     }); 
     
     practiceSessionData.forEach(s => { 
-        if(!clubStats[s.club]) clubStats[s.club] = {tot:0, cnt:0}; 
+        if (!clubStats[s.club]) {
+            clubStats[s.club] = {tot:0, cnt:0}; 
+        }
         clubStats[s.club].tot += s.dist; 
         clubStats[s.club].cnt++; 
     });
@@ -3004,7 +3084,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
     
     try { 
-        if(cCtx && typeof Chart !== 'undefined') { 
+        if (cCtx && typeof Chart !== 'undefined') { 
             clubChart = new Chart(cCtx.getContext('2d'), { 
                 type: 'bar', 
                 data: { labels: cLabels, datasets: [{ data: cData, backgroundColor: '#3b82f6' }] }, 
@@ -3015,21 +3095,28 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
 
     let wBuckets = { cold: {tot:0, cnt:0}, optimal: {tot:0, cnt:0}, hot: {tot:0, cnt:0} };
     chartData.forEach(r => { 
-        if(r.weather_temp && r.total_score > 0) { 
+        if (r.weather_temp && r.total_score > 0) { 
             let tempNum = parseInt(String(r.weather_temp).replace('°C', '')); 
             let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72; 
             let relScore = r.total_score - par; 
             
-            if(!isNaN(tempNum)) { 
-                if (tempNum < 15) { wBuckets.cold.tot += relScore; wBuckets.cold.cnt++; } 
-                else if (tempNum <= 25) { wBuckets.optimal.tot += relScore; wBuckets.optimal.cnt++; } 
-                else { wBuckets.hot.tot += relScore; wBuckets.hot.cnt++; } 
+            if (!isNaN(tempNum)) { 
+                if (tempNum < 15) { 
+                    wBuckets.cold.tot += relScore; 
+                    wBuckets.cold.cnt++; 
+                } else if (tempNum <= 25) { 
+                    wBuckets.optimal.tot += relScore; 
+                    wBuckets.optimal.cnt++; 
+                } else { 
+                    wBuckets.hot.tot += relScore; 
+                    wBuckets.hot.cnt++; 
+                } 
             } 
         } 
     });
     
     try { 
-        if(wCtx && typeof Chart !== 'undefined') { 
+        if (wCtx && typeof Chart !== 'undefined') { 
             weatherChart = new Chart(wCtx.getContext('2d'), { 
                 type: 'bar', 
                 data: { 
@@ -3067,25 +3154,25 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             let fA = h.fir_adv || ""; 
             let gA = h.gir_adv || ""; 
             
-            if(h.fir === 'miss') { 
+            if (h.fir === 'miss') { 
                 fTotMiss++; 
-                if(fA.includes('LEFT')) fL++; 
-                if(fA.includes('RIGHT')) fR++; 
-                if(fA.includes('SHORT')) fS++; 
+                if (fA.includes('LEFT')) fL++; 
+                if (fA.includes('RIGHT')) fR++; 
+                if (fA.includes('SHORT')) fS++; 
             } 
             
-            if(h.gir === 'miss') { 
+            if (h.gir === 'miss') { 
                 gTotMiss++; 
-                if(gA.includes('LEFT')) gL++; 
-                if(gA.includes('RIGHT')) gR++; 
-                if(gA.includes('SHORT')) gS++; 
-                if(gA.includes('LONG')) gLg++; 
+                if (gA.includes('LEFT')) gL++; 
+                if (gA.includes('RIGHT')) gR++; 
+                if (gA.includes('SHORT')) gS++; 
+                if (gA.includes('LONG')) gLg++; 
             } 
         }); 
     });
     
     let mpStat = document.getElementById('miss-penalty-stats');
-    if(mpStat) { 
+    if (mpStat) { 
         mpStat.innerHTML = `
             <div style="margin-bottom: 10px;"><b>Drive Bias:</b> ${fTotMiss > 0 ? `${Math.round((fL/fTotMiss)*100)}% Left | ${Math.round((fR/fTotMiss)*100)}% Right` : 'No data.'}</div>
             <div><b>Approach Bias:</b> ${gTotMiss > 0 ? `${Math.round((gS/gTotMiss)*100)}% Short | ${Math.round((gL/gTotMiss)*100)}% Left` : 'No data.'}</div>
@@ -3102,14 +3189,16 @@ window.openStatGraph = function(title, statKey) {
     let tfEl = document.getElementById('filter-timeframe'); 
     if (tfEl) { 
         let modTfEl = document.getElementById('modal-filter-timeframe'); 
-        if (modTfEl) modTfEl.value = tfEl.value; 
+        if (modTfEl) {
+            modTfEl.value = tfEl.value; 
+        }
     }
     
     window.refreshModalGraph();
 };
 
 window.refreshModalGraph = function() {
-    if(!currentStatKey) return;
+    if (!currentStatKey) return;
     
     let modTfEl = document.getElementById('modal-filter-timeframe'); 
     let tFilter = modTfEl ? modTfEl.value : 'season';
@@ -3117,8 +3206,8 @@ window.refreshModalGraph = function() {
     let plotData = []; 
     let rList = [...currentFilteredRounds];
     
-    if(tFilter === 'last10') rList = rList.slice(0, 10); 
-    if(tFilter === 'last20') rList = rList.slice(0, 20); 
+    if (tFilter === 'last10') rList = rList.slice(0, 10); 
+    if (tFilter === 'last20') rList = rList.slice(0, 20); 
     rList = rList.reverse();
     
     rList.forEach(r => {
@@ -3126,132 +3215,141 @@ window.refreshModalGraph = function() {
         let valid = false; 
         let targetHoles = r.hole_scores || [];
         
-        if(currentStatKey === 'score') { 
+        if (currentStatKey === 'score') { 
             let sSum = 0; 
             targetHoles.forEach(h => { sSum += (h.score||0); }); 
             val = sSum; 
             valid = true; 
         }
-        if(currentStatKey === 'putts') { 
+        
+        if (currentStatKey === 'putts') { 
             let th = 0, tp = 0; 
             targetHoles.forEach(h => {
-                if(h.putts !== null && h.putts > 0){
+                if (h.putts !== null && h.putts > 0){
                     tp += h.putts; 
                     th++;
                 }
             }); 
-            if(th > 0) { 
+            if (th > 0) { 
                 val = (tp/th)*18; 
                 valid = true;
             } 
         }
-        if(currentStatKey === 'fir') { 
+        
+        if (currentStatKey === 'fir') { 
             let th = 0, tf = 0; 
             targetHoles.forEach(h => {
-                if(h.fir === 'hit' || h.fir === 'miss' || h.fir === 'drv grn') {
+                if (h.fir === 'hit' || h.fir === 'miss' || h.fir === 'drv grn') {
                     tf++; 
-                    if(h.fir === 'hit' || h.fir === 'drv grn') th++;
+                    if (h.fir === 'hit' || h.fir === 'drv grn') th++;
                 }
             }); 
-            if(tf > 0) { 
+            if (tf > 0) { 
                 val = (th/tf)*100; 
                 valid = true;
             } 
         }
-        if(currentStatKey === 'gir') { 
+        
+        if (currentStatKey === 'gir') { 
             let th = 0, tg = 0; 
             targetHoles.forEach(h => {
-                if(h.gir === 'hit' || h.gir === 'miss' || h.gir === 'under'){
+                if (h.gir === 'hit' || h.gir === 'miss' || h.gir === 'under'){
                     tg++; 
-                    if(h.gir === 'hit' || h.gir === 'under') th++;
+                    if (h.gir === 'hit' || h.gir === 'under') th++;
                 }
             }); 
-            if(tg > 0) { 
+            if (tg > 0) { 
                 val = (th/tg)*100; 
                 valid = true;
             } 
         }
-        if(currentStatKey === 'drops') { 
+        
+        if (currentStatKey === 'drops') { 
             let dSum = 0; 
             targetHoles.forEach(h => { dSum += (h.drops||0); }); 
             val = dSum; 
             valid = true; 
         }
-        if(currentStatKey === 'scram') { 
+        
+        if (currentStatKey === 'scram') { 
             let th = 0, ts = 0; 
             targetHoles.forEach(h => {
-                if(h.gir === 'miss') {
+                if (h.gir === 'miss') {
                     ts++; 
-                    if(h.score <= h.par) th++;
+                    if (h.score <= h.par) th++;
                 }
             }); 
-            if(ts > 0) { 
-                val = (th/ts)*100; 
-                valid = true;
-            } 
-        }
-        if(currentStatKey === 'driveDist') { 
-            let drvTot = 0, drvCnt = 0; 
-            targetHoles.forEach(h => { 
-                if(h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) { 
-                    drvTot += h.drive_distance; 
-                    drvCnt++; 
-                } 
-            }); 
-            if(drvCnt > 0) { 
-                val = Math.round(drvTot/drvCnt); 
-                valid = true; 
-            } 
-        }
-        if(['hio','egl','brd','par','bog','dbl','tpl','qd'].includes(currentStatKey)) {
-            let cnt = 0; 
-            targetHoles.forEach(h => { 
-                if(h.score && h.par) { 
-                    let d = h.score - h.par; 
-                    if(currentStatKey === 'hio' && h.score === 1) cnt++; 
-                    else if(currentStatKey === 'egl' && d === -2) cnt++; 
-                    else if(currentStatKey === 'brd' && d === -1) cnt++; 
-                    else if(currentStatKey === 'par' && d === 0) cnt++; 
-                    else if(currentStatKey === 'bog' && d === 1) cnt++; 
-                    else if(currentStatKey === 'dbl' && d === 2) cnt++; 
-                    else if(currentStatKey === 'tpl' && d === 3) cnt++; 
-                    else if(currentStatKey === 'qd' && d >= 4) cnt++; 
-                } 
-            }); 
-            val = cnt; 
-            valid = true;
-        }
-        if(['p3','p4','p5'].includes(currentStatKey)) { 
-            let pt = 0, pc = 0; 
-            targetHoles.forEach(h => { 
-                if(h.score && h.par) { 
-                    let p = parseInt(currentStatKey.replace('p','')); 
-                    if(h.par === p) { 
-                        pt += h.score; 
-                        pc++; 
-                    } 
-                } 
-            }); 
-            if(pc > 0) { 
-                val = pt/pc; 
-                valid = true; 
-            } 
-        }
-        if(currentStatKey === 'ss') { 
-            let th = 0, ts = 0; 
-            targetHoles.forEach(h => { 
-                if(h.sand_save === 'yes' || h.sand_save === 'no' || h.sand_save === '1' || h.sand_save === '2' || h.sand_save === '3+') { 
-                    ts++; 
-                    if(h.sand_save === 'yes' || h.sand_save === '1') th++; 
-                } 
-            }); 
-            if(ts > 0) { 
+            if (ts > 0) { 
                 val = (th/ts)*100; 
                 valid = true;
             } 
         }
         
-        if(valid) {
+        if (currentStatKey === 'driveDist') { 
+            let drvTot = 0, drvCnt = 0; 
+            targetHoles.forEach(h => { 
+                if (h.drive_distance > 0 && (!h.drive_exception || h.drive_exception === "")) { 
+                    drvTot += h.drive_distance; 
+                    drvCnt++; 
+                } 
+            }); 
+            if (drvCnt > 0) { 
+                val = Math.round(drvTot/drvCnt); 
+                valid = true; 
+            } 
+        }
+        
+        if (['hio','egl','brd','par','bog','dbl','tpl','qd'].includes(currentStatKey)) {
+            let cnt = 0; 
+            targetHoles.forEach(h => { 
+                if (h.score && h.par) { 
+                    let d = h.score - h.par; 
+                    if (currentStatKey === 'hio' && h.score === 1) cnt++; 
+                    else if (currentStatKey === 'egl' && d === -2) cnt++; 
+                    else if (currentStatKey === 'brd' && d === -1) cnt++; 
+                    else if (currentStatKey === 'par' && d === 0) cnt++; 
+                    else if (currentStatKey === 'bog' && d === 1) cnt++; 
+                    else if (currentStatKey === 'dbl' && d === 2) cnt++; 
+                    else if (currentStatKey === 'tpl' && d === 3) cnt++; 
+                    else if (currentStatKey === 'qd' && d >= 4) cnt++; 
+                } 
+            }); 
+            val = cnt; 
+            valid = true;
+        }
+        
+        if (['p3','p4','p5'].includes(currentStatKey)) { 
+            let pt = 0, pc = 0; 
+            targetHoles.forEach(h => { 
+                if (h.score && h.par) { 
+                    let p = parseInt(currentStatKey.replace('p','')); 
+                    if (h.par === p) { 
+                        pt += h.score; 
+                        pc++; 
+                    } 
+                } 
+            }); 
+            if (pc > 0) { 
+                val = pt/pc; 
+                valid = true; 
+            } 
+        }
+        
+        if (currentStatKey === 'ss') { 
+            let th = 0, ts = 0; 
+            targetHoles.forEach(h => { 
+                if (h.sand_save === 'yes' || h.sand_save === 'no' || h.sand_save === '1' || h.sand_save === '2' || h.sand_save === '3+') { 
+                    ts++; 
+                    if (h.sand_save === 'yes' || h.sand_save === '1') th++; 
+                } 
+            }); 
+            if (ts > 0) { 
+                val = (th/ts)*100; 
+                valid = true;
+            } 
+        }
+        
+        if (valid) {
             plotData.push({
                 x: new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}), 
                 y: val
@@ -3260,16 +3358,16 @@ window.refreshModalGraph = function() {
     });
 
     let sgTitle = document.getElementById('stat-graph-title');
-    if(sgTitle) {
+    if (sgTitle) {
         sgTitle.innerText = currentStatTitle.toUpperCase();
     }
 
-    if(statDetailChartObj) {
+    if (statDetailChartObj) {
         statDetailChartObj.destroy();
     }
     
     let cEl = document.getElementById('statDetailChart'); 
-    if(!cEl || typeof Chart === 'undefined') return;
+    if (!cEl || typeof Chart === 'undefined') return;
     
     statDetailChartObj = new Chart(cEl.getContext('2d'), { 
         type: 'line', 
