@@ -77,7 +77,9 @@ window.applyTheme(savedTheme);
 window.initializeApp = async function() {
     try {
         if (supabaseClient) {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (error) throw error;
+            
             if (session) { 
                 currentUser = session.user; 
                 localStorage.removeItem('golf_guest_mode'); 
@@ -115,7 +117,15 @@ window.initializeApp = async function() {
         } else {
             document.getElementById('auth-overlay').style.display = 'flex'; 
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error(e);
+        if (localStorage.getItem('golf_guest_mode') === 'true') {
+            document.getElementById('auth-overlay').style.display = 'none'; 
+            window.loadLocalState(); 
+        } else {
+            document.getElementById('auth-overlay').style.display = 'flex'; 
+        }
+    }
 
     let lastHole = localStorage.getItem('golf_last_hole');
     if (lastHole) currentPlayHole = parseInt(lastHole);
@@ -192,6 +202,7 @@ window.continueAsGuest = function() {
     document.getElementById('auth-overlay').style.display = 'none'; 
     window.loadLocalState(); 
     window.buildGrid(); 
+    window.updatePlayModeUI();
 };
 
 window.switchView = function(viewId, btn) { 
