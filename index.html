@@ -14,25 +14,25 @@
 <body>
 
     <!-- AUTH OVERLAY -->
-    <div id="auth-overlay" class="overlay" style="display: flex;">
+    <div id="auth-overlay" class="overlay" style="display: none; z-index: 3000;">
         <div class="card" style="width: 90%; max-width: 400px; text-align: center;">
             <h1 style="color: var(--accent-green); margin-bottom: 5px; font-size: 24px;">PINPOINT GOLF</h1>
-            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Terminal Access</p>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Welcome to Pinpoint Golf</p>
             
-            <input type="text" id="auth-nickname" placeholder="Email or Nickname" style="width: 100%; margin-bottom: 10px;">
-            <input type="password" id="auth-password" placeholder="Passcode" style="width: 100%; margin-bottom: 15px;">
+            <input type="text" id="auth-nickname" placeholder="Email Address" style="width: 100%; margin-bottom: 10px;">
+            <input type="password" id="auth-password" placeholder="Password" style="width: 100%; margin-bottom: 15px;">
             
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button id="login-btn" class="primary" style="flex: 1;" onclick="handleAuth('login')">Initialize</button>
-                <button id="signup-btn" style="flex: 1;" onclick="handleAuth('signup')">Create Uplink</button>
+                <button id="login-btn" class="primary" style="flex: 1;" onclick="handleAuth('login')">Login</button>
+                <button id="signup-btn" style="flex: 1;" onclick="handleAuth('signup')">Sign Up</button>
             </div>
             
             <div style="font-size: 12px; margin-bottom: 20px;">
-                <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); text-decoration: none;">Forgot Passcode?</a>
+                <a href="#" onclick="handleForgotPassword()" style="color: var(--accent-green); text-decoration: none;">Forgot Password?</a>
             </div>
             
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 15px;">
-            <button class="adv-btn" style="width: 100%; padding: 12px; color: var(--text-muted);" onclick="continueAsGuest()">Bypass (Continue as Guest)</button>
+            <button class="adv-btn" style="width: 100%; padding: 12px; color: var(--text-muted);" onclick="continueAsGuest()">Continue as Guest</button>
             
             <div id="auth-error" style="color: #ef4444; margin-top: 15px; font-size: 14px;"></div>
         </div>
@@ -53,7 +53,7 @@
         
         <!-- Search & Setup Card -->
         <div class="card" id="search-card">
-            <h2 style="font-size: 16px; margin-bottom: 10px;">COURSE UPLINK</h2>
+            <h2 style="font-size: 16px; margin-bottom: 10px;">COURSE SEARCH</h2>
             <div style="display: flex; gap: 10px; margin-bottom: 10px; position: relative;">
                 <input type="text" id="course-search-input" placeholder="Search global database..." style="flex: 1;" autocomplete="off">
                 <ul id="search-dropdown" class="search-dropdown"></ul>
@@ -442,7 +442,7 @@
     </div>
 
     <!-- OVERLAYS & MODALS -->
-    <div id="settings-overlay" class="overlay" style="display: none; z-index: 2000;">
+    <div id="settings-overlay" class="overlay" style="display: none; z-index: 4000;">
         <div class="card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2>SYSTEM SETTINGS</h2>
@@ -483,8 +483,8 @@
             
             <div id="password-change-section" class="settings-section" style="margin-top: 20px; display: none;">
                 <h3 style="color: var(--accent-green); margin-bottom: 10px; font-size: 14px;">SECURITY</h3>
-                <input type="password" id="new-password" placeholder="New Passcode" style="width: 100%; margin-bottom: 10px;">
-                <button class="adv-btn" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Passcode</button>
+                <input type="password" id="new-password" placeholder="New Password" style="width: 100%; margin-bottom: 10px;">
+                <button class="adv-btn" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Password</button>
             </div>
             
             <div style="margin-top: 30px;">
@@ -496,7 +496,7 @@
     </div>
 
     <!-- History Modal -->
-    <div id="history-modal" class="overlay" style="display: none; z-index: 2000;">
+    <div id="history-modal" class="overlay" style="display: none; z-index: 4000;">
         <div class="card" style="width: 95%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <div>
@@ -525,7 +525,7 @@
     </div>
 
     <!-- Stat Graph Modal -->
-    <div id="stat-graph-modal" class="overlay" style="display: none; z-index: 2000;">
+    <div id="stat-graph-modal" class="overlay" style="display: none; z-index: 4000;">
         <div class="card" style="width: 95%; max-width: 500px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <h2 id="stat-graph-title" style="color: var(--accent-green); font-size: 16px;">STAT</h2>
@@ -544,7 +544,7 @@
     </div>
 
     <!-- AI Insight Detail Modal -->
-    <div id="insight-modal" class="overlay" style="display: none; z-index: 2000;">
+    <div id="insight-modal" class="overlay" style="display: none; z-index: 4000;">
         <div class="card" style="width: 90%; max-width: 400px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <h2 id="insight-detail-title" style="color: var(--accent-green); font-size: 16px;">INSIGHT</h2>
@@ -555,7 +555,7 @@
     </div>
 
     <!-- Incomplete Round Modal -->
-    <div id="incomplete-modal" class="overlay" style="display: none; z-index: 2000;">
+    <div id="incomplete-modal" class="overlay" style="display: none; z-index: 4000;">
         <div class="card" style="width: 90%; max-width: 400px; text-align: center;">
             <h2 style="color: #f59e0b; margin-bottom: 10px;">INCOMPLETE LOG</h2>
             <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">The following holes are missing score data:</p>
