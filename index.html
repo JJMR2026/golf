@@ -14,7 +14,7 @@
 <body>
 
     <!-- AUTH OVERLAY -->
-    <div id="auth-overlay" class="overlay">
+    <div id="auth-overlay" class="overlay" style="display: flex;">
         <div class="card" style="width: 90%; max-width: 400px; text-align: center;">
             <h1 style="color: var(--accent-green); margin-bottom: 5px; font-size: 24px;">PINPOINT GOLF</h1>
             <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Terminal Access</p>
@@ -230,26 +230,26 @@
     <div id="view-analytics" class="view-container">
         <h1 style="text-align: center; margin-bottom: 15px;">TELEMETRY</h1>
         
-        <!-- MASTER FILTERS -->
+        <!-- MASTER FILTERS (Moved Above Tabs) -->
         <div class="filter-bar">
             <div class="multi-select-container">
                 <button class="dropdown-btn" id="course-btn-text" onclick="toggleFilterDropdown('course-checkbox-list')">All Courses</button>
-                <div class="multi-select-dropdown" id="course-checkbox-list"></div>
+                <div class="multi-select-dropdown" id="course-checkbox-list" style="display: none;"></div>
             </div>
             
             <div class="multi-select-container">
                 <button class="dropdown-btn" id="year-btn-text" onclick="toggleFilterDropdown('year-checkbox-list')">All Years</button>
-                <div class="multi-select-dropdown" id="year-checkbox-list"></div>
+                <div class="multi-select-dropdown" id="year-checkbox-list" style="display: none;"></div>
             </div>
             
             <div class="multi-select-container">
                 <button class="dropdown-btn" id="month-btn-text" onclick="toggleFilterDropdown('month-checkbox-list')">All Months</button>
-                <div class="multi-select-dropdown" id="month-checkbox-list" style="max-height: 200px; overflow-y: auto;"></div>
+                <div class="multi-select-dropdown" id="month-checkbox-list" style="display: none; max-height: 200px; overflow-y: auto;"></div>
             </div>
             
             <div class="multi-select-container">
                 <button class="dropdown-btn" id="par-btn-text" onclick="toggleFilterDropdown('par-checkbox-list')">All Pars</button>
-                <div class="multi-select-dropdown" id="par-checkbox-list">
+                <div class="multi-select-dropdown" id="par-checkbox-list" style="display: none;">
                     <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="margin: 5px 0;">
                     <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
                     <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
@@ -259,7 +259,7 @@
 
             <div class="multi-select-container">
                 <button class="dropdown-btn" id="hole-btn-text" onclick="toggleFilterDropdown('hole-checkbox-list')">All Holes</button>
-                <div class="multi-select-dropdown" id="hole-checkbox-list" style="max-height: 200px; overflow-y: auto;">
+                <div class="multi-select-dropdown" id="hole-checkbox-list" style="display: none; max-height: 200px; overflow-y: auto;">
                     <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" checked onchange="checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="margin: 5px 0;">
                 </div>
             </div>
@@ -309,7 +309,6 @@
                         <option value="none">No Overlay</option>
                         <option value="hcp">Handicap Index</option>
                         <option value="putts">Total Putts</option>
-                        <option value="sg">Strokes Gained Putting</option>
                         <option value="fir">FIR %</option>
                         <option value="gir">GIR %</option>
                         <option value="driveDist">Avg Drive Dist</option>
@@ -443,7 +442,7 @@
     </div>
 
     <!-- OVERLAYS & MODALS -->
-    <div id="settings-overlay" class="overlay">
+    <div id="settings-overlay" class="overlay" style="display: none; z-index: 2000;">
         <div class="card" style="width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2>SYSTEM SETTINGS</h2>
@@ -497,7 +496,7 @@
     </div>
 
     <!-- History Modal -->
-    <div id="history-modal" class="overlay" style="z-index: 2000;">
+    <div id="history-modal" class="overlay" style="display: none; z-index: 2000;">
         <div class="card" style="width: 95%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <div>
@@ -526,7 +525,7 @@
     </div>
 
     <!-- Stat Graph Modal -->
-    <div id="stat-graph-modal" class="overlay" style="z-index: 2000;">
+    <div id="stat-graph-modal" class="overlay" style="display: none; z-index: 2000;">
         <div class="card" style="width: 95%; max-width: 500px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <h2 id="stat-graph-title" style="color: var(--accent-green); font-size: 16px;">STAT</h2>
@@ -545,7 +544,7 @@
     </div>
 
     <!-- AI Insight Detail Modal -->
-    <div id="insight-modal" class="overlay" style="z-index: 2000;">
+    <div id="insight-modal" class="overlay" style="display: none; z-index: 2000;">
         <div class="card" style="width: 90%; max-width: 400px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                 <h2 id="insight-detail-title" style="color: var(--accent-green); font-size: 16px;">INSIGHT</h2>
@@ -556,7 +555,7 @@
     </div>
 
     <!-- Incomplete Round Modal -->
-    <div id="incomplete-modal" class="overlay" style="z-index: 2000;">
+    <div id="incomplete-modal" class="overlay" style="display: none; z-index: 2000;">
         <div class="card" style="width: 90%; max-width: 400px; text-align: center;">
             <h2 style="color: #f59e0b; margin-bottom: 10px;">INCOMPLETE LOG</h2>
             <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">The following holes are missing score data:</p>
