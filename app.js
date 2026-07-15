@@ -1885,21 +1885,34 @@ window.toggleModalDrops = function(btn, i) {
 
 window.toggleModalHit = function(b, i, t) { 
     let ns = "";
+    
     if (t === 'sandSave') {
         let cur = b.innerText; 
         ns = cur === "-" ? "1" : (cur === "1" ? "2" : (cur === "2" ? "3+" : "")); 
         b.innerText = ns === "" ? "-" : ns;
+    } else if (t === 'fir') {
+        let cur = b.innerText;
+        if (cur === "-") ns = "hit";
+        else if (cur === "HIT") ns = "miss";
+        else if (cur === "MISS") ns = "drv grn";
+        else ns = "";
+        b.innerText = ns === "" ? "-" : ns.toUpperCase();
     } else {
-        ns = b.innerText === "MISS" ? "hit" : "miss"; 
+        let cur = b.innerText;
+        if (cur === "-") ns = "hit";
+        else if (cur === "HIT") ns = "miss";
+        else if (cur === "MISS") ns = "under";
+        else ns = "";
         b.innerText = ns === "" ? "-" : ns.toUpperCase();
     }
     
-    if(ns === 'hit' || ns === '1') {
+    if(ns === 'hit' || ns === '1' || ns === 'drv grn' || ns === 'under') {
         b.classList.add('hit'); 
     } else {
         b.classList.remove('hit'); 
     }
     modalRoundData[i][t] = ns === "-" ? "" : ns; 
+};i][t] = ns === "-" ? "" : ns; 
 };
 
 window.closeHistoryModal = function() { 
