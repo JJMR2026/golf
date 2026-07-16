@@ -79,7 +79,25 @@ select option { background-color: var(--card-bg); color: var(--text-main); }
 .play-input-box { width: 80px; height: 45px; background: var(--cell-bg); border: 1px solid var(--cell-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 .play-input-box input { width: 100%; height: 100%; background: transparent; border: none; color: var(--text-main); font-size: 20px; font-weight: bold; text-align: center; outline: none; }
 .play-input-box input::placeholder { font-size: 12px; font-weight: normal; color: #555; }
-.adv-btn { padding: 10px; font-size: 11px; flex: 1; border-radius: 6px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; min-width: 40px; font-weight: bold; transition: 0.2s;}
+.adv-btn { 
+    padding: 10px 5px; 
+    font-size: 11px; 
+    flex: 1 1 0; 
+    border-radius: 6px; 
+    background: rgba(0,0,0,0.4); 
+    border: 1px solid var(--border-color); 
+    color: var(--text-muted); 
+    cursor: pointer; 
+    min-width: 0; 
+    font-weight: bold; 
+    transition: 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
 .adv-btn.active { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
 .sub-miss { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;}
 .sub-miss.active { background: #ef4444; color: #fff; border-color: #ef4444;}
