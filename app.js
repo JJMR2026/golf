@@ -2661,12 +2661,24 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
                         borderWidth: 0 
                     }] 
                 }, 
-                options: { 
+               options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { 
-                        legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } 
+                        legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.raw || 0;
+                                    let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    let percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return `${label}: ${value} (${percentage})`;
+                                }
+                            }
+                        }
                     } 
+                }
                 } 
             }); 
         } 
@@ -2701,8 +2713,20 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { 
-                        legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } 
+                        legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.raw || 0;
+                                    let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    let percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return `${label}: ${value} (${percentage})`;
+                                }
+                            }
+                        }
                     } 
+                }
                 } 
             }); 
         } 
