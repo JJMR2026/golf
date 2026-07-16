@@ -189,3 +189,22 @@ details.year-folder summary::-webkit-details-marker { display: none; }
 .login-option { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
 .login-option h4 { margin: 0 0 10px 0; color: var(--accent-green); font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
 .login-option p { margin: 0 0 8px 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.bag-pill {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+}
+.bag-pill:has(input:checked) {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+.bag-pill input {
+    display: none; 
+}
