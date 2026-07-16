@@ -543,7 +543,22 @@ window.loadLocalState = function() {
             
             if(s.courseName && s.courseName !== 'NO COURSE' && s.courseName !== 'NO COURSE SELECTED' && s.courseName !== 'MANUAL SCORECARD (SEARCH TO FETCH)') {
                 document.getElementById('search-card').style.display = 'none'; 
-                window.togglePlayMode(true);
+                window.togglePlayMode = function(isPlayMode) { 
+    document.getElementById('btn-play-mode').className = isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
+    document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
+    document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; 
+    document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; 
+    
+    let topNav = document.getElementById('play-mode-top-nav');
+    if (topNav) topNav.style.display = isPlayMode ? 'flex' : 'none';
+
+    let adminBtn = document.getElementById('admin-save-template-btn');
+    if (adminBtn) {
+        adminBtn.style.display = (!isPlayMode && currentUser && currentUser.email === 'jordanrohel@yahoo.ca') ? 'block' : 'none';
+    }
+
+    if(isPlayMode) window.updatePlayModeUI(); 
+};
             }
         } catch(e) {
             console.error("Local state load error", e);
@@ -1046,31 +1061,7 @@ window.updatePlayModeUI = function() {
         dBlock.style.opacity = (par == 3) ? '0.3' : '1'; 
     }
 
-    let tmplBtn = document.getElementById('admin-save-template-btn');
-    if (currentUser && currentUser.email === 'jordanrohel@yahoo.ca') {
-        if (!tmplBtn) {
-            tmplBtn = document.createElement('button');
-            tmplBtn.id = 'admin-save-template-btn';
-            tmplBtn.className = 'primary';
-            tmplBtn.style.width = '100%';
-            tmplBtn.style.marginTop = '15px';
-            tmplBtn.style.background = '#f59e0b';
-            tmplBtn.style.color = '#000';
-            tmplBtn.innerText = '💾 ADMIN: PUSH OVERRIDES TO DB';
-            tmplBtn.onclick = window.saveCourseTemplate;
-            const submitBtn = document.getElementById('submit-round-btn');
-            if (submitBtn) {
-                submitBtn.after(tmplBtn);
-            }
-        }
-        tmplBtn.style.display = 'block';
-    } else {
-        if (tmplBtn) {
-            tmplBtn.style.display = 'none';
-        }
-    }
-
-    localStorage.setItem('golf_last_hole', currentPlayHole);
+    
 };
 
 window.saveCourseTemplate = async function() {
