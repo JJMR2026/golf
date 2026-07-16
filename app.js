@@ -873,6 +873,10 @@ window.togglePlayMode = function(isPlayMode) {
     document.getElementById('btn-grid-mode').className = !isPlayMode ? 'view-toggle-btn primary' : 'view-toggle-btn'; 
     document.getElementById('grid-mode-container').style.display = isPlayMode ? 'none' : 'block'; 
     document.getElementById('play-mode-container').style.display = isPlayMode ? 'flex' : 'none'; 
+    
+    let topNav = document.getElementById('play-mode-top-nav');
+    if (topNav) topNav.style.display = isPlayMode ? 'flex' : 'none';
+
     if(isPlayMode) window.updatePlayModeUI(); 
 };
 
@@ -980,23 +984,23 @@ window.setHoleCount = function(count) {
     }
     
     let toggleBox = document.getElementById('front-back-toggle');
+    let topToggleBox = document.getElementById('top-front-back-toggle');
     
     if (count === 9) { 
-        if (toggleBox) {
-            toggleBox.style.display = 'inline-flex'; 
-        }
+        if (toggleBox) toggleBox.style.display = 'inline-flex'; 
+        if (topToggleBox) topToggleBox.style.display = 'inline-flex';
         currentHoleOffset = 0; 
         
         let bf = document.getElementById('btn-front-9');
         let bb = document.getElementById('btn-back-9');
-        if (bf && bb) {
-            bf.classList.add('active'); 
-            bb.classList.remove('active'); 
-        }
+        let btf = document.getElementById('btn-top-front-9');
+        let btb = document.getElementById('btn-top-back-9');
+        
+        if (bf && bb) { bf.classList.add('active'); bb.classList.remove('active'); }
+        if (btf && btb) { btf.classList.add('active'); btb.classList.remove('active'); }
     } else { 
-        if (toggleBox) {
-            toggleBox.style.display = 'none'; 
-        }
+        if (toggleBox) toggleBox.style.display = 'none'; 
+        if (topToggleBox) topToggleBox.style.display = 'none';
         currentHoleOffset = 0; 
     }
     
@@ -1011,25 +1015,24 @@ window.setNineSide = function(side) {
     
     let bf = document.getElementById('btn-front-9');
     let bb = document.getElementById('btn-back-9');
+    let btf = document.getElementById('btn-top-front-9');
+    let btb = document.getElementById('btn-top-back-9');
     
     if (side === 'front') { 
         currentHoleOffset = 0; 
-        if (bf && bb) { 
-            bf.classList.add('active'); 
-            bb.classList.remove('active'); 
-        }
+        if (bf && bb) { bf.classList.add('active'); bb.classList.remove('active'); }
+        if (btf && btb) { btf.classList.add('active'); btb.classList.remove('active'); }
     } else { 
         currentHoleOffset = 9; 
-        if (bf && bb) { 
-            bf.classList.remove('active'); 
-            bb.classList.add('active'); 
-        }
+        if (bf && bb) { bf.classList.remove('active'); bb.classList.add('active'); }
+        if (btf && btb) { btf.classList.remove('active'); btb.classList.add('active'); }
     }
     
     currentPlayHole = currentHoleOffset; 
     window.buildGrid(); 
     window.updatePlayModeUI(); 
     window.saveLocalState(); 
+
 };
 
 window.jumpToPlayMode = function(index) { 
