@@ -1,19 +1,26 @@
+import os
 import requests
 import time
-import json
-from supabase import create_client
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
-# -- 1. CREDENTIALS --
-SUPABASE_URL = "https://hksccpousgspagkqcjzd.supabase.co"
-SUPABASE_KEY = "YOUR_SUPABASE_SERVICE_ROLE_KEY" # <-- Paste your secret key here
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Load variables from .env file (for Supabase credentials)
+load_dotenv()
 
-RAPIDAPI_KEY = "YOUR_RAPID_API_KEY" # <-- Paste your RapidAPI key here
+# --- 1. SUPABASE CONNECTION ---
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
+
+# --- 2. GOLF API CONFIGURATION ---
+RAPIDAPI_KEY = "SBNYQO6CROSCJ4IZ5PQEHESHGI"
 RAPIDAPI_HOST = "golf-course-api.p.rapidapi.com"
 
-# -- 2. REGIONS TO HARVEST --
+# --- 3. REGIONS (Canada First, then full US) ---
 regions = [
-    "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT",
+    # Canada
+    "AB", "BC", "SK", "MB", "ON", "QC", "NB", "NS", "PE", "NL", "YT", "NT", "NU",
+    # USA
     "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", 
     "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", 
     "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", 
@@ -35,13 +42,14 @@ def harvest_courses():
 
         while has_more:
             print(f"   -> Fetching page {page}...")
-            url = f"https://golf-course-api.p.rapidapi.com/courses?state={region}&limit=100&page={page}"
+            # Using the state parameter to pull bulk courses safely
+            api_url = f"https://golf-course-api.p.rapidapi.com/courses?state={region}&limit=100&page={page}"
             
             try:
-                response = requests.get(url, headers=headers)
+                response = requests.get(api_url, headers=headers)
                 
                 if response.status_code == 429:
-                    print("\n   ⚠️ API LIMIT REACHED! You have exhausted your 50 daily requests.")
+                    print("\n   ⚠️ API LIMIT REACHED! You have exhausted your daily requests.")
                     print(f"   🛑 Stopped at Region: {region}, Page: {page}.")
                     print(f"   🎉 HARVEST PAUSED. Successfully pushed {total_added} new tee boxes today.")
                     return 
@@ -63,34 +71,54 @@ def harvest_courses():
                     tees = course.get('tees', [])
                     
                     for tee in tees:
-                        tee_name = str(tee.get('name', 'Standard')).strip()
+                        raw_tee_name = str(tee.get('name', 'Standard')).strip()
+                        
+                        # Parse gender for the unique constraint
+                        gender = "Women" if any(w in raw_tee_name.lower() for w in ["women", "ladies", "red"]) else "Men"
+                        
+                        # Clean up tee name
+                        tee_name = raw_tee_name.replace("(Women)", "").replace("(Men)", "").strip()
                         
                         try:
-                            # Safely check if tee exists
-                            existing = supabase.table('course_tees').select('id').eq('course_name', course_name).eq('tee_name', tee_name).limit(1).execute()
+                            # Safely check if tee exists using the FULL unique constraint
+                            existing = supabase.table('course_tees').select('id') \
+                                .eq('course_name', course_name) \
+                                .eq('tee_name', tee_name) \
+                                .eq('gender', gender) \
+                                .limit(1).execute()
                             
-                            # Check if the data list inside the response is empty
+                            # ONLY inserts if it does not already exist
                             if len(existing.data) == 0:
                                 holes = tee.get('holes', [])
                                 pars = [h.get('par', 4) for h in holes]
                                 yardages = [h.get('yardage', 0) for h in holes]
+                                stroke_indexes = [h.get('stroke_index', 0) for h in holes]
                                 
-                                while len(pars) < 18: pars.append("")
-                                while len(yardages) < 18: yardages.append("")
-
-                                pars = pars[:18]
-                                yardages = yardages[:18]
+                                # PERFECT 9-HOLE DOUBLING LOGIC
+                                if len(pars) == 9:
+                                    pars = pars + pars
+                                    yardages = yardages + yardages
+                                    stroke_indexes = stroke_indexes + stroke_indexes
+                                
+                                # Standardize array length just in case API data is malformed
+                                pars = (pars + [0]*18)[:18]
+                                yardages = (yardages + [0]*18)[:18]
+                                stroke_indexes = (stroke_indexes + [0]*18)[:18]
 
                                 payload = {
                                     "course_name": course_name,
                                     "tee_name": tee_name,
+                                    "gender": gender,
                                     "pars": pars,
-                                    "yardages": yardages
+                                    "yardages": yardages,
+                                    "stroke_indexes": stroke_indexes,
+                                    "course_rating": tee.get('course_rating', None),
+                                    "slope_rating": tee.get('slope_rating', None) 
                                 }
                                 
                                 supabase.table('course_tees').insert(payload).execute()
                                 total_added += 1
-                                print(f"   ⛳ Added: {course_name} ({tee_name})")
+                                print(f"   ⛳ Added: {course_name} | {tee_name} ({gender})")
                             else:
                                 pass # Silently skip duplicates
                                 
@@ -115,7 +143,7 @@ def harvest_courses():
                 has_more = False
                 break
 
-    print(f"\n🎉 CONTINENT HARVEST COMPLETE! Successfully mapped {total_added} new tee boxes to Supabase.")
+    print(f"\n🎉 HARVEST COMPLETE! Successfully mapped {total_added} new tee boxes to Supabase.")
 
 if __name__ == "__main__":
     harvest_courses()
