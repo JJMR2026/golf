@@ -1230,7 +1230,216 @@ window.saveCourseTemplate = async function() {
         btn.disabled = false; 
     }
 };
+window.fetchCourseDetails = async function() {
+    if (!window.checkActiveRoundSafeguard()) return;
+    
+    const searchInput = document.getElementById('course-search-input');
+    if (!searchInput) return;
+    
+    const query = searchInput.value.trim(); 
+    if(!query) return;
+    
+    const fetchBtn = document.getElementById('fetch-course-btn'); 
+    const originalText = fetchBtn ? fetchBtn.innerText : "Fetch";
+    if (fetchBtn) {
+        fetchBtn.innerText = "⏳..."; 
+        fetchBtn.disabled = true; 
+    }
+    
+    const apiStatus = document.getElementById('api-status');
+    if (apiStatus) apiStatus.innerText = "Loading...";
 
+    if (!supabaseClient) {
+        if (apiStatus) apiStatus.innerText = "⚠️ Offline mode. Type course and hit Start Round.";
+        if (fetchBtn) {
+            fetchBtn.innerText = originalText; 
+            fetchBtn.disabled = false;
+        }
+        return;
+    }
+
+    try {
+        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`).limit(100); 
+        
+        if (teeData) {
+            let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase().includes(query.toUpperCase()) || query.toUpperCase().includes(t.course_name.trim().toUpperCase()));
+            
+            if (!matchedCourse && teeData.length > 0) {
+                matchedCourse = teeData[0];
+            }
+            
+            if (matchedCourse) {
+                const fetchedCourseName = matchedCourse.course_name.trim();
+                availableTees = teeData.filter(t => t.course_name.trim() === fetchedCourseName);
+                window.fetchWeatherForCourse(fetchedCourseName);
+                
+                let parsedPars = availableTees[0].pars; 
+                if (typeof parsedPars === 'string') { 
+                    try { 
+                        parsedPars = JSON.parse(parsedPars.replace(/{/g, '[').replace(/}/g, ']')); 
+                    } catch(e){} 
+                }
+                currentCoursePars = Array.isArray(parsedPars) ? [...parsedPars] : Array(18).fill(""); 
+                
+                let y = availableTees[0].yardages;
+                if (typeof y === 'string') { 
+                    try { 
+                        if (y === "null" || y === "") {
+                            y = Array(18).fill(""); 
+                        } else {
+                            y = JSON.parse(y.replace(/{/g, '[').replace(/}/g, ']')); 
+                        }
+                    } catch(e) { 
+                        y = Array(18).fill(""); 
+                    } 
+                }
+                currentYardages = Array.isArray(y) && y.length > 0 ? [...y] : Array(18).fill(""); 
+                
+                roundData = Array.from({length: 18}, () => ({ 
+                    score: "", 
+                    putts: "", 
+                    fir: "", 
+                    firAdv: [], 
+                    gir: "", 
+                    girAdv: [], 
+                    drive: "", 
+                    driveException: "", 
+                    drops: 0, 
+                    dropsAdv: [], 
+                    sandSave: "", 
+                    driveClub: "", 
+                    appClub: "" 
+                }));
+                
+                dismissedWarnings = [];
+                
+                const display = document.getElementById('current-course-display');
+                if (display) {
+                    display.innerText = fetchedCourseName.toUpperCase(); 
+                    display.style.color = 'var(--accent-green)';
+                }
+                
+                window.populateTeeDropdown(); 
+                if (apiStatus) apiStatus.innerText = ""; 
+                window.buildGrid(); 
+                window.updatePlayModeUI(); 
+                window.saveLocalState(); 
+                return;
+            }
+        }
+    } catch(e) { 
+        console.error("Course fetch failed:", e); 
+    } finally { 
+        if (fetchBtn) {
+            fetchBtn.innerText = originalText; 
+            fetchBtn.disabled = false; 
+        }
+    }
+    
+    const display = document.getElementById('current-course-display');
+    if (display) {
+        display.innerText = query.toUpperCase(); 
+        display.style.color = 'var(--accent-green)'; 
+    }
+    if (apiStatus) apiStatus.innerText = "ℹ️ Course not found. Please enter pars manually.";
+    
+    currentCoursePars = Array(18).fill(""); 
+    currentYardages = Array(18).fill(""); 
+    availableTees = []; 
+    
+    window.populateTeeDropdown(); 
+    window.buildGrid(); 
+    window.updatePlayModeUI(); 
+    window.saveLocalState();
+};
+
+window.populateTeeDropdown = function() {
+    const select = document.getElementById('tee-select'); 
+    if (!select) return;
+    
+    const setupContainer = document.getElementById('course-setup-container');
+    if (setupContainer) {
+        setupContainer.style.display = 'block';
+    }
+    
+    const colorOrder = { 'Black': 1, 'Blue': 2, 'White': 3, 'Silver': 4, 'Red': 5 };
+    
+    availableTees.sort((a, b) => {
+        let yardA = 0, yardB = 0;
+        
+        try { 
+            let yaArr = typeof a.yardages === 'string' ? JSON.parse(a.yardages.replace(/{/g, '[').replace(/}/g, ']')) : a.yardages; 
+            if (Array.isArray(yaArr)) {
+                yardA = yaArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0); 
+            }
+        } catch(e) {}
+        
+        try { 
+            let ybArr = typeof b.yardages === 'string' ? JSON.parse(b.yardages.replace(/{/g, '[').replace(/}/g, ']')) : b.yardages; 
+            if (Array.isArray(ybArr)) {
+                yardB = ybArr.reduce((sum, val) => sum + (parseInt(val) || 0), 0); 
+            }
+        } catch(e) {}
+        
+        if (yardA > 0 && yardB > 0 && yardA !== yardB) {
+            return yardB - yardA;
+        }
+        
+        let ca = colorOrder[a.tee_name.trim()] || 99; 
+        let cb = colorOrder[b.tee_name.trim()] || 99; 
+        return ca - cb;
+    });
+    
+    select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
+    
+    if (typeof window.handleTeeChange === 'function') {
+        window.handleTeeChange();
+    }
+};
+
+window.handleTeeChange = function() {
+    const select = document.getElementById('tee-select');
+    if (!select) return;
+    
+    const val = select.value;
+    const manualSetup = document.getElementById('manual-tee-setup-container');
+    if (manualSetup) {
+        manualSetup.style.display = (val === 'new') ? 'block' : 'none';
+    }
+    
+    if (val === 'new' || val === '') {
+        selectedTee = null;
+        currentCoursePars = Array(18).fill("");
+        currentYardages = Array(18).fill("");
+    } else if (availableTees && availableTees.length > 0) {
+        selectedTee = availableTees.find(t => t.id == val);
+        if (selectedTee) {
+            let p = selectedTee.pars;
+            if (typeof p === 'string') {
+                try { 
+                    p = JSON.parse(p.replace(/{/g, '[').replace(/}/g, ']')); 
+                } catch(e) { 
+                    p = Array(18).fill(""); 
+                }
+            }
+            currentCoursePars = Array.isArray(p) ? [...p] : Array(18).fill("");
+            
+            let y = selectedTee.yardages;
+            if (typeof y === 'string') {
+                try { 
+                    y = JSON.parse(y.replace(/{/g, '[').replace(/}/g, ']')); 
+                } catch(e) { 
+                    y = Array(18).fill(""); 
+                }
+            }
+            currentYardages = Array.isArray(y) ? [...y] : Array(18).fill("");
+        }
+    }
+    
+    window.buildGrid();
+    window.updatePlayModeUI();
+    window.saveLocalState();
+};
 // ==========================================
 // SCORECARD GRID ENGINE
 // ==========================================
