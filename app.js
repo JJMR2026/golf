@@ -582,6 +582,7 @@ window.checkActiveRoundSafeguard = function() {
     return true;
 };
 
+// FIX 1 & 2: Rewritten search handler to be fully robust and fix the dropdown clicking bug.
 let searchTimeout = null;
 const searchInputEl = document.getElementById('course-search-input');
 if (searchInputEl) {
@@ -598,19 +599,24 @@ if (searchInputEl) {
         searchTimeout = setTimeout(async () => { 
             if (!supabaseClient) return;
             try { 
-                const flexQuery = query.replace(/\s+/g, '%');
-                const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${flexQuery}%`).limit(100); 
+                // Using just the first 4 characters to guarantee Supabase returns data
+                const broadSearch = query.substring(0, 4);
+                const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${broadSearch}%`).limit(1000); 
                 if(error) throw error;
                 
+                const cleanQuery = query.replace(/\s+/g, '');
                 const uniqueCourses = [];
                 data.forEach(item => {
                     let c = item.course_name.trim();
-                    if (!uniqueCourses.includes(c)) uniqueCourses.push(c);
+                    if (c.replace(/\s+/g, '').toLowerCase().includes(cleanQuery)) {
+                        if (!uniqueCourses.includes(c)) uniqueCourses.push(c);
+                    }
                 });
                 
                 let limitCourses = uniqueCourses.slice(0, 10);
                 if (limitCourses.length > 0) { 
-                    dropdown.innerHTML = limitCourses.map(c => `<li onclick="window.selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
+                    // Changed onclick to onmousedown to prevent the input from losing focus before the click registers
+                    dropdown.innerHTML = limitCourses.map(c => `<li onmousedown="window.selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
                     dropdown.classList.add('active'); 
                 } else { 
                     dropdown.classList.remove('active'); 
@@ -618,7 +624,7 @@ if (searchInputEl) {
             } catch(err) { 
                 console.error(err); 
             } 
-        }, 250); 
+        }, 300); 
     });
 
     searchInputEl.addEventListener('keypress', function(e) { 
@@ -630,7 +636,7 @@ if (searchInputEl) {
     });
 }
 
-// FIX: Added the missing function so clicking the dropdown actually selects the course
+// Function now reliably catches the selection
 window.selectCourseFromDropdown = function(courseName) {
     const searchInput = document.getElementById('course-search-input');
     if (searchInput) {
@@ -1271,27 +1277,24 @@ window.fetchCourseDetails = async function() {
     }
 
     try {
-        // FIX: Make search flexible to handle spaces
-        const flexQuery = query.replace(/\s+/g, '%');
-        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${flexQuery}%`).limit(100); 
+        // Safe query matching: Get first 4 letters for a broad DB fetch, then strictly filter in memory.
+        const broadSearch = query.substring(0, 4);
+        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${broadSearch}%`).limit(1000); 
         
+        if (error) throw error;
+
         if (teeData && teeData.length > 0) {
-            // FIX: Better matching logic to ignore spaces entirely when finding the exact match
             let cleanQuery = query.replace(/\s+/g, '').toUpperCase();
             
-            let matchedCourse = teeData.find(t => t.course_name.trim().replace(/\s+/g, '').toUpperCase() === cleanQuery);
+            let matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/\s+/g, '').toUpperCase() === cleanQuery);
             
             if (!matchedCourse) {
-                matchedCourse = teeData.find(t => t.course_name.trim().replace(/\s+/g, '').toUpperCase().includes(cleanQuery) || cleanQuery.includes(t.course_name.trim().replace(/\s+/g, '').toUpperCase()));
-            }
-            
-            if (!matchedCourse) {
-                matchedCourse = teeData[0];
+                matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/\s+/g, '').toUpperCase().includes(cleanQuery));
             }
             
             if (matchedCourse) {
-                const fetchedCourseName = matchedCourse.course_name.trim();
-                availableTees = teeData.filter(t => t.course_name.trim() === fetchedCourseName);
+                const fetchedCourseName = (matchedCourse.course_name || "").trim();
+                availableTees = teeData.filter(t => (t.course_name || "").trim() === fetchedCourseName);
                 window.fetchWeatherForCourse(fetchedCourseName);
                 
                 let parsedPars = availableTees[0].pars; 
@@ -1317,19 +1320,9 @@ window.fetchCourseDetails = async function() {
                 currentYardages = Array.isArray(y) && y.length > 0 ? [...y] : Array(18).fill(""); 
                 
                 roundData = Array.from({length: 18}, () => ({ 
-                    score: "", 
-                    putts: "", 
-                    fir: "", 
-                    firAdv: [], 
-                    gir: "", 
-                    girAdv: [], 
-                    drive: "", 
-                    driveException: "", 
-                    drops: 0, 
-                    dropsAdv: [], 
-                    sandSave: "", 
-                    driveClub: "", 
-                    appClub: "" 
+                    score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], 
+                    drive: "", driveException: "", drops: 0, dropsAdv: [], 
+                    sandSave: "", driveClub: "", appClub: "", appDist: "" 
                 }));
                 
                 dismissedWarnings = [];
@@ -1406,12 +1399,12 @@ window.populateTeeDropdown = function() {
             return yardB - yardA;
         }
         
-        let ca = colorOrder[a.tee_name.trim()] || 99; 
-        let cb = colorOrder[b.tee_name.trim()] || 99; 
+        let ca = colorOrder[(a.tee_name || "").trim()] || 99; 
+        let cb = colorOrder[(b.tee_name || "").trim()] || 99; 
         return ca - cb;
     });
     
-    select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${t.tee_name.trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
+    select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${(t.tee_name || "").trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
     
     if (typeof window.handleTeeChange === 'function') {
         window.handleTeeChange();
@@ -1461,9 +1454,6 @@ window.handleTeeChange = function() {
     window.updatePlayModeUI();
     window.saveLocalState();
 };
-// ==========================================
-// SCORECARD GRID ENGINE
-// ==========================================
 
 window.buildGrid = function() {
     const grid = document.getElementById('scorecard-grid'); 
@@ -1482,7 +1472,6 @@ window.buildGrid = function() {
     
     let endIndex = currentHoleOffset + currentHoleCount;
     
-    // FAILSAFE: Ensure roundData always has 18 slots before rendering
     if (!roundData || roundData.length < 18) {
         roundData = Array.from({length: 18}, () => ({ 
             score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], 
@@ -1500,7 +1489,6 @@ window.buildGrid = function() {
         for (let i = currentHoleOffset; i < endIndex; i++) {
             const cell = document.createElement('div');
             
-            // FAILSAFE: Prevent 'undefined' crashes on corrupted arrays
             let pVal = currentCoursePars[i] !== undefined && currentCoursePars[i] !== null ? currentCoursePars[i] : '';
             let yVal = currentYardages[i] !== undefined && currentYardages[i] !== null ? currentYardages[i] : '';
             let cellData = roundData[i] || {};
@@ -1542,7 +1530,7 @@ window.buildGrid = function() {
             grid.appendChild(cell);
         }
     });
-    window.updateDriveDistances();
+    if (typeof window.updateDriveDistances === 'function') window.updateDriveDistances();
 };
 
 window.toggleGridDrops = function(index) { 
@@ -1661,7 +1649,7 @@ window.forceSubmitRound = async function() {
             } catch(e) {} 
         } 
     } else if (selectedTee) { 
-        teeName = selectedTee.tee_name.trim(); 
+        teeName = (selectedTee.tee_name || "").trim(); 
     }
 
     let finalTeeName = teeName + (rType !== 'Regular' ? ' [' + rType + ']' : '');
@@ -1858,6 +1846,7 @@ window.renderHistoryList = function(allData, type) {
     });
     tbody.innerHTML = html;
 };
+
 window.openHistoryModal = async function(id, name, date, score, holesPlayed, temp, wind) {
     let tEl = document.getElementById('modal-course-title'); 
     if (tEl) tEl.innerText = name; 
