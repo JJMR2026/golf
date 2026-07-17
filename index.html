@@ -44,6 +44,8 @@
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
         <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
+            <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
             <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
                 <option value="dark">Dark Mode (Default)</option>
                 <option value="sunset">Sunset (Orange/Purple)</option>
@@ -52,6 +54,48 @@
                 <option value="masters">Masters Green</option>
                 <option value="light">Light Mode</option>
             </select>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">TEE PREFERENCES</label>
+            <label class="checkbox-container">
+                <input type="checkbox" id="hide-womens-tees" onchange="toggleWomensTees(this.checked)"> Hide Women's Tees
+            </label>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 25px;">
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">MY BAG (CLUB FILTER)</label>
+            <!-- Scrollable container keeps the UI compact -->
+            <div id="bag-checkboxes" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; max-height: 160px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px;">
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="Driver" checked> Driver</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="3 Wood" checked> 3 Wood</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="5 Wood"> 5 Wood</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="7 Wood"> 7 Wood</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="2 Hybrid"> 2 Hybrid</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="3 Hybrid"> 3 Hybrid</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="4 Hybrid"> 4 Hybrid</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="5 Hybrid" checked> 5 Hybrid</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="2 Iron"> 2 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="3 Iron"> 3 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="4 Iron"> 4 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="5 Iron"> 5 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="6 Iron" checked> 6 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="7 Iron" checked> 7 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="8 Iron" checked> 8 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="9 Iron" checked> 9 Iron</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="Pitching Wedge" checked> Pitching</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="Gap Wedge" checked> Gap Wedge</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="Sand Wedge"> Sand Wedge</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="Lob Wedge"> Lob Wedge</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="48 Degree"> 48 Degree</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="50 Degree"> 50 Degree</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="52 Degree"> 52 Degree</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="54 Degree"> 54 Degree</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="56 Degree" checked> 56 Degree</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="58 Degree"> 58 Degree</label>
+                <label class="bag-pill"><input type="checkbox" class="bag-club" value="60 Degree"> 60 Degree</label>
+            </div>
+        </div>
         </div>
         <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">MY BAG (CLUB FILTER)</label>
