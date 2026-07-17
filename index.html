@@ -42,9 +42,8 @@
     <div class="auth-card">
         <button type="button" class="close-modal-btn" onclick="document.getElementById('settings-overlay').style.display='none'">✕</button>
         <h2 style="margin-top: 0;">ACCOUNT SETTINGS</h2>
+        
         <div style="text-align: left; margin-bottom: 25px;">
-            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
-            <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
             <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
                 <option value="dark">Dark Mode (Default)</option>
@@ -57,15 +56,15 @@
         </div>
 
         <div style="text-align: left; margin-bottom: 25px;">
-            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">TEE PREFERENCES</label>
-            <label class="checkbox-container">
-                <input type="checkbox" id="hide-womens-tees" onchange="toggleWomensTees(this.checked)"> Hide Women's Tees
+            <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px; display: block;">TEE PREFERENCES</label>
+            <label class="checkbox-container" style="justify-content: flex-start;">
+                <input type="checkbox" id="hide-womens-tees" onchange="toggleWomensTees(this.checked)"> 
+                <strong style="margin-left: 8px;">Hide Women's Tees</strong>
             </label>
         </div>
 
         <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">MY BAG (CLUB FILTER)</label>
-            <!-- Scrollable container keeps the UI compact -->
             <div id="bag-checkboxes" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; max-height: 160px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px;">
                 <label class="bag-pill"><input type="checkbox" class="bag-club" value="Driver" checked> Driver</label>
                 <label class="bag-pill"><input type="checkbox" class="bag-club" value="3 Wood" checked> 3 Wood</label>
@@ -96,19 +95,19 @@
                 <label class="bag-pill"><input type="checkbox" class="bag-club" value="60 Degree"> 60 Degree</label>
             </div>
         </div>
-        </div>
-        <div style="text-align: left; margin-bottom: 25px;">
-        </div>
+
         <div id="password-change-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-bottom: 20px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 10px; display: block; text-align: left;">SECURITY</label>
             <input type="password" id="new-password" placeholder="Enter New Password" autocomplete="off" style="width: 100%; margin-bottom: 10px;">
             <button class="primary" style="width: 100%; padding: 10px;" onclick="changePassword()">Update Password</button>
             <div id="settings-msg" style="font-size: 12px; margin-top: 10px;"></div>
         </div>
+        
         <div id="admin-harvester-section" style="border-top: 1px solid var(--border-color); padding-top: 20px; text-align: left; margin-bottom: 20px; display: none;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DATABASE ADMIN</label>
             <button class="view-toggle-btn" style="width: 100%; padding: 10px;" onclick="checkHarvesterStatus()">📡 Live Harvester Monitor</button>
         </div>
+        
         <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
             <button class="danger-btn" style="width: 100%; padding: 10px;" onclick="logOut()">Sign Out completely</button>
         </div>
@@ -204,8 +203,13 @@
                 <div>
                     <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">CLUB</label>
                     <select id="range-club" style="width: 100%;">
-                        <option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="5W">5 Wood</option><option value="Hybrid">Hybrid</option>
-                        <option value="4i">4 Iron</option><option value="5i">5 Iron</option><option value="6i">6 Iron</option><option value="7i">7 Iron</option><option value="8i">8 Iron</option><option value="9i">9 Iron</option><option value="PW">PW</option><option value="GW">GW</option><option value="SW">SW</option><option value="LW">LW</option>
+                        <option value="Driver">Driver</option><option value="3 Wood">3 Wood</option><option value="5 Wood">5 Wood</option><option value="7 Wood">7 Wood</option>
+                        <option value="2 Hybrid">2 Hybrid</option><option value="3 Hybrid">3 Hybrid</option><option value="4 Hybrid">4 Hybrid</option><option value="5 Hybrid">5 Hybrid</option>
+                        <option value="2 Iron">2 Iron</option><option value="3 Iron">3 Iron</option><option value="4 Iron">4 Iron</option><option value="5 Iron">5 Iron</option>
+                        <option value="6 Iron">6 Iron</option><option value="7 Iron">7 Iron</option><option value="8 Iron">8 Iron</option><option value="9 Iron">9 Iron</option>
+                        <option value="Pitching Wedge">PW</option><option value="Gap Wedge">GW</option><option value="Sand Wedge">SW</option><option value="Lob Wedge">LW</option>
+                        <option value="48 Degree">48°</option><option value="50 Degree">50°</option><option value="52 Degree">52°</option><option value="54 Degree">54°</option>
+                        <option value="56 Degree">56°</option><option value="58 Degree">58°</option><option value="60 Degree">60°</option>
                     </select>
                 </div>
                 <div>
@@ -368,7 +372,7 @@
                             <div style="display:flex; gap:5px; margin-top:5px;">
                                 <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width:60px;">
                                 <select class="play-sub-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)">
-                                    <option value="">Club...</option><option value="Driver">Driver</option><option value="3W">3 Wood</option><option value="5W">5 Wood</option><option value="Hybrid">Hybrid</option><option value="Iron">Iron</option>
+                                    <option value="">Club...</option>
                                 </select>
                             </div>
                         </div>
@@ -392,6 +396,7 @@
                             </div>
                             <div style="display:flex; gap:5px; margin-top:5px;">
                                 <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
+                                    <option value="">Club...</option>
                                 </select>
                             </div>
                         </div>
