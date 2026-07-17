@@ -315,6 +315,7 @@ window.switchAnalyticsTab = function(tab, btn) {
     document.getElementById('analytics-tab-' + tab).style.display = 'block'; 
     btn.classList.add('active'); 
 };
+
 window.checkHarvesterStatus = async function() {
     document.getElementById('settings-overlay').style.display = 'none';
     document.getElementById('insight-detail-title').innerText = "HARVESTER LAYER LOG";
@@ -597,7 +598,8 @@ if (searchInputEl) {
         searchTimeout = setTimeout(async () => { 
             if (!supabaseClient) return;
             try { 
-                const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${query}%`).limit(100); 
+                const flexQuery = query.replace(/\s+/g, '%');
+                const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${flexQuery}%`).limit(100); 
                 if(error) throw error;
                 
                 const uniqueCourses = [];
@@ -627,6 +629,16 @@ if (searchInputEl) {
         } 
     });
 }
+
+// FIX: Added the missing function so clicking the dropdown actually selects the course
+window.selectCourseFromDropdown = function(courseName) {
+    const searchInput = document.getElementById('course-search-input');
+    if (searchInput) {
+        searchInput.value = courseName;
+    }
+    document.getElementById('search-dropdown').classList.remove('active');
+    window.fetchCourseDetails();
+};
 
 window.getMyBag = function() {
     let clubs = [];
@@ -1259,12 +1271,21 @@ window.fetchCourseDetails = async function() {
     }
 
     try {
-        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${query}%`).limit(100); 
+        // FIX: Make search flexible to handle spaces
+        const flexQuery = query.replace(/\s+/g, '%');
+        let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${flexQuery}%`).limit(100); 
         
-        if (teeData) {
-            let matchedCourse = teeData.find(t => t.course_name.trim().toUpperCase().includes(query.toUpperCase()) || query.toUpperCase().includes(t.course_name.trim().toUpperCase()));
+        if (teeData && teeData.length > 0) {
+            // FIX: Better matching logic to ignore spaces entirely when finding the exact match
+            let cleanQuery = query.replace(/\s+/g, '').toUpperCase();
             
-            if (!matchedCourse && teeData.length > 0) {
+            let matchedCourse = teeData.find(t => t.course_name.trim().replace(/\s+/g, '').toUpperCase() === cleanQuery);
+            
+            if (!matchedCourse) {
+                matchedCourse = teeData.find(t => t.course_name.trim().replace(/\s+/g, '').toUpperCase().includes(cleanQuery) || cleanQuery.includes(t.course_name.trim().replace(/\s+/g, '').toUpperCase()));
+            }
+            
+            if (!matchedCourse) {
                 matchedCourse = teeData[0];
             }
             
