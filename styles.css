@@ -208,3 +208,14 @@ details.year-folder summary::-webkit-details-marker { display: none; }
 .bag-pill input {
     display: none; 
 }
+/* Hide native HTML number input spin buttons on WebKit browsers (Chrome, Safari, Edge, Opera) */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Hide native HTML number input spin buttons on Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
