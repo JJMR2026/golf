@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     
-    <link rel="stylesheet" href="styles.css?v=19.0">
+    <link rel="stylesheet" href="styles.css?v=20.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -181,14 +181,14 @@
         <h2 style="margin:0; color:var(--accent-green); font-size:18px; letter-spacing:2px; text-transform:uppercase;" class="mobile-hide">PINPOINT GOLF</h2>
         <div class="nav-buttons mobile-hide">
             <button class="nav-btn active" onclick="switchView('view-new-round', this)">Play</button>
-            <button class="nav-btn" onclick="switchView('view-range', this)">Practice</button>
+            <button class="nav-btn" onclick="switchView('view-range', this)">Distances</button>
             <button class="nav-btn" onclick="switchView('view-history', this)">History</button>
             <button class="nav-btn" onclick="switchView('view-analytics', this)">Stats</button>
         </div>
         <button class="view-toggle-btn" onclick="openSettings()" style="padding: 10px; margin-left: auto; border-radius: 50%; font-size: 18px; background: rgba(0,0,0,0.3); border-color: var(--border-color);">⚙️</button>
     </div>
 
-   <!-- CLUB DISTANCES HUB VIEW -->
+    <!-- CLUB DISTANCES HUB VIEW -->
     <div id="view-range" class="view-container">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -205,6 +205,7 @@
             <button class="primary" style="width: 100%; padding: 12px; font-size: 14px;" onclick="saveClubDistances()">SAVE DISTANCES</button>
         </div>
     </div>
+
     <!-- PLAY ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
@@ -554,11 +555,11 @@
 
 <div class="bottom-nav desktop-hide">
     <button class="nav-btn active" onclick="switchView('view-new-round', this)"><span>⛳</span>Play</button>
-    <button class="nav-btn" onclick="switchView('view-range', this)"><span>🏌️‍♂️</span>Practice</button>
+    <button class="nav-btn" onclick="switchView('view-range', this)"><span>🏌️‍♂️</span>Distances</button>
     <button class="nav-btn" onclick="switchView('view-history', this)"><span>📖</span>History</button>
     <button class="nav-btn" onclick="switchView('view-analytics', this)"><span>📊</span>Stats</button>
 </div>
 
-<script src="app.js?v=19.0"></script>
+<script src="app.js?v=20.0"></script>
 </body>
 </html>
