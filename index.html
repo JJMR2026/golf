@@ -188,76 +188,23 @@
         <button class="view-toggle-btn" onclick="openSettings()" style="padding: 10px; margin-left: auto; border-radius: 50%; font-size: 18px; background: rgba(0,0,0,0.3); border-color: var(--border-color);">⚙️</button>
     </div>
 
-    <!-- PRACTICE HUB VIEW -->
+   <!-- CLUB DISTANCES HUB VIEW -->
     <div id="view-range" class="view-container">
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: var(--accent-green); margin: 0; text-transform: uppercase;">Practice Hub</h3>
-                <select id="practice-type-select" style="width: auto; padding: 8px; font-size: 12px; background: rgba(0,0,0,0.2); border-color: var(--border-color); color: var(--text-main); border-radius: 6px;" onchange="togglePracticeMode()">
-                    <option value="RANGE">Driving Range</option>
-                    <option value="SIM">Simulator</option>
-                </select>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="color: var(--accent-green); margin: 0; text-transform: uppercase;">My Distances</h3>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 20px;">
+                Set your stock yardages below. The app will use these to automatically suggest your approach club based on the remaining distance to the green during your round.
+            </p>
+            
+            <div id="club-distances-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; padding-right: 10px; margin-bottom: 20px;">
+                <!-- Populated dynamically via JS based on selected bag clubs -->
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px;">
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">CLUB</label>
-                    <select id="range-club" style="width: 100%;">
-                        <option value="Driver">Driver</option><option value="3 Wood">3 Wood</option><option value="5 Wood">5 Wood</option><option value="7 Wood">7 Wood</option>
-                        <option value="2 Hybrid">2 Hybrid</option><option value="3 Hybrid">3 Hybrid</option><option value="4 Hybrid">4 Hybrid</option><option value="5 Hybrid">5 Hybrid</option>
-                        <option value="2 Iron">2 Iron</option><option value="3 Iron">3 Iron</option><option value="4 Iron">4 Iron</option><option value="5 Iron">5 Iron</option>
-                        <option value="6 Iron">6 Iron</option><option value="7 Iron">7 Iron</option><option value="8 Iron">8 Iron</option><option value="9 Iron">9 Iron</option>
-                        <option value="Pitching Wedge">PW</option><option value="Gap Wedge">GW</option><option value="Sand Wedge">SW</option><option value="Lob Wedge">LW</option>
-                        <option value="48 Degree">48°</option><option value="50 Degree">50°</option><option value="52 Degree">52°</option><option value="54 Degree">54°</option>
-                        <option value="56 Degree">56°</option><option value="58 Degree">58°</option><option value="60 Degree">60°</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">DISTANCE (YDS)</label>
-                    <input type="number" id="range-dist" placeholder="Total Yds" style="width: 100%;">
-                </div>
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">STRIKE QUALITY</label>
-                    <select id="range-strike" style="width: 100%;">
-                        <option value="Pure">🎯 Pure</option><option value="Thin">⬇️ Thin</option><option value="Fat">⬆️ Fat</option><option value="Toe">➡️ Toe</option><option value="Heel">⬅️ Heel</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">SHOT SHAPE</label>
-                    <select id="range-shape" style="width: 100%;">
-                        <option value="Straight">Straight</option><option value="Draw">Draw</option><option value="Fade">Fade</option><option value="Hook">Hook</option><option value="Slice">Slice</option>
-                        <option value="Push">Push</option><option value="Pull">Pull</option>
-                    </select>
-                </div>
-                
-                <div class="sim-metric" style="display: none;">
-                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">BALL SPEED</label>
-                    <input type="number" id="sim-ball-speed" placeholder="mph" style="width: 100%;">
-                </div>
-                <div class="sim-metric" style="display: none;">
-                    <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">SPIN RATE</label>
-                    <input type="number" id="sim-spin" placeholder="rpm" style="width: 100%;">
-                </div>
-            </div>
-            
-            <button class="primary" style="width: 100%; margin-bottom: 20px; padding: 12px; font-size: 14px;" onclick="logPracticeShot()">LOG SHOT TO SESSION</button>
-
-            <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-                <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--text-muted); font-size: 12px; text-transform: uppercase; display: flex; justify-content: space-between;">
-                    <span>Current Session Averages</span>
-                    <span id="practice-weather-display" style="color: var(--accent-green); text-transform: none;"></span>
-                </h4>
-                <div id="practice-session-table" style="overflow-x: auto; background: var(--cell-bg); border: 1px solid var(--border-color); border-radius: 8px;">
-                    <table class="stats-table" style="margin-top:0;">
-                        <thead><tr><th>Club</th><th>Avg Yds</th><th>Shape</th><th>Shots</th></tr></thead>
-                        <tbody id="practice-session-body"><tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 15px;">No shots logged this session.</td></tr></tbody>
-                    </table>
-                </div>
-                <button class="view-toggle-btn" style="width: 100%; margin-top: 15px; padding: 12px;" onclick="savePracticeSession()">Save Session to Database</button>
-            </div>
+            <button class="primary" style="width: 100%; padding: 12px; font-size: 14px;" onclick="saveClubDistances()">SAVE DISTANCES</button>
         </div>
     </div>
-
     <!-- PLAY ROUND VIEW -->
     <div id="view-new-round" class="view-container active">
         <div class="card" id="search-card">
