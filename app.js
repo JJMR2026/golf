@@ -28,20 +28,9 @@ let currentYardages = Array(18).fill("");
 let currentPlayHole = 0;
 
 let roundData = Array.from({length: 18}, () => ({ 
-    score: "", 
-    putts: "", 
-    fir: "", 
-    firAdv: [], 
-    gir: "", 
-    girAdv: [], 
-    drive: "", 
-    driveException: "", 
-    drops: 0, 
-    dropsAdv: [], 
-    sandSave: "", 
-    driveClub: "", 
-    appClub: "",
-    appDist: ""
+    score: "", putts: "", fir: "", firAdv: [], gir: "", girAdv: [], 
+    drive: "", driveException: "", drops: 0, dropsAdv: [], sandSave: "", 
+    driveClub: "", appClub: "", appDist: ""
 }));
 
 let masterAnalyticsData = [];
@@ -50,14 +39,7 @@ let selectedTee = null;
 let activeModalRoundId = null;
 let modalCoursePars = Array(18).fill("");
 let modalRoundData = Array.from({length: 18}, () => ({ 
-    id: null, 
-    score: "", 
-    putts: "", 
-    fir: "", 
-    gir: "", 
-    drive: "", 
-    drops: 0, 
-    sandSave: "" 
+    id: null, score: "", putts: "", fir: "", gir: "", drive: "", drops: 0, sandSave: "" 
 }));
 
 let trendChart = null;
@@ -74,24 +56,13 @@ let roundWeather = { temp: null, wind: null };
 let dismissedWarnings = [];
 let currentStatKey = null;
 let currentStatTitle = null;
-let practiceSessionData = [];
 
 const themes = {
-    dark: { 
-        bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' 
-    },
-    light: { 
-        bg: '#f3f4f6', card: '#ffffff', border: '#d1d5db', accent: '#10b981', hover: '#059669', text: '#111827', muted: '#6b7280', cell: '#f9fafb', cellBorder: '#e5e7eb' 
-    },
-    masters: { 
-        bg: '#022c16', card: '#064e3b', border: '#065f46', accent: '#fde047', hover: '#eab308', text: '#f3f4f6', muted: '#9ca3af', cell: '#022c16', cellBorder: '#065f46' 
-    },
-    midnight: { 
-        bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' 
-    },
-    sunset: { 
-        bg: '#1a0b1c', card: '#2d1b30', border: '#4a2c4f', accent: '#f97316', hover: '#d97706', text: '#fff1f2', muted: '#e1adba', cell: '#1a0b1c', cellBorder: '#4a2c4f' 
-    }
+    dark: { bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' },
+    light: { bg: '#f3f4f6', card: '#ffffff', border: '#d1d5db', accent: '#10b981', hover: '#059669', text: '#111827', muted: '#6b7280', cell: '#f9fafb', cellBorder: '#e5e7eb' },
+    masters: { bg: '#022c16', card: '#064e3b', border: '#065f46', accent: '#fde047', hover: '#eab308', text: '#f3f4f6', muted: '#9ca3af', cell: '#022c16', cellBorder: '#065f46' },
+    midnight: { bg: '#0f172a', card: '#1e293b', border: '#334155', accent: '#38bdf8', hover: '#0ea5e9', text: '#f8fafc', muted: '#94a3b8', cell: '#0f172a', cellBorder: '#334155' },
+    sunset: { bg: '#1a0b1c', card: '#2d1b30', border: '#4a2c4f', accent: '#f97316', hover: '#d97706', text: '#fff1f2', muted: '#e1adba', cell: '#1a0b1c', cellBorder: '#4a2c4f' }
 };
 
 window.applyTheme = function(themeName) {
@@ -112,7 +83,6 @@ window.applyTheme = function(themeName) {
     
     const metaTheme = document.getElementById('meta-theme-color');
     if(metaTheme) metaTheme.setAttribute('content', t.bg);
-    
     localStorage.setItem('golf_theme', themeName);
     
     const selector = document.getElementById('theme-selector');
@@ -127,10 +97,7 @@ window.initializeApp = async function() {
         if (supabaseClient) {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (error) throw error;
-            
-            if (session) { 
-                currentUser = session.user; 
-            }
+            if (session) currentUser = session.user; 
         }
     } catch (error) {
         console.warn("Auth check bypassed/offline:", error.message);
@@ -197,7 +164,6 @@ window.handleAuth = async function(type) {
         } else {
             res = await supabaseClient.auth.signInWithPassword({ email: email, password: passInput });
         }
-        
         if (res.error) throw res.error; 
         
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -214,9 +180,7 @@ window.handleAuth = async function(type) {
         if (errEl) {
             errEl.style.color = "#ef4444"; 
             errEl.innerText = e.message; 
-        } else {
-            alert(e.message);
-        }
+        } else alert(e.message);
     } finally { 
         btn.innerText = originalText; 
         btn.disabled = false; 
@@ -253,20 +217,14 @@ window.logOut = async function() {
     localStorage.removeItem('golf_guest_mode'); 
     localStorage.removeItem('golf_round_state'); 
     localStorage.removeItem('golf_last_hole');
-    if (supabaseClient) {
-        await supabaseClient.auth.signOut(); 
-    }
+    if (supabaseClient) await supabaseClient.auth.signOut(); 
     location.reload(); 
 };
 
 window.openSettings = function() { 
     document.getElementById('password-change-section').style.display = currentUser ? 'block' : 'none'; 
-    
     let harvesterSec = document.getElementById('admin-harvester-section');
-    if(harvesterSec) {
-        harvesterSec.style.display = (currentUser && currentUser.email === 'jordanrohel@yahoo.ca') ? 'block' : 'none';
-    }
-    
+    if(harvesterSec) harvesterSec.style.display = (currentUser && currentUser.email === 'jordanrohel@yahoo.ca') ? 'block' : 'none';
     document.getElementById('settings-overlay').style.display = 'flex'; 
 };
 
@@ -284,34 +242,21 @@ window.continueAsGuest = function() {
 };
 
 window.switchView = function(viewId, btn) { 
-    document.querySelectorAll('.view-container').forEach(el => {
-        el.classList.remove('active');
-    }); 
-    
-    document.querySelectorAll('.nav-btn').forEach(el => {
-        el.classList.remove('active');
-    }); 
-    
-    document.querySelectorAll('.bottom-nav button').forEach(el => {
-        el.classList.remove('active');
-    });
+    document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active')); 
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); 
+    document.querySelectorAll('.bottom-nav button').forEach(el => el.classList.remove('active'));
     
     document.getElementById(viewId).classList.add('active'); 
     if(btn) btn.classList.add('active'); 
     
     if(viewId === 'view-history') window.fetchHistory(); 
     if(viewId === 'view-analytics') window.loadAnalyticsData(); 
+    if(viewId === 'view-range') window.renderClubDistancesUI();
 };
 
 window.switchAnalyticsTab = function(tab, btn) { 
-    document.querySelectorAll('#view-analytics > .card > div[id^="analytics-tab-"]').forEach(el => {
-        el.style.display = 'none';
-    }); 
-    
-    document.querySelectorAll('.analytics-tabs button').forEach(el => {
-        el.classList.remove('active');
-    }); 
-    
+    document.querySelectorAll('#view-analytics > .card > div[id^="analytics-tab-"]').forEach(el => el.style.display = 'none'); 
+    document.querySelectorAll('.analytics-tabs button').forEach(el => el.classList.remove('active')); 
     document.getElementById('analytics-tab-' + tab).style.display = 'block'; 
     btn.classList.add('active'); 
 };
@@ -363,61 +308,73 @@ window.checkHarvesterStatus = async function() {
     }
 };
 
-window.togglePracticeMode = function() {
-    const val = document.getElementById('practice-type-select').value;
-    document.querySelectorAll('.sim-metric').forEach(d => {
-        d.style.display = val === 'SIM' ? 'block' : 'none';
-    });
-};
-
-window.logPracticeShot = function() {
-    const club = document.getElementById('range-club').value; 
-    const dist = parseInt(document.getElementById('range-dist').value);
-    const strike = document.getElementById('range-strike').value; 
-    const shape = document.getElementById('range-shape').value;
+// --- NEW STATIC CLUB DISTANCES ENGINE ---
+window.renderClubDistancesUI = function() {
+    let bag = window.getMyBag();
+    let savedDistancesStr = localStorage.getItem('golf_club_distances');
+    let savedDistances = savedDistancesStr ? JSON.parse(savedDistancesStr) : {};
     
-    if(isNaN(dist) || dist <= 0) return alert("Enter accurate target numerical metrics.");
-    
-    practiceSessionData.push({ club: club, dist: dist, strike: strike, shape: shape });
-    
-    document.getElementById('range-dist').value = ""; 
-    document.getElementById('sim-ball-speed').value = ""; 
-    document.getElementById('sim-spin').value = "";
-    
-    window.updatePracticeTable();
-};
-
-window.updatePracticeTable = function() {
-    const tbody = document.getElementById('practice-session-body');
-    if(practiceSessionData.length === 0) { 
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 15px;">No shots logged this session.</td></tr>'; 
-        return; 
-    }
-    
-    let grouped = {};
-    practiceSessionData.forEach(s => { 
-        if(!grouped[s.club]) grouped[s.club] = { tot: 0, cnt: 0, shapes: {} }; 
-        grouped[s.club].tot += s.dist; 
-        grouped[s.club].cnt++; 
-        grouped[s.club].shapes[s.shape] = (grouped[s.club].shapes[s.shape] || 0) + 1;
-    });
+    let listContainer = document.getElementById('club-distances-list');
+    if (!listContainer) return;
     
     let html = "";
-    Object.keys(grouped).sort((a,b) => (grouped[b].tot/grouped[b].cnt) - (grouped[a].tot/grouped[a].cnt)).forEach(c => {
-        let avg = Math.round(grouped[c].tot / grouped[c].cnt); 
-        let commonShape = Object.keys(grouped[c].shapes).sort((x,y) => grouped[c].shapes[y] - grouped[c].shapes[x])[0];
-        html += `<tr><td>${c}</td><td>${avg}y</td><td>${commonShape}</td><td>${grouped[c].cnt}</td></tr>`;
+    bag.forEach(club => {
+        let val = savedDistances[club] || "";
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--cell-bg); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <span style="font-weight: bold; font-size: 14px;">${club}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" class="club-dist-input" data-club="${club}" value="${val}" placeholder="Yds" style="width: 70px; text-align: right; background: rgba(0,0,0,0.3); border: 1px solid var(--cell-border); padding: 8px; border-radius: 6px; color: var(--text-main); font-weight: bold;">
+                    <span style="font-size: 11px; color: var(--text-muted);">YDS</span>
+                </div>
+            </div>
+        `;
     });
-    tbody.innerHTML = html;
+    
+    listContainer.innerHTML = html;
 };
 
-window.savePracticeSession = function() {
-    if(practiceSessionData.length === 0) return alert("Session log buffer evaluation empty.");
-    alert("Practice telemetry array synchronized to terminal memory stacks."); 
-    practiceSessionData = []; 
-    window.updatePracticeTable();
+window.saveClubDistances = function() {
+    let savedDistancesStr = localStorage.getItem('golf_club_distances');
+    let savedDistances = savedDistancesStr ? JSON.parse(savedDistancesStr) : {};
+    
+    document.querySelectorAll('.club-dist-input').forEach(input => {
+        let club = input.getAttribute('data-club');
+        let dist = parseInt(input.value);
+        if (!isNaN(dist) && dist > 0) {
+            savedDistances[club] = dist;
+        } else {
+            delete savedDistances[club]; // Clear if empty
+        }
+    });
+    
+    localStorage.setItem('golf_club_distances', JSON.stringify(savedDistances));
+    alert("✅ Distances saved. The app will now auto-suggest clubs based on these yardages.");
 };
 
+window.getSmartClubRecommendation = function(targetDistance) {
+    if (!targetDistance || targetDistance <= 0) return "";
+    let bag = window.getMyBag();
+    let savedDistancesStr = localStorage.getItem('golf_club_distances');
+    let clubDistances = savedDistancesStr ? JSON.parse(savedDistancesStr) : {};
+
+    let closestClub = ""; 
+    let minDiff = 999;
+    
+    for (const club of bag) {
+        let avgDist = parseInt(clubDistances[club]);
+        if (!isNaN(avgDist) && avgDist > 0) {
+            let diff = Math.abs(avgDist - targetDistance);
+            if (diff < minDiff) { 
+                minDiff = diff; 
+                closestClub = club; 
+            }
+        }
+    }
+    return closestClub;
+};
+
+// --- WEATHER ENGINE ---
 window.fetchWeatherForCourse = function(courseName) {
     const display = document.getElementById('weather-display'); 
     display.innerText = "🌤️ Locating course for weather...";
@@ -440,13 +397,9 @@ window.fetchWeatherForCourse = function(courseName) {
                 } else {
                     display.innerText = "⚠️ Weather unavailable";
                 }
-            }).catch(() => {
-                display.innerText = "⚠️ Weather unavailable";
-            });
+            }).catch(() => { display.innerText = "⚠️ Weather unavailable"; });
         }
-    }).catch(() => {
-        display.innerText = "⚠️ Weather unavailable";
-    });
+    }).catch(() => { display.innerText = "⚠️ Weather unavailable"; });
 };
 
 window.fetchWeatherByCoords = async function(lat, lon, display, courseName) {
@@ -463,7 +416,6 @@ window.fetchWeatherByCoords = async function(lat, lon, display, courseName) {
             roundWeather.wind = `${data.current_weather.windspeed}km/h ${dir}`;
             
             display.innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
-            document.getElementById('practice-weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
             window.saveLocalState();
         }
     } catch(e) { 
@@ -471,6 +423,7 @@ window.fetchWeatherByCoords = async function(lat, lon, display, courseName) {
     }
 };
 
+// --- STATE MANAGEMENT ---
 window.saveLocalState = function() { 
     const el = document.getElementById('current-course-display'); 
     if (!el) return; 
@@ -512,7 +465,6 @@ window.loadLocalState = function() {
             
             if(roundWeather.temp) {
                 document.getElementById('weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`; 
-                document.getElementById('practice-weather-display').innerText = `⛅ ${roundWeather.temp} | 💨 ${roundWeather.wind}`;
             }
             
             let btn18 = document.getElementById('btn-18-holes');
@@ -550,7 +502,6 @@ window.loadLocalState = function() {
         } 
     } 
 };
-
 window.processOfflineQueue = async function() {
     if (!supabaseClient) return;
     const queueStr = localStorage.getItem('golf_offline_queue');
@@ -599,7 +550,6 @@ if (searchInputEl) {
         searchTimeout = setTimeout(async () => { 
             if (!supabaseClient) return;
             try { 
-                // Using just the first 4 characters to guarantee Supabase returns data
                 const broadSearch = query.substring(0, 4);
                 const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${broadSearch}%`).limit(1000); 
                 if(error) throw error;
@@ -615,7 +565,6 @@ if (searchInputEl) {
                 
                 let limitCourses = uniqueCourses.slice(0, 10);
                 if (limitCourses.length > 0) { 
-                    // Changed onclick to onmousedown to prevent the input from losing focus before the click registers
                     dropdown.innerHTML = limitCourses.map(c => `<li onmousedown="window.selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
                     dropdown.classList.add('active'); 
                 } else { 
@@ -636,7 +585,6 @@ if (searchInputEl) {
     });
 }
 
-// Function now reliably catches the selection
 window.selectCourseFromDropdown = function(courseName) {
     const searchInput = document.getElementById('course-search-input');
     if (searchInput) {
@@ -680,53 +628,6 @@ window.populateClubDropdowns = function() {
     }
 };
 
-window.getGlobalClubAverages = function() {
-    let stats = {};
-    masterAnalyticsData.forEach(r => {
-        (r.hole_scores||[]).forEach(h => {
-            if(h.drive_club && h.drive_distance > 0 && !h.drive_exception) { 
-                if(!stats[h.drive_club]) stats[h.drive_club] = {tot:0, cnt:0}; 
-                stats[h.drive_club].tot += h.drive_distance; 
-                stats[h.drive_club].cnt++; 
-            }
-            if(h.approach_club && h.approach_yd > 0) { 
-                if(!stats[h.approach_club]) stats[h.approach_club] = {tot:0, cnt:0}; 
-                stats[h.approach_club].tot += h.approach_yd; 
-                stats[h.approach_club].cnt++; 
-            }
-        });
-    });
-    practiceSessionData.forEach(s => {
-        if(!stats[s.club]) stats[s.club] = {tot:0, cnt:0};
-        stats[s.club].tot += s.dist; 
-        stats[s.club].cnt++;
-    });
-    
-    let avgs = {}; 
-    for (let c in stats) {
-        avgs[c] = Math.round(stats[c].tot / stats[c].cnt);
-    }
-    return avgs;
-};
-
-window.getSmartClubRecommendation = function(targetDistance) {
-    if (!targetDistance || targetDistance <= 0) return "";
-    let bag = window.getMyBag();
-    let clubAverages = window.getGlobalClubAverages(); 
-    let closestClub = ""; 
-    let minDiff = 999;
-    
-    for (const [club, avgDist] of Object.entries(clubAverages)) {
-        if (bag.includes(club)) {
-            let diff = Math.abs(avgDist - targetDistance);
-            if (diff < minDiff) { 
-                minDiff = diff; 
-                closestClub = club; 
-            }
-        }
-    }
-    return closestClub;
-};
 window.adjustStat = function(field, amount) {
     let el = document.getElementById(`play-${field}`); 
     if(!el) return;
@@ -1188,6 +1089,7 @@ window.updatePlayModeUI = function() {
 
     localStorage.setItem('golf_last_hole', currentPlayHole);
 };
+
 window.saveCourseTemplate = async function() {
     if (!currentUser || currentUser.email !== 'jordanrohel@yahoo.ca') {
         return alert("Unauthorized. Admin access required.");
@@ -1248,6 +1150,7 @@ window.saveCourseTemplate = async function() {
         btn.disabled = false; 
     }
 };
+
 window.fetchCourseDetails = async function() {
     if (!window.checkActiveRoundSafeguard()) return;
     
@@ -1277,7 +1180,6 @@ window.fetchCourseDetails = async function() {
     }
 
     try {
-        // Safe query matching: Get first 4 letters for a broad DB fetch, then strictly filter in memory.
         const broadSearch = query.substring(0, 4);
         let { data: teeData, error } = await supabaseClient.from('course_tees').select('*').ilike('course_name', `%${broadSearch}%`).limit(1000); 
         
@@ -1376,9 +1278,19 @@ window.populateTeeDropdown = function() {
         setupContainer.style.display = 'block';
     }
     
+    let displayTees = availableTees;
+    // Apply Womens Tee filter logic
+    const hideWomens = document.getElementById('hide-womens-tees');
+    if (hideWomens && hideWomens.checked) {
+        displayTees = displayTees.filter(t => {
+            const n = (t.tee_name || "").toUpperCase();
+            return !n.includes("WOMEN") && !n.includes("LADIES") && n !== "RED"; 
+        });
+    }
+
     const colorOrder = { 'Black': 1, 'Blue': 2, 'White': 3, 'Silver': 4, 'Red': 5 };
     
-    availableTees.sort((a, b) => {
+    displayTees.sort((a, b) => {
         let yardA = 0, yardB = 0;
         
         try { 
@@ -1404,12 +1316,25 @@ window.populateTeeDropdown = function() {
         return ca - cb;
     });
     
-    select.innerHTML = '<option value="">-- Select a Tee --</option>' + availableTees.map(t => `<option value="${t.id}">${(t.tee_name || "").trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
+    select.innerHTML = '<option value="">-- Select a Tee --</option>' + displayTees.map(t => `<option value="${t.id}">${(t.tee_name || "").trim()}</option>`).join('') + '<option value="new">+ Add New Tee Manually</option>';
     
     if (typeof window.handleTeeChange === 'function') {
         window.handleTeeChange();
     }
 };
+
+window.toggleWomensTees = function(isChecked) {
+    localStorage.setItem('golf_hide_womens', isChecked ? 'true' : 'false');
+    window.populateTeeDropdown();
+};
+
+// Initialize checkbox state based on local storage
+document.addEventListener('DOMContentLoaded', () => {
+    const hideWomens = document.getElementById('hide-womens-tees');
+    if (hideWomens) {
+        hideWomens.checked = localStorage.getItem('golf_hide_womens') === 'true';
+    }
+});
 
 window.handleTeeChange = function() {
     const select = document.getElementById('tee-select');
@@ -1765,7 +1690,6 @@ window.forceSubmitRound = async function() {
         } 
     }
 };
-
 window.fetchHistory = function() {
     if (!currentUser || !supabaseClient) return;
     
@@ -2633,6 +2557,7 @@ window.updateAnalytics = function() {
         }
     }
 };
+
 window.loadAnalyticsData = async function() {
     if (!currentUser) { 
         let t = document.getElementById('analytics-data-table');
@@ -2844,24 +2769,10 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     }];
     
     const oColors = { 
-        hcp: '#f59e0b', 
-        putts: '#3b82f6', 
-        driveDist: '#8b5cf6', 
-        fir: '#8b5cf6', 
-        gir: '#d946ef', 
-        scram: '#10b981', 
-        sand: '#eab308', 
-        drops: '#ef4444', 
-        p3: '#f43f5e', 
-        p4: '#14b8a6', 
-        p5: '#eab308', 
-        birdies: '#10b981', 
-        pars: '#9ca3af', 
-        bogeys: '#ef4444', 
-        tpAvoid: '#2dd4bf', 
-        acc: '#a855f7', 
-        f9: '#facc15', 
-        b9: '#fb923c' 
+        hcp: '#f59e0b', putts: '#3b82f6', driveDist: '#8b5cf6', fir: '#8b5cf6', gir: '#d946ef', 
+        scram: '#10b981', sand: '#eab308', drops: '#ef4444', p3: '#f43f5e', p4: '#14b8a6', 
+        p5: '#eab308', birdies: '#10b981', pars: '#9ca3af', bogeys: '#ef4444', tpAvoid: '#2dd4bf', 
+        acc: '#a855f7', f9: '#facc15', b9: '#fb923c' 
     };
 
     if (activeOverlay === 'hcp') {
@@ -2895,52 +2806,31 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             th = filteredHoles;
             
             th.forEach(h => {
-                if (h.hole_number <= 9) {
-                    f9 += h.score; 
-                } else {
-                    b9 += h.score;
-                }
+                if (h.hole_number <= 9) f9 += h.score; 
+                else b9 += h.score;
                 
                 if (h.putts !== null && h.putts > 0) { 
                     p += h.putts; 
                     tpA_T++; 
-                    if (h.putts < 3) {
-                        tpA_H++; 
-                    }
+                    if (h.putts < 3) tpA_H++; 
                 }
                 
-                if (h.drops) {
-                    dr += h.drops; 
-                }
+                if (h.drops) dr += h.drops; 
                 
-                if (h.fir === 'hit' || h.fir === 'drv grn') { 
-                    fT++; 
-                    fH++; 
-                } else if (h.fir === 'miss') { 
-                    fT++; 
-                }
+                if (h.fir === 'hit' || h.fir === 'drv grn') { fT++; fH++; } 
+                else if (h.fir === 'miss') fT++; 
                 
-                if (h.gir === 'hit' || h.gir === 'under') { 
-                    gT++; 
-                    gH++; 
-                } else if (h.gir === 'miss') { 
-                    gT++; 
-                }
+                if (h.gir === 'hit' || h.gir === 'under') { gT++; gH++; } 
+                else if (h.gir === 'miss') gT++; 
                 
-                if (h.sand_save === 'yes' || h.sand_save === '1') { 
-                    ssT++; 
-                    ssH++; 
-                } else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') { 
-                    ssT++; 
-                }
+                if (h.sand_save === 'yes' || h.sand_save === '1') { ssT++; ssH++; } 
+                else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') ssT++; 
                 
                 if (h.score && h.par) { 
                     let d = h.score - h.par; 
-                    
                     if (h.par === 3) { p3 += d; p3c++; } 
                     if (h.par === 4) { p4 += d; p4c++; } 
                     if (h.par === 5) { p5 += d; p5c++; } 
-                    
                     if (d === -1) brd++; 
                     if (d === 0) pr++; 
                     if (d === 1) bog++; 
@@ -3119,19 +3009,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         let fH = 0, fT = 0, gH = 0, gT = 0; 
         
         (r.hole_scores || []).forEach(h => { 
-            if (h.fir === 'hit' || h.fir === 'drv grn') { 
-                fT++; 
-                fH++; 
-            } else if (h.fir === 'miss') { 
-                fT++; 
-            } 
+            if (h.fir === 'hit' || h.fir === 'drv grn') { fT++; fH++; } 
+            else if (h.fir === 'miss') { fT++; } 
             
-            if (h.gir === 'hit' || h.gir === 'under') { 
-                gT++; 
-                gH++; 
-            } else if (h.gir === 'miss') { 
-                gT++; 
-            } 
+            if (h.gir === 'hit' || h.gir === 'under') { gT++; gH++; } 
+            else if (h.gir === 'miss') { gT++; } 
         });
         
         accLabels.push(new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'})); 
@@ -3206,14 +3088,6 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
             } 
         }); 
     }); 
-    
-    practiceSessionData.forEach(s => { 
-        if (!clubStats[s.club]) {
-            clubStats[s.club] = {tot:0, cnt:0}; 
-        }
-        clubStats[s.club].tot += s.dist; 
-        clubStats[s.club].cnt++; 
-    });
     
     let cLabels = Object.keys(clubStats).sort((a,b) => (clubStats[b].tot/clubStats[b].cnt) - (clubStats[a].tot/clubStats[a].cnt)); 
     let cData = cLabels.map(c => Math.round(clubStats[c].tot/clubStats[c].cnt));
