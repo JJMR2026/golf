@@ -2,10 +2,13 @@ import os
 import requests
 import time
 from supabase import create_client, Client
-from dotenv import load_dotenv
 
-# Load variables from .env file (for Supabase credentials)
-load_dotenv()
+# Try to load .env for local testing, but silently pass in GitHub Actions
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # --- 1. SUPABASE CONNECTION ---
 url: str = os.environ.get("SUPABASE_URL")
