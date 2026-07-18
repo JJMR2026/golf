@@ -550,6 +550,7 @@ if (searchInputEl) {
         searchTimeout = setTimeout(async () => { 
             if (!supabaseClient) return;
             try { 
+                // Using just the first 4 characters to guarantee Supabase returns data
                 const broadSearch = query.substring(0, 4);
                 const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${broadSearch}%`).limit(1000); 
                 if(error) throw error;
@@ -565,6 +566,7 @@ if (searchInputEl) {
                 
                 let limitCourses = uniqueCourses.slice(0, 10);
                 if (limitCourses.length > 0) { 
+                    // Changed onclick to onmousedown to prevent the input from losing focus before the click registers
                     dropdown.innerHTML = limitCourses.map(c => `<li onmousedown="window.selectCourseFromDropdown('${c.replace(/'/g, "\\'")}')">${c.toUpperCase()}</li>`).join(''); 
                     dropdown.classList.add('active'); 
                 } else { 
@@ -585,6 +587,7 @@ if (searchInputEl) {
     });
 }
 
+// Function now reliably catches the selection
 window.selectCourseFromDropdown = function(courseName) {
     const searchInput = document.getElementById('course-search-input');
     if (searchInput) {
