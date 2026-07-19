@@ -2634,6 +2634,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     if (penaltyPieChartObj) penaltyPieChartObj.destroy(); 
     if (accuracyChart) accuracyChart.destroy(); 
     if (parScoringChart) parScoringChart.destroy();
+    if (window.droppedShotsPieChartObj) window.droppedShotsPieChartObj.destroy();
     
     if (filteredRounds.length === 0) return;
     
@@ -2834,19 +2835,23 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     } catch(e){}
 
     // Pie Chart Subtext Calculation
-    let subtext1 = document.getElementById('scoring-pie-subtext');
-    if (subtext1) {
-        let maxPar = Object.keys(bogDblHoles).reduce((a, b) => bogDblHoles[a] > bogDblHoles[b] ? a : b);
-        if (bogDblHoles[maxPar] > 0) subtext1.innerText = `Most dropped shots happen on Par ${maxPar}s.`;
-        else subtext1.innerText = "";
-    }
-
-    let penTypes = {'Water': dW, 'OB': dOB, 'Lost': dL, 'Unplayable': dU};
-    let subtext2 = document.getElementById('penalty-pie-subtext');
-    if (subtext2) {
-        let maxPen = Object.keys(penTypes).reduce((a,b) => penTypes[a] > penTypes[b] ? a : b);
-        if (penTypes[maxPen] > 0) subtext2.innerText = `Highest Penalty Cause: ${maxPen} (${penTypes[maxPen]} total)`;
-        else subtext2.innerText = "No penalty trends recorded.";
+ let dsCtx = document.getElementById('droppedShotsPieChart');
+    if (dsCtx && typeof Chart !== 'undefined') {
+        window.droppedShotsPieChartObj = new Chart(dsCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Par 3s', 'Par 4s', 'Par 5s'],
+                datasets: [{
+                    data: [bogDblHoles[3], bogDblHoles[4], bogDblHoles[5]],
+                    backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } 
+            }
+        });
     }
 
     try { 
