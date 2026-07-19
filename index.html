@@ -471,35 +471,24 @@
             </div>
 
             <!-- TAB 2: CHARTS -->
+<!-- TAB 2: CHARTS -->
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
                     
+                    <!-- NEW MULTI-METRIC SLICER -->
                     <div class="chart-container" style="grid-column: 1 / -1;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
-                            <div style="font-size:12px; font-weight:bold; color:var(--text-muted);">SCORING TREND OVERLAY</div>
-                            <div>
-                                <select id="primary-chart-metric" onchange="updateAnalytics()" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-main); font-size: 12px; padding: 4px 8px; border-radius: 4px; outline: none;">
-                                    <option value="none">-- Select Overlay --</option>
-                                    <option value="hcp" selected>Handicap Index</option>
-                                    <option value="putts">Total Putts</option>
-                                    <option value="tpAvoid">3-Putt Avoidance %</option>
-                                    <option value="driveDist">Avg Drive Distance</option>
-                                    <option value="fir">FIR %</option>
-                                    <option value="gir">GIR %</option>
-                                    <option value="acc">Total Accuracy (FIR+GIR)</option>
-                                    <option value="scram">Scrambling %</option>
-                                    <option value="sand">Bunker Save %</option>
-                                    <option value="drops">Penalty Drops</option>
-                                    <option value="birdies">Birdies</option>
-                                    <option value="pars">Pars</option>
-                                    <option value="bogeys">Bogeys</option>
-                                    <option value="p3">Par 3 Avg</option>
-                                    <option value="p4">Par 4 Avg</option>
-                                    <option value="p5">Par 5 Avg</option>
-                                    <option value="f9">Front 9 Score</option>
-                                    <option value="b9">Back 9 Score</option>
-                                </select>
-                            </div>
+                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">SCORING TREND OVERLAY</div>
+                        <div id="chart-slicer" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 15px;">
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="hcp" onchange="updateAnalytics()" checked> HCP Index</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="putts" onchange="updateAnalytics()"> Putts</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="fir" onchange="updateAnalytics()"> FIR %</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="gir" onchange="updateAnalytics()"> GIR %</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="acc" onchange="updateAnalytics()"> Total Acc</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="scram" onchange="updateAnalytics()"> Scrambling</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="sand" onchange="updateAnalytics()"> Sand Save</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="birdies" onchange="updateAnalytics()"> Birdies</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="pars" onchange="updateAnalytics()"> Pars</label>
+                            <label class="metric-pill"><input type="checkbox" class="trend-metric-cb" value="drops" onchange="updateAnalytics()"> Penalties</label>
                         </div>
                         <div style="position: relative; height: 230px;"><canvas id="scoringTrendChart"></canvas></div>
                     </div>
@@ -507,11 +496,13 @@
                     <div class="chart-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; width:100%; text-align:left;">SCORING PERCENTAGES</div>
                         <div style="position: relative; height: 180px; width:220px;"><canvas id="scoringPieChart"></canvas></div>
+                        <div id="scoring-pie-subtext" style="font-size: 11px; color: var(--accent-green); margin-top: 15px; font-weight: bold;"></div>
                     </div>
                     
                     <div class="chart-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; width:100%; text-align:left;">PENALTY BREAKDOWN</div>
                         <div style="position: relative; height: 180px; width:180px;"><canvas id="penaltyPieChart"></canvas></div>
+                        <div id="penalty-pie-subtext" style="font-size: 11px; color: #ef4444; margin-top: 15px; font-weight: bold;"></div>
                     </div>
 
                     <div class="chart-container" style="grid-column: 1 / -1;">
@@ -523,17 +514,6 @@
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">PAR SCORING AVERAGES</div>
                         <div style="position: relative; height: 180px;"><canvas id="parScoringChart"></canvas></div>
                     </div>
-                    
-                    <div class="chart-container">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">CLIMATE IMPACT</div>
-                        <div style="position: relative; height: 180px;"><canvas id="weatherScoreChart"></canvas></div>
-                    </div>
-
-                    <div class="chart-container" style="grid-column: 1 / -1; display:flex; flex-direction:column; padding-bottom: 10px;">
-                        <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">AVERAGE BAG DISTANCES (YARDS)</div>
-                        <div style="flex:1; position:relative; min-height:180px;"><canvas id="clubChart"></canvas></div>
-                    </div>
-
                 </div>
             </div>
 
