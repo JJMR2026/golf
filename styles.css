@@ -180,27 +180,16 @@ details.year-folder summary::-webkit-details-marker { display: none; }
 .insight-btn { display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-main); transition: 0.2s; text-align: left; line-height: 1.5; }
 .insight-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--accent-green); }
 
-.analytics-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; overflow-x: auto; }
-.analytics-tabs button { flex: 1; min-width: 100px; padding: 10px; background: transparent; border: none; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.2s; }
+.analytics-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; overflow-x: auto; }
+.analytics-tabs button { flex: 1; max-width: 120px; padding: 10px; background: transparent; border: none; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.2s; text-align: center; }
 .analytics-tabs button.active { background: var(--accent-green); color: #000; }
-.analytics-tabs {
-    display: flex;
-    justify-content: center; /* Centers the tabs perfectly */
-    gap: 10px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-}
-.analytics-tabs button {
-    flex: 1;
-    max-width: 120px; /* Keeps them crisp and uniform */
-    text-align: center;
-}
+
 .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 500px; text-align: center; margin: auto; position: relative;}
 .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
 .login-option { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
 .login-option h4 { margin: 0 0 10px 0; color: var(--accent-green); font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
 .login-option p { margin: 0 0 8px 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
 .bag-pill {
     display: inline-block;
     padding: 8px 16px;
@@ -220,6 +209,31 @@ details.year-folder summary::-webkit-details-marker { display: none; }
 .bag-pill input {
     display: none; 
 }
+
+/* NEW: Multi-Metric Slicer Pills */
+.metric-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.metric-pill:has(input:checked) {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+.metric-pill input {
+    display: none; 
+}
+
 /* Hide native HTML number input spin buttons on WebKit browsers (Chrome, Safari, Edge, Opera) */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
