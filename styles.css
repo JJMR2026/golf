@@ -183,7 +183,19 @@ details.year-folder summary::-webkit-details-marker { display: none; }
 .analytics-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; overflow-x: auto; }
 .analytics-tabs button { flex: 1; min-width: 100px; padding: 10px; background: transparent; border: none; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.2s; }
 .analytics-tabs button.active { background: var(--accent-green); color: #000; }
-
+.analytics-tabs {
+    display: flex;
+    justify-content: center; /* Centers the tabs perfectly */
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+.analytics-tabs button {
+    flex: 1;
+    max-width: 120px; /* Keeps them crisp and uniform */
+    text-align: center;
+}
 .auth-card { background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color); width: 100%; max-width: 500px; text-align: center; margin: auto; position: relative;}
 .auth-card input { width: 100%; margin-bottom: 15px; box-sizing: border-box; }
 .login-option { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: left; }
