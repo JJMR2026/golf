@@ -3062,7 +3062,13 @@ window.refreshModalGraph = function() {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } } 
     });
 };
-
+window.discardRound = function() {
+    if (confirm("Are you sure you want to discard this round? All unsaved progress will be lost.")) {
+        localStorage.removeItem('golf_round_state');
+        localStorage.removeItem('golf_last_hole');
+        location.reload(); // Instantly refreshes back to the blank Search Course screen
+    }
+};
 document.addEventListener('DOMContentLoaded', function() {
     window.initializeApp();
 });
