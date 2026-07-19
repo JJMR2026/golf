@@ -1522,7 +1522,6 @@ window.toggleGridHit = function(index, type) {
     }
     window.saveLocalState(); 
 };
-
 window.attemptSubmitRound = function() {
     let endIndex = currentHoleOffset + currentHoleCount; 
     let missingHoles = [];
@@ -1674,6 +1673,7 @@ window.forceSubmitRound = async function() {
         } 
     }
 };
+
 window.fetchHistory = function() {
     if (!currentUser || !supabaseClient) return;
     
@@ -2013,7 +2013,6 @@ window.getRelativeParString = function(score, par) {
 };
 
 window.calculateHandicap = function(allRounds) {
-    // Explicitly ignore Simulator, Range, AND Short Course / Executive rounds
     let validRounds = allRounds.filter(r => 
         !(r.tee_name && r.tee_name.includes('[SIM]')) && 
         !(r.tee_name && r.tee_name.includes('[RANGE]')) &&
@@ -2033,17 +2032,13 @@ window.calculateHandicap = function(allRounds) {
         let srToUse = r.slope_rating;
 
         if (crToUse && srToUse) {
-            // Dynamic scaling: Prevent 9-hole rating math crashes
             if (is9HoleRound && crToUse > 50) {
-                // You played 9 holes, but the rating is for 18. Double your score to match.
                 scoreToUse = r.total_score * 2;
             } else if (!is9HoleRound && crToUse < 50) {
-                // You played 18 holes, but the rating is for a 9-hole course. Double the rating.
                 crToUse = crToUse * 2;
             }
             return ((scoreToUse - crToUse) * 113 / srToUse);
         } else {
-            // Fallback math for legacy rounds without rating/slope stored
             let parSum = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : (is9HoleRound ? 36 : 72);
             return (scoreToUse - parSum) * 0.96;
         }
@@ -2187,102 +2182,107 @@ window.generateInsights = function(fRounds) {
     if (fRounds.length === 0) return "Gathering data...";
     
     let insights = [];
-    let recentRounds = fRounds.slice(0, 5);
     
     const agg = (arr) => {
-        let stats = { p3:0, p3c:0, p4:0, p4c:0, p5:0, p5c:0, putts:0, hp:0, f9s:0, f9p:0, b9s:0, b9p:0, sOpp:0, sHit:0, wind:[], temp:[], sc:[] };
+        let stats = { 
+            p3:0, p3c:0, p4:0, p4c:0, p5:0, p5c:0, 
+            putts:0, hp:0, 
+            girT:0, girH:0, firT:0, firH:0, 
+            scramT:0, scramH:0, 
+            sandT:0, sandH:0,
+            missL:0, missR:0, missS:0,
+            f9s:0, f9p:0, b9s:0, b9p:0 
+        };
         
         arr.forEach(r => {
-            if (r.weather_temp && r.weather_wind && r.total_score > 0) {
-                let t = parseInt(String(r.weather_temp).replace('°C', '')); 
-                let w = parseInt(String(r.weather_wind).replace('km/h', '')); 
-                let par = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : 72;
-                
-                if (!isNaN(t) && !isNaN(w)) { 
-                    stats.temp.push(t); 
-                    stats.wind.push(w); 
-                    stats.sc.push(r.total_score - par); 
-                }
-            }
-            
             if (!r.hole_scores) return;
-            
             r.hole_scores.forEach(h => {
                 if (h.score && h.par) { 
                     let d = h.score - h.par; 
-                    
                     if (h.par === 3) { stats.p3 += d; stats.p3c++; } 
                     if (h.par === 4) { stats.p4 += d; stats.p4c++; } 
                     if (h.par === 5) { stats.p5 += d; stats.p5c++; } 
-                    
-                    if (h.hole_number <= 9) { 
-                        stats.f9s += h.score; 
-                        stats.f9p += h.par; 
-                    } else { 
-                        stats.b9s += h.score; 
-                        stats.b9p += h.par; 
-                    }
+                    if (h.hole_number <= 9) { stats.f9s += h.score; stats.f9p += h.par; } 
+                    else { stats.b9s += h.score; stats.b9p += h.par; }
                 }
+                if (h.putts !== null && h.putts > 0) { stats.putts += h.putts; stats.hp++; }
                 
-                if (h.putts !== null && h.putts > 0) { 
-                    stats.putts += h.putts; 
-                    stats.hp++; 
+                if (h.gir === 'hit' || h.gir === 'under') stats.girH++;
+                if (h.gir === 'hit' || h.gir === 'miss' || h.gir === 'under') stats.girT++;
+
+                if (h.fir === 'hit' || h.fir === 'drv grn') stats.firH++;
+                if (h.fir === 'hit' || h.fir === 'miss' || h.fir === 'drv grn') stats.firT++;
+
+                if (h.gir === 'miss') {
+                    stats.scramT++;
+                    if (h.score && h.par && h.score <= h.par) stats.scramH++;
+                    let gA = h.gir_adv || "";
+                    if (gA.includes('LEFT')) stats.missL++;
+                    if (gA.includes('RIGHT')) stats.missR++;
+                    if (gA.includes('SHORT')) stats.missS++;
                 }
-                
-                if (h.gir === 'miss' && h.score && h.par) { 
-                    stats.sOpp++; 
-                    if (h.score <= h.par) {
-                        stats.sHit++; 
-                    }
-                }
+
+                if (h.sand_save === 'yes' || h.sand_save === '1') { stats.sandT++; stats.sandH++; }
+                else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') stats.sandT++;
             }); 
         });
         return stats;
     };
 
     let glob = agg(fRounds);
-    let rec = agg(recentRounds);
 
-    if (glob.hp > 0 && rec.hp > 0 && fRounds.length > 3) { 
-        let gAvg = (glob.putts / glob.hp); 
-        let rAvg = (rec.putts / rec.hp); 
-        let diff = rAvg - gAvg;
-        
-        if (diff > 0.2) {
-            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Putting Slump:</b> You are averaging ${rAvg.toFixed(1)} putts/hole over your last 5 rounds, worse than your overall ${gAvg.toFixed(1)} avg.</div></div>`); 
-        } else if (diff < -0.2) {
-            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Strength')"><span style="font-size:18px;">🟢</span><div><b>Putting Heat:</b> You are averaging ${rAvg.toFixed(1)} putts/hole recently, beating your global ${gAvg.toFixed(1)} avg.</div></div>`); 
-        }
+    if (glob.hp > 0) {
+        let pAvg = (glob.putts / glob.hp);
+        if (pAvg > 2.0) insights.push({ icon: "🔴", title: "Putting Liability", desc: `Averaging ${pAvg.toFixed(2)} putts per hole. You are losing strokes on the green.`, details: "Drill: Ladder Putting & 3-Foot Circle." });
+        else if (pAvg <= 1.7) insights.push({ icon: "🟢", title: "Putting Heat", desc: `Averaging a deadly ${pAvg.toFixed(2)} putts per hole.`, details: "Keep maintaining your current green-reading routine." });
     }
-    
+
+    if (glob.scramT > 0) {
+        let scPct = (glob.scramH / glob.scramT) * 100;
+        if (scPct < 25) insights.push({ icon: "🔴", title: "Short Game Struggles", desc: `Only saving par ${scPct.toFixed(0)}% of the time when missing the green.`, details: "Drill: Chipping up-and-down games." });
+        else if (scPct > 50) insights.push({ icon: "🟢", title: "Scrambling Wizard", desc: `Saving par an elite ${scPct.toFixed(0)}% of the time after a missed GIR.`, details: "Your wedge play is saving your scorecard." });
+    }
+
+    if ((glob.missL + glob.missR + glob.missS) > 10) {
+        let totM = glob.missL + glob.missR + glob.missS;
+        let lPct = (glob.missL / totM) * 100;
+        let rPct = (glob.missR / totM) * 100;
+        let sPct = (glob.missS / totM) * 100;
+        
+        if (lPct > 50) insights.push({ icon: "⚠️", title: "Left Miss Tendency", desc: `${lPct.toFixed(0)}% of your approach misses are going Left.`, details: "Check your clubface alignment and grip strength." });
+        if (rPct > 50) insights.push({ icon: "⚠️", title: "Right Miss Tendency", desc: `${rPct.toFixed(0)}% of your approach misses are going Right.`, details: "Check for an open face at impact or an inside-out path." });
+        if (sPct > 50) insights.push({ icon: "⚠️", title: "Coming Up Short", desc: `${sPct.toFixed(0)}% of your approach misses are Short.`, details: "You are under-clubbing. Start taking one extra club on approaches." });
+    }
+
     let avgs = [];
     if (glob.p3c > 0) avgs.push({type: 'Par 3s', val: glob.p3/glob.p3c}); 
     if (glob.p4c > 0) avgs.push({type: 'Par 4s', val: glob.p4/glob.p4c}); 
     if (glob.p5c > 0) avgs.push({type: 'Par 5s', val: glob.p5/glob.p5c});
-    
     if (avgs.length > 0) { 
         avgs.sort((a,b) => b.val - a.val); 
-        insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Scoring Leak')"><span style="font-size:18px;">🔴</span><div><b>Scoring Leak:</b> Your weakest holes are <b>${avgs[0].type}</b> (+${avgs[0].val.toFixed(1)} to par).</div></div>`); 
+        insights.push({ icon: "📊", title: "Scoring Target", desc: `Your most vulnerable holes are ${avgs[0].type} (+${avgs[0].val.toFixed(1)} to par).`, details: "Focus your course management strategy here." }); 
     }
-    
+
     if (glob.f9p > 0 && glob.b9p > 0) {
         let f9Avg = glob.f9s - glob.f9p; 
         let b9Avg = glob.b9s - glob.b9p;
-        if (b9Avg > f9Avg + 1) {
-            insights.push(`<div class="insight-btn" onclick="window.openInsightDetail('Stamina Fade')"><span style="font-size:18px;">🔴</span><div><b>Stamina Fade:</b> You average +${b9Avg.toFixed(1)} on the Back 9 compared to +${f9Avg.toFixed(1)} on the Front 9.</div></div>`); 
-        }
+        if (b9Avg > f9Avg + 1.5) insights.push({ icon: "🔋", title: "Back 9 Fade", desc: `You average +${b9Avg.toFixed(1)} on the Back 9 vs +${f9Avg.toFixed(1)} on the Front.`, details: "Focus on hydration, nutrition, and mental fatigue during the turn." }); 
     }
 
     if (insights.length === 0) return "Gathering more round data to generate your performance insights..."; 
-    return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">${insights.join('')}</div>`;
+    return `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">` + 
+        insights.map(i => `<div class="insight-btn" onclick="window.openInsightDetail('${i.title}', '${i.details}')"><span style="font-size:18px;">${i.icon}</span><div><b>${i.title}:</b> ${i.desc}</div></div>`).join('') + 
+        `</div>`;
 };
 
-window.openInsightDetail = function(title) {
+window.openInsightDetail = function(title, desc) {
     document.getElementById('insight-detail-title').innerText = title.toUpperCase();
     document.getElementById('insight-modal').style.display = 'flex';
     document.getElementById('insight-detail-content').innerHTML = `
-        <p>This insight was triggered by a deviation in your recent scoring data compared to your historical baseline.</p>
-        <p>In the future, clicking this module will link directly to targeted YouTube drills and practice plans designed specifically to address this metric.</p>
+        <p style="color: var(--text-main); font-size: 14px; margin-bottom: 20px;">${desc}</p>
+        <div style="padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px;">
+            <p style="color: var(--text-muted); font-size: 12px; margin: 0;">🔗 <i>YouTube Drill integration coming in V2.0...</i></p>
+        </div>
     `;
 };
 
@@ -2530,21 +2530,40 @@ window.loadAnalyticsData = async function() {
     const table = document.getElementById('analytics-data-table'); 
     if (table) table.innerHTML = '<tbody><tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">⏳ Crunching...</td></tr></tbody>';
     
-    if (!supabaseClient) {
-        if (table) table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Database Offline. Analytics unavailable.</td></tr></tbody>`;
-        return;
-    }
+    if (!supabaseClient) return;
 
     try {
-        const { data, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
+        const { data: rounds, error } = await supabaseClient.from('logged_rounds').select('*, hole_scores(*)').eq('user_id', currentUser.id).order('date_played', { ascending: false });
         if (error) throw error; 
         
-        masterAnalyticsData = data || []; 
+        const { data: tees } = await supabaseClient.from('course_tees').select('course_name, tee_name, course_rating, slope_rating');
+        let teeMap = {};
+        if (tees) {
+            tees.forEach(t => {
+                let c = (t.course_name || "").trim().toLowerCase();
+                let tn = (t.tee_name || "").trim().toLowerCase();
+                teeMap[c + '|' + tn] = { cr: t.course_rating, sr: t.slope_rating };
+            });
+        }
+
+        rounds.forEach(r => {
+            if (!r.course_rating || !r.slope_rating) {
+                let c = (r.course_name || "").trim().toLowerCase();
+                let tn = (r.tee_name || "").replace(' [Regular]', '').replace(' [SIM]', '').replace(' [RANGE]', '').trim().toLowerCase();
+                let match = teeMap[c + '|' + tn];
+                if (match && match.cr && match.sr) {
+                    r.course_rating = match.cr;
+                    r.slope_rating = match.sr;
+                }
+            }
+        });
+        
+        masterAnalyticsData = rounds || []; 
         window.populateFilters(); 
         window.forceSyncFilters(); 
         window.updateAnalytics(); 
     } catch(err) { 
-        if (table) table.innerHTML = `<tbody><tr><td colspan="4" style="text-align:center;color:#ef4444; padding: 20px;">❌ Dev Error: ${err.message}</td></tr></tbody>`; 
+        console.error(err);
     }
 };
 
@@ -2625,130 +2644,67 @@ window.forceSyncFilters = function() {
 window.renderCharts = function(filteredRounds, actHoles, actPars) {
     const tCtx = document.getElementById('scoringTrendChart'); 
     const pC = document.getElementById('scoringPieChart'); 
+    const dsCtx = document.getElementById('droppedShotsPieChart'); 
     const pCtx = document.getElementById('penaltyPieChart'); 
     const aCtx = document.getElementById('accuracyChart'); 
     const psCtx = document.getElementById('parScoringChart');
     
     if (trendChart) trendChart.destroy(); 
     if (scorePieChart) scorePieChart.destroy(); 
+    if (window.droppedShotsPieChartObj) window.droppedShotsPieChartObj.destroy();
     if (penaltyPieChartObj) penaltyPieChartObj.destroy(); 
     if (accuracyChart) accuracyChart.destroy(); 
     if (parScoringChart) parScoringChart.destroy();
-    if (window.droppedShotsPieChartObj) window.droppedShotsPieChartObj.destroy();
     
     if (filteredRounds.length === 0) return;
     
     const chartData = [...filteredRounds].reverse(); 
     
-    // NEW: Find all active trend metric pills
     let activeMetrics = [];
-    document.querySelectorAll('.trend-metric-cb:checked').forEach(cb => {
-        activeMetrics.push(cb.value);
-    });
+    document.querySelectorAll('.trend-metric-cb:checked').forEach(cb => { activeMetrics.push(cb.value); });
     
     let baseScores = [];
-    let metricData = {
-        hcp: [], putts: [], fir: [], gir: [], acc: [], scram: [], sand: [],
-        birdies: [], pars: [], bogeys: [], drops: []
-    };
+    let metricData = { hcp: [], putts: [], fir: [], gir: [], acc: [], scram: [], sand: [], birdies: [], pars: [], bogeys: [], drops: [] };
     
     let hcpHist = window.calculateHcpHistory(filteredRounds); 
     metricData.hcp = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
 
     let tpBrd = 0, tpPar = 0, tpBog = 0, tpDbl = 0;
-    let bogDblHoles = {3:0, 4:0, 5:0}; // Tracks where bogeys happen most
-    let dW = 0, dOB = 0, dL = 0, dU = 0; // Tracks penalty types
-    
-    let fL = 0, fR = 0, fS = 0, fTotMiss = 0; 
-    let gL = 0, gR = 0, gS = 0, gLg = 0, gTotMiss = 0;
-    
+    let bogDblHoles = {3:0, 4:0, 5:0}; 
+    let dW = 0, dOB = 0, dL = 0, dU = 0; 
     let accLabels = [], firData = [], girData = [];
     let p3T = 0, p3C = 0, p4T = 0, p4C = 0, p5T = 0, p5C = 0;
 
     chartData.forEach(r => { 
         let targetHoles = r.hole_scores || []; 
-        let filteredHoles = [];
-        
-        targetHoles.forEach(h => { 
-            if (actHoles.includes(h.hole_number.toString()) && actPars.includes(h.par.toString())) { 
-                filteredHoles.push(h); 
-            } 
-        });
-        
-        targetHoles = filteredHoles;
         let rs = 0; 
         
-        if (targetHoles.length === 0 && (!r.hole_scores || r.hole_scores.length === 0)) { 
-            rs = r.total_score; 
-        } else { 
-            targetHoles.forEach(h => { rs += (h.score || 0); }); 
-        }
+        targetHoles.forEach(h => { rs += (h.score || 0); }); 
         baseScores.push(rs); 
         
-        // Populate metric arrays for the trend slicer
-        let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, tpA_H=0, tpA_T=0, ts=0, th=0;
+        let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, ts=0, th=0;
         
         targetHoles.forEach(h => {
-            if (h.putts !== null && h.putts > 0) { 
-                p += h.putts; 
-                tpA_T++; 
-                if (h.putts < 3) tpA_H++; 
-            }
+            if (h.putts !== null && h.putts > 0) { p += h.putts; }
             if (h.drops) dr += h.drops; 
+            if (h.fir === 'hit' || h.fir === 'drv grn') { fT++; fH++; } else if (h.fir === 'miss') fT++; 
+            if (h.gir === 'hit' || h.gir === 'under') { gT++; gH++; } else if (h.gir === 'miss') gT++; 
             
-            if (h.fir === 'hit' || h.fir === 'drv grn') { fT++; fH++; } 
-            else if (h.fir === 'miss') fT++; 
-            
-            if (h.gir === 'hit' || h.gir === 'under') { gT++; gH++; } 
-            else if (h.gir === 'miss') gT++; 
-            
-            if (h.gir === 'miss') {
-                ts++; 
-                if (h.score <= h.par) th++;
-            }
-            
-            if (h.sand_save === 'yes' || h.sand_save === '1') { ssT++; ssH++; } 
-            else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') ssT++; 
+            if (h.gir === 'miss') { ts++; if (h.score <= h.par) th++; }
+            if (h.sand_save === 'yes' || h.sand_save === '1') { ssT++; ssH++; } else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') ssT++; 
             
             if (h.score && h.par) { 
                 let d = h.score - h.par; 
                 if (d === -1) { brd++; tpBrd++; }
                 else if (d === 0) { pr++; tpPar++; }
                 else if (d === 1) { bog++; tpBog++; }
-                else if (d >= 2) { bog++; tpDbl++; } // Graph bogeys as all dropped shots
+                else if (d >= 2) { bog++; tpDbl++; } 
                 
-                if (d >= 1 && h.par >= 3 && h.par <= 5) {
-                    bogDblHoles[h.par]++;
-                }
-                
+                if (d >= 1 && h.par >= 3 && h.par <= 5) { bogDblHoles[h.par]++; }
                 if (h.par === 3) { p3T += h.score; p3C++; } 
                 if (h.par === 4) { p4T += h.score; p4C++; } 
                 if (h.par === 5) { p5T += h.score; p5C++; } 
             }
-            
-            let fA = h.fir_adv || ""; 
-            let gA = h.gir_adv || ""; 
-            let dA = h.drops_adv || ""; 
-            
-            if (h.fir === 'miss') { 
-                fTotMiss++; 
-                if (fA.includes('LEFT')) fL++; 
-                if (fA.includes('RIGHT')) fR++; 
-                if (fA.includes('SHORT')) fS++; 
-            } 
-            if (h.gir === 'miss') { 
-                gTotMiss++; 
-                if (gA.includes('LEFT')) gL++; 
-                if (gA.includes('RIGHT')) gR++; 
-                if (gA.includes('SHORT')) gS++; 
-                if (gA.includes('LONG')) gLg++; 
-            } 
-            if (h.drops && h.drops > 0) { 
-                if (dA.includes('WATER')) dW++; 
-                if (dA.includes('OB')) dOB++; 
-                if (dA.includes('LOST')) dL++; 
-                if (dA.includes('UNPLAYABLE')) dU++; 
-            } 
         });
         
         metricData.putts.push(p); 
@@ -2767,203 +2723,60 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         girData.push(gT > 0 ? Math.round((gH/gT)*100) : null);
     });
     
-    let trendDatasets = [{ 
-        label: actHoles.length < 18 ? 'Filtered Holes Score' : 'Total Score', 
-        data: baseScores, 
-        borderColor: '#10b981', 
-        backgroundColor: 'rgba(16, 185, 129, 0.1)', 
-        borderWidth: 2, 
-        pointBackgroundColor: '#121212', 
-        pointBorderColor: '#10b981', 
-        fill: true, 
-        yAxisID: 'y', 
-        tension: 0.3 
-    }];
-    
+    let trendDatasets = [{ label: 'Total Score', data: baseScores, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, pointBackgroundColor: '#121212', fill: true, yAxisID: 'y', tension: 0.3 }];
     const oColors = { hcp:'#f59e0b', putts:'#3b82f6', fir:'#8b5cf6', gir:'#d946ef', acc:'#a855f7', scram:'#10b981', sand:'#eab308', birdies:'#10b981', pars:'#9ca3af', bogeys:'#ef4444', drops:'#ef4444' };
     const oLabels = { hcp:'HCP', putts:'Putts', fir:'FIR %', gir:'GIR %', acc:'Total Acc', scram:'Scrambling', sand:'Sand Save', birdies:'Birdies', pars:'Pars', bogeys:'Bogeys+', drops:'Penalties' };
 
     activeMetrics.forEach(m => {
-        trendDatasets.push({ 
-            label: oLabels[m], 
-            data: metricData[m], 
-            borderColor: oColors[m], 
-            backgroundColor: 'transparent', 
-            borderWidth: 2, 
-            borderDash: [5, 5], 
-            pointBackgroundColor: '#121212', 
-            pointBorderColor: oColors[m], 
-            yAxisID: 'y1', 
-            tension: 0.3 
-        });
+        trendDatasets.push({ label: oLabels[m], data: metricData[m], borderColor: oColors[m], backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], yAxisID: 'y1', tension: 0.3 });
     });
     
-    try { 
-        if (tCtx && typeof Chart !== 'undefined') {
-            trendChart = new Chart(tCtx.getContext('2d'), { 
-                type: 'line', 
-                data: { 
-                    labels: chartData.map(r => new Date(r.date_played).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })), 
-                    datasets: trendDatasets 
-                }, 
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        tooltip: { 
-                            callbacks: { 
-                                label: function(context) { 
-                                    if (context.dataset.label === 'Trendline') return null; 
-                                    return context.dataset.label + ': ' + context.raw; 
-                                } 
-                            } 
-                        }, 
-                        legend: { 
-                            display: true, 
-                            labels: {color: '#9ca3af', font: {size: 10}} 
-                        }, 
-                        title: { display: false } 
-                    }, 
-                    scales: { 
-                        x: { display: false }, 
-                        y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a2a2a' } }, 
-                        y1: { type: 'linear', display: activeMetrics.length > 0, position: 'right', grid: { drawOnChartArea: false } } 
-                    } 
-                } 
-            }); 
-        }
-    } catch(e){}
+    if (tCtx && typeof Chart !== 'undefined') {
+        trendChart = new Chart(tCtx.getContext('2d'), { 
+            type: 'line', data: { labels: accLabels, datasets: trendDatasets }, 
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { display: activeMetrics.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } 
+        }); 
+    }
 
-    // Pie Chart Subtext Calculation
- let dsCtx = document.getElementById('droppedShotsPieChart');
+    if (pC && typeof Chart !== 'undefined') { 
+        scorePieChart = new Chart(pC.getContext('2d'), { 
+            type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } 
+        }); 
+    } 
+
+    // NEW DROPPED SHOT PIE CHART
     if (dsCtx && typeof Chart !== 'undefined') {
         window.droppedShotsPieChartObj = new Chart(dsCtx.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: ['Par 3s', 'Par 4s', 'Par 5s'],
-                datasets: [{
-                    data: [bogDblHoles[3], bogDblHoles[4], bogDblHoles[5]],
-                    backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'],
-                    borderWidth: 0
-                }]
+                datasets: [{ data: [bogDblHoles[3], bogDblHoles[4], bogDblHoles[5]], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'], borderWidth: 0 }]
             },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } 
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } }
         });
     }
-
-    try { 
-        if (pC && typeof Chart !== 'undefined') { 
-            scorePieChart = new Chart(pC.getContext('2d'), { 
-                type: 'doughnut', 
-                data: { 
-                    labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], 
-                    datasets: [{ 
-                        data: [tpBrd, tpPar, tpBog, tpDbl], 
-                        backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], 
-                        borderWidth: 0 
-                    }] 
-                }, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.raw || 0;
-                                    let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    let percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                                    return `${label}: ${value} (${percentage})`;
-                                }
-                            }
-                        }
-                    } 
-                } 
-            }); 
-        } 
-    } catch(e){}
     
-    try { 
-        if (pCtx && typeof Chart !== 'undefined') { 
-            penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { 
-                type: 'doughnut', 
-                data: { 
-                    labels: ['Water', 'OB', 'Lost', 'Unplayable'], 
-                    datasets: [{ 
-                        data: [dW, dOB, dL, dU], 
-                        backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], 
-                        borderWidth: 0 
-                    }] 
-                }, 
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.raw || 0;
-                                    let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    let percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                                    return `${label}: ${value} (${percentage})`;
-                                }
-                            }
-                        }
-                    } 
-                } 
-            }); 
-        } 
-    } catch(e){}
+    if (pCtx && typeof Chart !== 'undefined') { 
+        penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { 
+            type: 'doughnut', data: { labels: ['Water', 'OB', 'Lost', 'Unplayable'], datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] }, 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } 
+        }); 
+    } 
     
-    try { 
-        if (aCtx && typeof Chart !== 'undefined') { 
-            accuracyChart = new Chart(aCtx.getContext('2d'), { 
-                type: 'line', 
-                data: { 
-                    labels: accLabels, 
-                    datasets: [
-                        { label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, 
-                        { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 }
-                    ] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false } 
-            }); 
-        } 
-    } catch(e){}
+    if (aCtx && typeof Chart !== 'undefined') { 
+        accuracyChart = new Chart(aCtx.getContext('2d'), { 
+            type: 'line', data: { labels: accLabels, datasets: [ { label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 } ] }, 
+            options: { responsive: true, maintainAspectRatio: false } 
+        }); 
+    } 
     
-    try { 
-        if (psCtx && typeof Chart !== 'undefined') { 
-            parScoringChart = new Chart(psCtx.getContext('2d'), { 
-                type: 'bar', 
-                data: { 
-                    labels: ['Par 3', 'Par 4', 'Par 5'], 
-                    datasets: [{ 
-                        label: 'Avg Strokes', 
-                        data: [
-                            p3C > 0 ? (p3T/p3C).toFixed(2) : 0, 
-                            p4C > 0 ? (p4T/p4C).toFixed(2) : 0, 
-                            p5C > 0 ? (p5T/p5C).toFixed(2) : 0
-                        ], 
-                        backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] 
-                    }] 
-                }, 
-                options: { responsive: true, maintainAspectRatio: false } 
-            }); 
-        } 
-    } catch(e){}
-
-    let mpStat = document.getElementById('miss-penalty-stats');
-    if (mpStat) { 
-        mpStat.innerHTML = `
-            <div style="margin-bottom: 10px;"><b>Drive Bias:</b> ${fTotMiss > 0 ? `${Math.round((fL/fTotMiss)*100)}% Left | ${Math.round((fR/fTotMiss)*100)}% Right` : 'No data.'}</div>
-            <div><b>Approach Bias:</b> ${gTotMiss > 0 ? `${Math.round((gS/gTotMiss)*100)}% Short | ${Math.round((gL/gTotMiss)*100)}% Left` : 'No data.'}</div>
-        `; 
-    }
+    if (psCtx && typeof Chart !== 'undefined') { 
+        parScoringChart = new Chart(psCtx.getContext('2d'), { 
+            type: 'bar', data: { labels: ['Par 3', 'Par 4', 'Par 5'], datasets: [{ label: 'Avg Strokes', data: [ p3C > 0 ? (p3T/p3C).toFixed(2) : 0, p4C > 0 ? (p4T/p4C).toFixed(2) : 0, p5C > 0 ? (p5T/p5C).toFixed(2) : 0 ], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'] }] }, 
+            options: { responsive: true, maintainAspectRatio: false } 
+        }); 
+    } 
 };
 
 window.openStatGraph = function(title, statKey) {
@@ -3067,13 +2880,15 @@ window.refreshModalGraph = function() {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } } 
     });
 };
+
 window.discardRound = function() {
     if (confirm("Are you sure you want to discard this round? All unsaved progress will be lost.")) {
         localStorage.removeItem('golf_round_state');
         localStorage.removeItem('golf_last_hole');
-        location.reload(); // Instantly refreshes back to the blank Search Course screen
+        location.reload(); 
     }
 };
+
 document.addEventListener('DOMContentLoaded', function() {
     window.initializeApp();
 });
