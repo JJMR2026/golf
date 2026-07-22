@@ -9,8 +9,9 @@
     <meta name="theme-color" content="#050505" id="meta-theme-color">
     <link rel="manifest" href="manifest.json">
     
-    <link rel="stylesheet" href="styles.css?v=20.0">
+    <link rel="stylesheet" href="styles.css?v=21.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -45,7 +46,7 @@
         
         <div style="text-align: left; margin-bottom: 25px;">
             <label style="font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block;">APP THEME</label>
-            <select id="theme-selector" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
+            <select id="theme-selector" class="settings-select" style="width: 100%; padding: 10px;" onchange="applyTheme(this.value)">
                 <option value="dark">Dark Mode (Default)</option>
                 <option value="sunset">Sunset (Orange/Purple)</option>
                 <option value="ocean">Ocean (Deep Blue)</option>
@@ -130,7 +131,7 @@
             <h2 id="stat-graph-title" style="color: var(--accent-green); margin: 0; font-size: 18px; line-height: 1.4;">STAT TREND</h2>
         </div>
         <div style="margin-bottom: 15px; display:flex; gap:10px;">
-            <select class="filter-select" id="modal-filter-timeframe" onchange="refreshModalGraph()" style="width:auto; padding:8px; font-size:12px;">
+            <select class="filter-select settings-select" id="modal-filter-timeframe" onchange="refreshModalGraph()" style="width:auto; padding:8px; font-size:12px;">
                 <option value="last10" selected>Last 10 Rounds</option>
                 <option value="last20">Last 20 Rounds</option>
                 <option value="season">This Season</option>
@@ -198,7 +199,6 @@
                 Set your stock yardages below. The app will use these to automatically suggest your approach club based on the remaining distance to the green during your round.
             </p>
             
-            <!-- BUG FIX: Removed max-height and overflow-y to prevent internal scroll traps -->
             <div id="club-distances-list" style="display: flex; flex-direction: column; gap: 10px; padding-right: 10px; margin-bottom: 20px;">
                 <!-- Populated dynamically via JS based on selected bag clubs -->
             </div>
@@ -221,11 +221,11 @@
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 150px;">
                         <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Select Tee Box</label>
-                        <select id="tee-select" onchange="handleTeeChange()" style="width: 100%;"></select>
+                        <select id="tee-select" class="settings-select" onchange="handleTeeChange()" style="width: 100%;"></select>
                     </div>
                     <div style="flex: 1; min-width: 150px;">
                         <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase;">Round Type</label>
-                        <select id="round-type-select" style="width: 100%;">
+                        <select id="round-type-select" class="settings-select" style="width: 100%;">
                             <option value="Regular">Regular Round</option>
                             <option value="SIM">Simulator Round</option>
                         </select>
@@ -320,7 +320,7 @@
                             </div>
                             <div style="display:flex; gap:5px; margin-top:5px;">
                                 <input type="number" class="play-sub-select" id="play-drive" placeholder="Yds" onchange="syncPlayToState('drive', this.value)" style="width:60px;">
-                                <select class="play-sub-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)">
+                                <select class="play-sub-select settings-select" id="play-drive-club" onchange="syncPlayToState('driveClub', this.value)">
                                     <option value="">Club...</option>
                                 </select>
                             </div>
@@ -344,7 +344,7 @@
                                 <button type="button" class="adv-btn sub-miss" id="gir-adv-right" onclick="toggleAdv('gir', 'RIGHT')">RIGHT</button>
                             </div>
                             <div style="display:flex; gap:5px; margin-top:5px;">
-                                <select class="play-sub-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
+                                <select class="play-sub-select settings-select" id="play-approach-club" onchange="syncPlayToState('appClub', this.value)">
                                     <option value="">Club...</option>
                                 </select>
                             </div>
@@ -395,7 +395,6 @@
             </div>
             <div class="analytics-tabs" style="margin-bottom: 15px;">
                 <button class="active" onclick="filterHistoryList('REAL', this)">Course</button>
-                <button onclick="filterHistoryList('RANGE', this)">Range</button>
                 <button onclick="filterHistoryList('SIM', this)">Simulator</button>
             </div>
             <div id="history-list"></div>
@@ -409,7 +408,7 @@
                 <summary style="font-size:12px; padding:10px;">⚙️ ADJUST ANALYTICS FILTERS</summary>
                 <div class="folder-content">
                     <div class="filter-row" style="margin-bottom: 0;">
-                        <select class="filter-select" id="filter-timeframe" onchange="updateAnalytics()">
+                        <select class="filter-select settings-select" id="filter-timeframe" onchange="updateAnalytics()">
                             <option value="season" selected>This Season</option>
                             <option value="last1">Last Round</option>
                             <option value="last2">Last 2 Rounds</option>
@@ -420,35 +419,32 @@
                             <option value="last20">Last 20 Rounds</option>
                             <option value="full">All Time</option>
                         </select>
-                        <select class="filter-select" id="filter-hole-count" onchange="updateAnalytics()">
+                        <select class="filter-select settings-select" id="filter-hole-count" onchange="updateAnalytics()">
                             <option value="18" selected>18-Holes Only</option>
                             <option value="9">9-Holes Only</option>
                             <option value="all">All Rounds</option>
                         </select>
+                        <select class="filter-select settings-select" id="filter-round-type" onchange="updateAnalytics()">
+                            <option value="real" selected>Real Golf</option>
+                            <option value="sim">Simulator Only</option>
+                            <option value="all">Both</option>
+                        </select>
+                        
                         <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('year-checkbox-list')"><span id="year-btn-text">All Years</span><span>▼</span></div><div class="multi-select-dropdown" id="year-checkbox-list"></div></div>
-                        <div class="multi-select-container">
-                            <div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div>
-                            <div class="multi-select-dropdown" id="month-checkbox-list">
-                                <label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" onchange="toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                            </div>
-                        </div>
+                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('month-checkbox-list')"><span id="month-btn-text">All Months</span><span>▼</span></div><div class="multi-select-dropdown" id="month-checkbox-list"></div></div>
                         <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('course-checkbox-list')"><span id="course-btn-text">All Courses</span><span>▼</span></div><div class="multi-select-dropdown" id="course-checkbox-list"></div></div>
+                        
                         <div class="multi-select-container">
                             <div class="multi-select-btn" onclick="toggleFilterDropdown('par-checkbox-list')"><span id="par-btn-text">All Pars</span><span>▼</span></div>
                             <div class="multi-select-dropdown" id="par-checkbox-list">
-                                <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
-                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
+                                <label class="checkbox-container"><input type="checkbox" id="cb-all-pars" autocomplete="off" checked onchange="toggleGroupToggles(this, '.par-cb', 'par-btn-text', 'Par')"> <strong>All Pars</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="3" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 3s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="4" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 4s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="5" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 5s</label>
+                                <label class="checkbox-container"><input type="checkbox" class="par-cb" value="6" autocomplete="off" checked onchange="checkGroupToggles('.par-cb', 'cb-all-pars', 'par-btn-text', 'Par')"> Par 6s</label>
                             </div>
                         </div>
-                        <div class="multi-select-container">
-                            <div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div>
-                            <div class="multi-select-dropdown" id="hole-checkbox-list">
-                                <label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" onchange="toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">
-                            </div>
-                        </div>
+                        <div class="multi-select-container"><div class="multi-select-btn" onclick="toggleFilterDropdown('hole-checkbox-list')"><span id="hole-btn-text">All Holes</span><span>▼</span></div><div class="multi-select-dropdown" id="hole-checkbox-list"></div></div>
                     </div>
                 </div>
             </details>
@@ -475,7 +471,6 @@
             <div id="analytics-tab-charts" style="display:none;">
                 <div class="charts-grid" style="border-top: none; margin-top: 0; padding-top: 0;">
                     
-                    <!-- NEW MULTI-METRIC SLICER -->
                     <div class="chart-container" style="grid-column: 1 / -1;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">SCORING TREND OVERLAY</div>
                         <div id="chart-slicer" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 15px;">
@@ -496,14 +491,12 @@
 
                     <div class="chart-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; width:100%; text-align:left;">SCORING PERCENTAGES</div>
-                        <div style="position: relative; height: 180px; width:220px;"><canvas id="scoringPieChart"></canvas></div>
-                        <div id="scoring-pie-subtext" style="font-size: 11px; color: var(--accent-green); margin-top: 15px; font-weight: bold;"></div>
+                        <div style="position: relative; height: 180px; width:100%;"><canvas id="scoringPieChart"></canvas></div>
                     </div>
                     
                     <div class="chart-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
                         <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; width:100%; text-align:left;">PENALTY BREAKDOWN</div>
-                        <div style="position: relative; height: 180px; width:180px;"><canvas id="penaltyPieChart"></canvas></div>
-                        <div id="penalty-pie-subtext" style="font-size: 11px; color: #ef4444; margin-top: 15px; font-weight: bold;"></div>
+                        <div style="position: relative; height: 180px; width:100%;"><canvas id="penaltyPieChart"></canvas></div>
                     </div>
 
                     <div class="chart-container" style="grid-column: 1 / -1;">
@@ -520,10 +513,6 @@
 
             <!-- TAB 3: INSIGHTS -->
             <div id="analytics-tab-insights" style="display:none;">
-                <div class="insights-card" style="margin-top:0; margin-bottom: 20px;">
-                    <div style="font-size:12px; font-weight:bold; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">SPATIAL MISS & BOUNDARY HAZARD BREAKDOWNS</div>
-                    <div id="miss-penalty-stats" style="font-size: 13px; color: var(--text-main); line-height: 1.8;"></div>
-                </div>
                 <div class="insights-card" style="margin-top:0;">
                     <h4>AI Engine System Output</h4>
                     <div id="ai-insights-box">⏳ Crawling data sets...</div>
@@ -541,6 +530,6 @@
     <button class="nav-btn" onclick="switchView('view-analytics', this)"><span>📊</span>Stats</button>
 </div>
 
-<script src="app.js?v=20.0"></script>
+<script src="app.js?v=21.0"></script>
 </body>
 </html>
