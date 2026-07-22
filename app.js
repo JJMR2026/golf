@@ -262,7 +262,13 @@ window.switchAnalyticsTab = function(tab, btn) {
 // --- NEW SEAMLESS START ROUND TRANSITION ---
 window.startRound = function() {
     const searchCard = document.getElementById('search-card');
+    const setupContainer = document.getElementById('course-setup-container');
+    const searchDropdown = document.getElementById('search-dropdown');
+    
     if (searchCard) searchCard.style.display = 'none';
+    if (setupContainer) setupContainer.style.display = 'none';
+    if (searchDropdown) searchDropdown.classList.remove('active');
+    
     window.togglePlayMode(true);
     window.saveLocalState();
 };
@@ -1391,7 +1397,6 @@ window.handleTeeChange = function() {
     window.updatePlayModeUI();
     window.saveLocalState();
 };
-
 window.buildGrid = function() {
     const grid = document.getElementById('scorecard-grid'); 
     if(!grid) return;
@@ -2004,7 +2009,6 @@ window.deleteActiveRound = async function(id) {
         window.loadAnalyticsData(); 
     } 
 };
-
 // --- ANALYTICS & MATH GLOBAL ENGINE ---
 window.getRelativeParString = function(score, par) { 
     if (par === 0 || score === 0) return ""; 
@@ -2059,7 +2063,10 @@ window.calculateHandicap = function(allRounds) {
     else if (n === 20) { countToUse = 8; adj = 0; }
     
     const avg = (diffs.slice(0, countToUse).reduce((a,b) => a+b, 0) / countToUse) + adj; 
-    return Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
+    let finalHcp = Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
+    
+    console.log("🏆 WHS Math - Lowest", countToUse, "Diffs:", diffs.slice(0, countToUse), " | Calculated HCP:", finalHcp);
+    return finalHcp;
 };
 
 window.calculateHcpHistory = function(rounds) {
@@ -2837,16 +2844,18 @@ window.refreshModalGraph = function() {
             targetHoles.forEach(h => { dSum += (h.drops||0); }); 
             val = dSum; valid = true; 
         }
-        if (['hio','egl','brd','par','bog','dbl','tpl','qd'].includes(currentStatKey)) {
+        
+        // BUG FIX: Synced up the graph click listener arrays (brd vs birdies, etc)
+        if (['hio','egl','birdies','pars','bogeys','dbl','tpl','qd'].includes(currentStatKey)) {
             let cnt = 0; 
             targetHoles.forEach(h => { 
                 if (h.score && h.par) { 
                     let d = h.score - h.par; 
                     if (currentStatKey === 'hio' && h.score === 1) cnt++; 
                     else if (currentStatKey === 'egl' && d === -2) cnt++; 
-                    else if (currentStatKey === 'brd' && d === -1) cnt++; 
-                    else if (currentStatKey === 'par' && d === 0) cnt++; 
-                    else if (currentStatKey === 'bog' && d === 1) cnt++; 
+                    else if (currentStatKey === 'birdies' && d === -1) cnt++; 
+                    else if (currentStatKey === 'pars' && d === 0) cnt++; 
+                    else if (currentStatKey === 'bogeys' && d === 1) cnt++; 
                     else if (currentStatKey === 'dbl' && d === 2) cnt++; 
                     else if (currentStatKey === 'tpl' && d === 3) cnt++; 
                     else if (currentStatKey === 'qd' && d >= 4) cnt++; 
