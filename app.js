@@ -17,6 +17,9 @@ try {
 if (typeof Chart !== 'undefined') {
     Chart.defaults.color = '#9ca3af'; 
     Chart.defaults.borderColor = '#2a2a2a';
+    if (typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
 }
 
 // --- GLOBAL VARIABLES ---
@@ -54,6 +57,13 @@ let roundWeather = { temp: null, wind: null };
 let dismissedWarnings = [];
 let currentStatKey = null;
 let currentStatTitle = null;
+
+// GLOBAL CLICK LISTENER: Closes dropdowns when clicking away
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.multi-select-container')) {
+        document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none');
+    }
+});
 
 const themes = {
     dark: { bg: '#050505', card: '#121212', border: '#2a2a2a', accent: '#10b981', hover: '#059669', text: '#f3f4f6', muted: '#9ca3af', cell: '#1a1a1a', cellBorder: '#333' },
@@ -259,7 +269,6 @@ window.switchAnalyticsTab = function(tab, btn) {
     btn.classList.add('active'); 
 };
 
-// --- NEW SEAMLESS START ROUND TRANSITION ---
 window.startRound = function() {
     const searchCard = document.getElementById('search-card');
     const setupContainer = document.getElementById('course-setup-container');
@@ -320,7 +329,6 @@ window.checkHarvesterStatus = async function() {
     }
 };
 
-// --- STATIC CLUB DISTANCES ENGINE ---
 window.renderClubDistancesUI = function() {
     let bag = window.getMyBag();
     let savedDistancesStr = localStorage.getItem('golf_club_distances');
@@ -386,7 +394,6 @@ window.getSmartClubRecommendation = function(targetDistance) {
     return closestClub;
 };
 
-// --- WEATHER ENGINE ---
 window.fetchWeatherForCourse = function(courseName) {
     const display = document.getElementById('weather-display'); 
     display.innerText = "🌤️ Locating course for weather...";
@@ -435,7 +442,6 @@ window.fetchWeatherByCoords = async function(lat, lon, display, courseName) {
     }
 };
 
-// --- STATE MANAGEMENT ---
 window.saveLocalState = function() { 
     const el = document.getElementById('current-course-display'); 
     if (!el) return; 
@@ -545,7 +551,6 @@ window.checkActiveRoundSafeguard = function() {
     return true;
 };
 
-// FIX 1 & 2: Rewritten search handler to be fully robust and fix the dropdown clicking bug.
 let searchTimeout = null;
 const searchInputEl = document.getElementById('course-search-input');
 if (searchInputEl) {
@@ -1291,7 +1296,6 @@ window.populateTeeDropdown = function() {
     }
     
     let displayTees = availableTees;
-    // Apply Womens Tee filter logic
     const hideWomens = document.getElementById('hide-womens-tees');
     if (hideWomens && hideWomens.checked) {
         displayTees = displayTees.filter(t => {
@@ -1346,7 +1350,6 @@ window.toggleWomensTees = function(isChecked) {
     window.populateTeeDropdown();
 };
 
-// Initialize checkbox state based on local storage
 document.addEventListener('DOMContentLoaded', () => {
     const hideWomens = document.getElementById('hide-womens-tees');
     if (hideWomens) {
@@ -1397,6 +1400,7 @@ window.handleTeeChange = function() {
     window.updatePlayModeUI();
     window.saveLocalState();
 };
+
 window.buildGrid = function() {
     const grid = document.getElementById('scorecard-grid'); 
     if(!grid) return;
@@ -1474,7 +1478,6 @@ window.buildGrid = function() {
     });
     if (typeof window.updateDriveDistances === 'function') window.updateDriveDistances();
 };
-
 window.toggleGridDrops = function(index) { 
     let cVal = parseInt(roundData[index].drops) || 0; 
     let newVal = cVal >= 10 ? 0 : cVal + 1; 
@@ -1527,6 +1530,7 @@ window.toggleGridHit = function(index, type) {
     }
     window.saveLocalState(); 
 };
+
 window.attemptSubmitRound = function() {
     let endIndex = currentHoleOffset + currentHoleCount; 
     let missingHoles = [];
@@ -1686,13 +1690,13 @@ window.fetchHistory = function() {
         if (!data || data.length === 0) { 
             let hList = document.getElementById('history-list');
             if (hList) {
-                hList.innerHTML = '<div class="empty-state">No arrays found.</div>'; 
+                hList.innerHTML = '<div class="empty-state">No records found.</div>'; 
             }
             return; 
         }
         
         const activeTabBtn = document.querySelector('#view-history .analytics-tabs button.active');
-        const filterType = activeTabBtn ? (activeTabBtn.innerText.includes('Range') ? 'RANGE' : (activeTabBtn.innerText.includes('Sim') ? 'SIM' : 'REAL')) : 'REAL';
+        const filterType = activeTabBtn ? (activeTabBtn.innerText.includes('Sim') ? 'SIM' : 'REAL') : 'REAL';
         window.renderHistoryList(data, filterType);
     });
 };
@@ -1718,9 +1722,8 @@ window.filterHistoryList = function(type, btn) {
 window.renderHistoryList = function(allData, type) {
     let data = allData.filter(r => { 
         let tName = r.tee_name || ""; 
-        if (type === 'RANGE') return tName.includes('[RANGE]'); 
         if (type === 'SIM') return tName.includes('[SIM]'); 
-        return !tName.includes('[RANGE]') && !tName.includes('[SIM]'); 
+        return !tName.includes('[SIM]') && !tName.includes('[RANGE]'); 
     });
     
     const tbody = document.getElementById('history-list'); 
@@ -1768,10 +1771,10 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
     if (sEl) sEl.innerText = score; 
     
     let wEl = document.getElementById('modal-weather'); 
-    if (wEl) wEl.innerText = temp ? `⛅ ${temp}` : ''; 
+    if (wEl) wEl.innerText = temp && temp !== 'null' ? `⛅ ${temp}` : ''; 
     
     let windEl = document.getElementById('modal-wind-dir'); 
-    if (windEl) windEl.innerText = wind ? `💨 ${wind}` : '';
+    if (windEl) windEl.innerText = wind && wind !== 'null' ? `💨 ${wind}` : '';
     
     let dEl = document.getElementById('modal-course-date'); 
     if (dEl) dEl.innerText = date;
@@ -2009,6 +2012,7 @@ window.deleteActiveRound = async function(id) {
         window.loadAnalyticsData(); 
     } 
 };
+
 // --- ANALYTICS & MATH GLOBAL ENGINE ---
 window.getRelativeParString = function(score, par) { 
     if (par === 0 || score === 0) return ""; 
@@ -2107,8 +2111,6 @@ window.pearsonCorrelation = function(x, y) {
 window.updateTrophyRoom = function(fRounds) {
     let lowScores = []; 
     let minScore = 999; 
-    let longDrives = []; 
-    let maxDrive = 0; 
     let lowPuttsList = []; 
     let minPutts = 999; 
     let mostFirsList = []; 
@@ -2118,15 +2120,20 @@ window.updateTrophyRoom = function(fRounds) {
         let dStr = r.date_played ? new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : "Unknown";
         let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
         
+        // BUG FIX 15: Grab formatting vars to pass to the modal
+        let cName = (r.course_name || "Unknown").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        let wTemp = r.weather_temp || "";
+        let wWind = r.weather_wind || "";
+
         if (holesPlayed >= 18) {
             let coursePar = r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0);
             
             if (r.total_score > 0) { 
                 if (r.total_score < minScore) { 
                     minScore = r.total_score; 
-                    lowScores = [{c: (r.course_name||"").trim(), d: dStr, p: coursePar}]; 
+                    lowScores = [{id: r.id, c: cName, d: dStr, p: coursePar, hp: holesPlayed, wt: wTemp, ww: wWind, s: r.total_score}]; 
                 } else if (r.total_score === minScore) { 
-                    lowScores.push({c: (r.course_name||"").trim(), d: dStr, p: coursePar}); 
+                    lowScores.push({id: r.id, c: cName, d: dStr, p: coursePar, hp: holesPlayed, wt: wTemp, ww: wWind, s: r.total_score}); 
                 } 
             }
             
@@ -2143,18 +2150,18 @@ window.updateTrophyRoom = function(fRounds) {
             if (hp >= 18 && truePutts > 0) { 
                 if (truePutts < minPutts) { 
                     minPutts = truePutts; 
-                    lowPuttsList = [{c: (r.course_name||"").trim(), d: dStr}]; 
+                    lowPuttsList = [{id: r.id, c: cName, d: dStr, hp: holesPlayed, wt: wTemp, ww: wWind, s: r.total_score}]; 
                 } else if (truePutts === minPutts) { 
-                    lowPuttsList.push({c: (r.course_name||"").trim(), d: dStr}); 
+                    lowPuttsList.push({id: r.id, c: cName, d: dStr, hp: holesPlayed, wt: wTemp, ww: wWind, s: r.total_score}); 
                 } 
             }
             
             let firs = r.hole_scores.filter(h => h.fir === 'hit' || h.fir === 'drv grn').length;
             if (firs > maxFir) { 
                 maxFir = firs; 
-                mostFirsList = [{c: (r.course_name||"").trim(), d: dStr}]; 
+                mostFirsList = [{id: r.id, c: cName, d: dStr, hp: holesPlayed, wt: wTemp, ww: wWind, s: r.total_score}]; 
             } else if (firs === maxFir && firs > 0) { 
-                mostFirsList.push({c: (r.course_name||"").trim(), d: dStr}); 
+                mostFirsList.push({id: r.id, c: cName, d: dStr, hp: holesPlayed, wt: wTemp, ww: wWind, s: r.total_score}); 
             }
         }
     });
@@ -2162,26 +2169,48 @@ window.updateTrophyRoom = function(fRounds) {
     const tBox = document.getElementById('trophy-room-box'); 
     if (!tBox) return;
     
-    const tStyle = "flex: 1; min-width: 120px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center;";
-    let displayScore = minScore === 999 ? '--' : `${minScore} <span style="font-size:14px; opacity:0.8;">${window.getRelativeParString(minScore, lowScores[0] ? lowScores[0].p : 72)}</span>`;
+    const tStyle = "flex: 1; min-width: 120px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s;";
+    
+    let lsHtml = '--';
+    if (lowScores.length > 0) {
+        let ls = lowScores[0];
+        let displayScore = `${minScore} <span style="font-size:14px; opacity:0.8;">${window.getRelativeParString(minScore, ls.p)}</span>`;
+        lsHtml = `<div style="${tStyle}" onmouseover="this.style.borderColor='var(--accent-green)'" onmouseout="this.style.borderColor='var(--border-color)'" onclick="window.openHistoryModal('${ls.id}', '${ls.c}', '${ls.d}', ${ls.s}, ${ls.hp}, '${ls.wt}', '${ls.ww}')">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Low Round</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${displayScore}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;"><strong>${ls.c}</strong><br><span style="opacity:0.6">${ls.d}</span></div>
+        </div>`;
+    } else {
+        lsHtml = `<div style="${tStyle} pointer-events: none;"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Low Round</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">--</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">--</div></div>`;
+    }
+
+    let lpHtml = '--';
+    if (lowPuttsList.length > 0) {
+        let lp = lowPuttsList[0];
+        lpHtml = `<div style="${tStyle}" onmouseover="this.style.borderColor='var(--accent-green)'" onmouseout="this.style.borderColor='var(--border-color)'" onclick="window.openHistoryModal('${lp.id}', '${lp.c}', '${lp.d}', ${lp.s}, ${lp.hp}, '${lp.wt}', '${lp.ww}')">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Fewest Putts</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${minPutts}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;"><strong>${lp.c}</strong><br><span style="opacity:0.6">${lp.d}</span></div>
+        </div>`;
+    } else {
+        lpHtml = `<div style="${tStyle} pointer-events: none;"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Fewest Putts</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">--</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">--</div></div>`;
+    }
+
+    let mfHtml = '--';
+    if (mostFirsList.length > 0) {
+        let mf = mostFirsList[0];
+        mfHtml = `<div style="${tStyle}" onmouseover="this.style.borderColor='var(--accent-green)'" onmouseout="this.style.borderColor='var(--border-color)'" onclick="window.openHistoryModal('${mf.id}', '${mf.c}', '${mf.d}', ${mf.s}, ${mf.hp}, '${mf.wt}', '${mf.ww}')">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Most FIRs</div>
+            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxFir}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;"><strong>${mf.c}</strong><br><span style="opacity:0.6">${mf.d}</span></div>
+        </div>`;
+    } else {
+        mfHtml = `<div style="${tStyle} pointer-events: none;"><div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Most FIRs</div><div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">--</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">--</div></div>`;
+    }
     
     tBox.innerHTML = `
         <div style="width: 100%; font-size: 14px; font-weight: bold; color: var(--accent-green); text-transform: uppercase; margin-bottom: 5px;">🏆 Trophy Room (18-Holes)</div>
-        <div style="${tStyle}">
-            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Low Round</div>
-            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${displayScore}</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowScores.length ? `<strong>${lowScores[0].c}</strong><br><span style="opacity:0.6">${lowScores[0].d}</span>` : '--'}</div>
-        </div>
-        <div style="${tStyle}">
-            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Fewest Putts</div>
-            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${minPutts === 999 ? '--' : minPutts}</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${lowPuttsList.length ? `<strong>${lowPuttsList[0].c}</strong><br><span style="opacity:0.6">${lowPuttsList[0].d}</span>` : '--'}</div>
-        </div>
-        <div style="${tStyle}">
-            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Most FIRs</div>
-            <div style="font-size: 24px; color: var(--accent-green); font-weight: bold;">${maxFir}</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">${mostFirsList.length ? `<strong>${mostFirsList[0].c}</strong><br><span style="opacity:0.6">${mostFirsList[0].d}</span>` : '--'}</div>
-        </div>
+        ${lsHtml} ${lpHtml} ${mfHtml}
     `;
 };
 
@@ -2193,11 +2222,11 @@ window.generateInsights = function(fRounds) {
     const agg = (arr) => {
         let stats = { 
             p3:0, p3c:0, p4:0, p4c:0, p5:0, p5c:0, 
+            p3putts:0, p3hp:0, p4putts:0, p4hp:0, p5putts:0, p5hp:0,
             putts:0, hp:0, 
             girT:0, girH:0, firT:0, firH:0, 
             scramT:0, scramH:0, 
             sandT:0, sandH:0,
-            missL:0, missR:0, missS:0,
             f9s:0, f9p:0, b9s:0, b9p:0 
         };
         
@@ -2212,7 +2241,12 @@ window.generateInsights = function(fRounds) {
                     if (h.hole_number <= 9) { stats.f9s += h.score; stats.f9p += h.par; } 
                     else { stats.b9s += h.score; stats.b9p += h.par; }
                 }
-                if (h.putts !== null && h.putts > 0) { stats.putts += h.putts; stats.hp++; }
+                if (h.putts !== null && h.putts > 0) { 
+                    stats.putts += h.putts; stats.hp++; 
+                    if (h.par === 3) { stats.p3putts += h.putts; stats.p3hp++; }
+                    if (h.par === 4) { stats.p4putts += h.putts; stats.p4hp++; }
+                    if (h.par === 5) { stats.p5putts += h.putts; stats.p5hp++; }
+                }
                 
                 if (h.gir === 'hit' || h.gir === 'under') stats.girH++;
                 if (h.gir === 'hit' || h.gir === 'miss' || h.gir === 'under') stats.girT++;
@@ -2223,10 +2257,6 @@ window.generateInsights = function(fRounds) {
                 if (h.gir === 'miss') {
                     stats.scramT++;
                     if (h.score && h.par && h.score <= h.par) stats.scramH++;
-                    let gA = h.gir_adv || "";
-                    if (gA.includes('LEFT')) stats.missL++;
-                    if (gA.includes('RIGHT')) stats.missR++;
-                    if (gA.includes('SHORT')) stats.missS++;
                 }
 
                 if (h.sand_save === 'yes' || h.sand_save === '1') { stats.sandT++; stats.sandH++; }
@@ -2242,23 +2272,19 @@ window.generateInsights = function(fRounds) {
         let pAvg = (glob.putts / glob.hp);
         if (pAvg > 2.0) insights.push({ icon: "🔴", title: "Putting Liability", desc: `Averaging ${pAvg.toFixed(2)} putts per hole. You are losing strokes on the green.`, details: "Drill: Ladder Putting & 3-Foot Circle." });
         else if (pAvg <= 1.7) insights.push({ icon: "🟢", title: "Putting Heat", desc: `Averaging a deadly ${pAvg.toFixed(2)} putts per hole.`, details: "Keep maintaining your current green-reading routine." });
+        
+        let p3a = glob.p3hp > 0 ? (glob.p3putts/glob.p3hp) : 0;
+        let p4a = glob.p4hp > 0 ? (glob.p4putts/glob.p4hp) : 0;
+        let p5a = glob.p5hp > 0 ? (glob.p5putts/glob.p5hp) : 0;
+        
+        if (p3a > p4a + 0.3 && p3a > p5a + 0.3) insights.push({ icon: "⚠️", title: "Par 3 Putting", desc: `You average significantly more putts on Par 3s (${p3a.toFixed(2)}) compared to Par 4s & 5s.`, details: "Check your approach proximity on Par 3s. You may be leaving yourself long, difficult first putts."});
+        if (p5a > p4a + 0.3 && p5a > p3a + 0.3) insights.push({ icon: "⚠️", title: "Par 5 Putting", desc: `You average significantly more putts on Par 5s (${p5a.toFixed(2)}) compared to shorter holes.`, details: "Your approach shots on long holes are putting pressure on your flatstick."});
     }
 
     if (glob.scramT > 0) {
         let scPct = (glob.scramH / glob.scramT) * 100;
         if (scPct < 25) insights.push({ icon: "🔴", title: "Short Game Struggles", desc: `Only saving par ${scPct.toFixed(0)}% of the time when missing the green.`, details: "Drill: Chipping up-and-down games." });
         else if (scPct > 50) insights.push({ icon: "🟢", title: "Scrambling Wizard", desc: `Saving par an elite ${scPct.toFixed(0)}% of the time after a missed GIR.`, details: "Your wedge play is saving your scorecard." });
-    }
-
-    if ((glob.missL + glob.missR + glob.missS) > 10) {
-        let totM = glob.missL + glob.missR + glob.missS;
-        let lPct = (glob.missL / totM) * 100;
-        let rPct = (glob.missR / totM) * 100;
-        let sPct = (glob.missS / totM) * 100;
-        
-        if (lPct > 50) insights.push({ icon: "⚠️", title: "Left Miss Tendency", desc: `${lPct.toFixed(0)}% of your approach misses are going Left.`, details: "Check your clubface alignment and grip strength." });
-        if (rPct > 50) insights.push({ icon: "⚠️", title: "Right Miss Tendency", desc: `${rPct.toFixed(0)}% of your approach misses are going Right.`, details: "Check for an open face at impact or an inside-out path." });
-        if (sPct > 50) insights.push({ icon: "⚠️", title: "Coming Up Short", desc: `${sPct.toFixed(0)}% of your approach misses are Short.`, details: "You are under-clubbing. Start taking one extra club on approaches." });
     }
 
     let avgs = [];
@@ -2337,6 +2363,9 @@ window.updateAnalytics = function() {
         
         let hfEl = document.getElementById('filter-hole-count'); 
         const holeFilter = hfEl ? hfEl.value : 'all'; 
+
+        let rtEl = document.getElementById('filter-round-type');
+        const roundTypeFilter = rtEl ? rtEl.value : 'real';
         
         let fRounds = masterAnalyticsData.filter(r => { 
             if (!actCrs.includes((r.course_name || "").trim())) return false; 
@@ -2345,11 +2374,19 @@ window.updateAnalytics = function() {
             if (timeframe === 'season' && d.getUTCFullYear().toString() !== new Date().getUTCFullYear().toString()) return false;
             if (timeframe !== 'season' && timeframe !== 'full' && !actYrs.includes(d.getUTCFullYear().toString())) return false; 
             
+            let mStr = (d.getUTCMonth() + 1).toString();
+            if (!actMonths.includes(mStr)) return false;
+
             if (r.hole_scores && r.hole_scores.length > 0) {
                 const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
                 if (holeFilter === '18' && playedHoles < 18) return false;
                 if (holeFilter === '9' && (playedHoles < 9 || playedHoles >= 18)) return false; 
             }
+
+            let tName = r.tee_name || "";
+            if (roundTypeFilter === 'real' && (tName.includes('[SIM]') || tName.includes('[RANGE]'))) return false;
+            if (roundTypeFilter === 'sim' && !tName.includes('[SIM]')) return false;
+
             return true; 
         });
         
@@ -2375,6 +2412,7 @@ window.updateAnalytics = function() {
             fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', ''))); 
         }
         
+        // BUG FIX 3: HCP is now completely beholden to fRounds (the filtered array)
         let hcDisplay = document.getElementById('hcp-display');
         if (hcDisplay && typeof window.calculateHandicap === 'function') { 
             hcDisplay.innerText = window.calculateHandicap(fRounds); 
@@ -2393,7 +2431,7 @@ window.updateAnalytics = function() {
             window.updateTrophyRoom(fRounds); 
         }
         
-        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, ssH:0, ssT:0 }; 
+        let s = { hio:0, alb:0, egl:0, brd:0, par:0, bog:0, dbl:0, tpl:0, qd:0, putts:0, pHP:0, drp:0, fH:0, fT:0, gH:0, gT:0, scramT:0, scramH:0, ssH:0, ssT:0 }; 
         let totalStrokes = 0; 
         let totalHolesCount = 0;
         
@@ -2402,6 +2440,12 @@ window.updateAnalytics = function() {
             th.forEach(h => { 
                 if (!h.score) return; 
                 
+                let pStr = h.par ? h.par.toString() : null;
+                if (pStr && !actPars.includes(pStr)) return;
+                
+                let hnStr = h.hole_number ? h.hole_number.toString() : null;
+                if (hnStr && !actHoles.includes(hnStr)) return;
+
                 totalStrokes += h.score; 
                 totalHolesCount++; 
                 
@@ -2410,6 +2454,7 @@ window.updateAnalytics = function() {
                     if(d === -1) s.brd++; 
                     else if(d === 0) s.par++; 
                     else if(d === 1) s.bog++; 
+                    else if(d >= 2) s.dbl++;
                 }
                 
                 if (h.putts !== null && h.putts > 0) { 
@@ -2428,6 +2473,11 @@ window.updateAnalytics = function() {
                     s.gT++; 
                     if(h.gir == 'hit' || h.gir == 'under') s.gH++; 
                 } 
+
+                if (h.gir === 'miss') {
+                    s.scramT++;
+                    if (h.score <= h.par) s.scramH++;
+                }
                 
                 if (h.sand_save === '1' || h.sand_save === 'yes') { 
                     s.ssT++; 
@@ -2479,6 +2529,12 @@ window.updateAnalytics = function() {
                     <td>${cA(s.bog)}</td>
                     <td>${cP(s.bog)}</td>
                 </tr>
+                <tr onclick="window.openStatGraph('Double+', 'dbl')">
+                    <td>Double+</td>
+                    <td>${s.dbl}</td>
+                    <td>${cA(s.dbl)}</td>
+                    <td>${cP(s.dbl)}</td>
+                </tr>
                 <tr style="background:rgba(0,0,0,0.2); color:var(--accent-green); border-top: 2px solid var(--border-color);">
                     <td colspan="4" style="text-align:left; font-size:12px;">EXECUTION</td>
                 </tr>
@@ -2486,7 +2542,7 @@ window.updateAnalytics = function() {
                     <td>Putts</td>
                     <td>${s.putts}</td>
                     <td>${s.pHP > 0 ? ((s.putts / s.pHP) * 18).toFixed(1) : '0.0'}</td>
-                    <td>-</td>
+                    <td>${s.pHP > 0 ? (s.putts / s.pHP).toFixed(2) + ' / hole' : '-'}</td>
                 </tr>
                 <tr onclick="window.openStatGraph('FIR %', 'fir')">
                     <td>FIR</td>
@@ -2499,6 +2555,18 @@ window.updateAnalytics = function() {
                     <td>${s.gH} / ${s.gT}</td>
                     <td>-</td>
                     <td>${s.gT > 0 ? ((s.gH / s.gT) * 100).toFixed(1) + '%' : '0.0%'}</td>
+                </tr>
+                <tr onclick="window.openStatGraph('Scrambling', 'scram')">
+                    <td>Scrambling</td>
+                    <td>${s.scramH} / ${s.scramT}</td>
+                    <td>-</td>
+                    <td>${s.scramT > 0 ? ((s.scramH / s.scramT) * 100).toFixed(1) + '%' : '0.0%'}</td>
+                </tr>
+                <tr onclick="window.openStatGraph('Sand Save', 'sand')">
+                    <td>Sand Save</td>
+                    <td>${s.ssH} / ${s.ssT}</td>
+                    <td>-</td>
+                    <td>${s.ssT > 0 ? ((s.ssH / s.ssT) * 100).toFixed(1) + '%' : '0.0%'}</td>
                 </tr>
                 <tr onclick="window.openStatGraph('Drops', 'drops')">
                     <td>Drops (Penalty)</td>
@@ -2596,12 +2664,36 @@ window.populateFilters = function() {
     
     let yBox = document.getElementById('year-checkbox-list');
     if (yBox) {
-        yBox.innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
+        yBox.innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-years" autocomplete="off" checked onchange="window.toggleGroupToggles(this, '.year-cb', 'year-btn-text', 'Year')"> <strong>All Years</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + uY.map(y => `<label class="checkbox-container"><input type="checkbox" class="year-cb" value="${y}" autocomplete="off" checked onchange="window.checkGroupToggles('.year-cb', 'cb-all-years', 'year-btn-text', 'Year')"> ${y}</label>`).join('');
+    }
+
+    let mBox = document.getElementById('month-checkbox-list');
+    if (mBox) {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        mBox.innerHTML = `<label class="checkbox-container"><input type="checkbox" id="cb-all-months" autocomplete="off" checked onchange="window.toggleGroupToggles(this, '.month-cb', 'month-btn-text', 'Month')"> <strong>All Months</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">` + monthNames.map((m, i) => `<label class="checkbox-container"><input type="checkbox" class="month-cb" value="${i+1}" autocomplete="off" checked onchange="window.checkGroupToggles('.month-cb', 'cb-all-months', 'month-btn-text', 'Month')"> ${m}</label>`).join('');
+    }
+
+    let hBox = document.getElementById('hole-checkbox-list');
+    if (hBox) {
+        let hHtml = `<label class="checkbox-container"><input type="checkbox" id="cb-all-holes" autocomplete="off" checked onchange="window.toggleGroupToggles(this, '.hole-cb', 'hole-btn-text', 'Hole')"> <strong>All Holes</strong></label><hr style="width: 100%; border: 0; border-top: 1px solid var(--border-color); margin: 5px 0;">`;
+        for(let i=1; i<=18; i++) {
+            hHtml += `<label class="checkbox-container"><input type="checkbox" class="hole-cb" value="${i}" autocomplete="off" checked onchange="window.checkGroupToggles('.hole-cb', 'cb-all-holes', 'hole-btn-text', 'Hole')"> Hole ${i}</label>`;
+        }
+        hBox.innerHTML = hHtml;
     }
 };
 
 window.toggleGroupToggles = function(mainCb, childClass, btnTextId, defaultText) { 
     document.querySelectorAll(childClass).forEach(b => { b.checked = mainCb.checked; }); 
+    
+    let btnTextEl = document.getElementById(btnTextId);
+    if (btnTextEl) {
+        if (mainCb.checked) {
+            btnTextEl.innerText = `All ${defaultText}s`;
+        } else {
+            btnTextEl.innerText = `0 ${defaultText}s`;
+        }
+    }
     window.updateAnalytics(); 
 };
 
@@ -2651,14 +2743,12 @@ window.forceSyncFilters = function() {
 window.renderCharts = function(filteredRounds, actHoles, actPars) {
     const tCtx = document.getElementById('scoringTrendChart'); 
     const pC = document.getElementById('scoringPieChart'); 
-    const dsCtx = document.getElementById('droppedShotsPieChart'); 
     const pCtx = document.getElementById('penaltyPieChart'); 
     const aCtx = document.getElementById('accuracyChart'); 
     const psCtx = document.getElementById('parScoringChart');
     
     if (trendChart) trendChart.destroy(); 
     if (scorePieChart) scorePieChart.destroy(); 
-    if (window.droppedShotsPieChartObj) window.droppedShotsPieChartObj.destroy();
     if (penaltyPieChartObj) penaltyPieChartObj.destroy(); 
     if (accuracyChart) accuracyChart.destroy(); 
     if (parScoringChart) parScoringChart.destroy();
@@ -2676,8 +2766,7 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     let hcpHist = window.calculateHcpHistory(filteredRounds); 
     metricData.hcp = [...hcpHist].reverse().map(h => h.hcp === "--.-" ? null : parseFloat(h.hcp));
 
-    let tpBrd = 0, tpPar = 0, tpBog = 0, tpDbl = 0;
-    let bogDblHoles = {3:0, 4:0, 5:0}; 
+    let tpBrd = 0, tpPar = 0, tpBog = 0, tpDbl = 0, tpTpl = 0, tpQuad = 0, tpGod = 0;
     let dW = 0, dOB = 0, dL = 0, dU = 0; 
     let accLabels = [], firData = [], girData = [];
     let p3T = 0, p3C = 0, p4T = 0, p4C = 0, p5T = 0, p5C = 0;
@@ -2692,8 +2781,21 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
         let p=0, fH=0, fT=0, gH=0, gT=0, dr=0, ssH=0, ssT=0, brd=0, pr=0, bog=0, ts=0, th=0;
         
         targetHoles.forEach(h => {
+            let pStr = h.par ? h.par.toString() : null;
+            if (pStr && !actPars.includes(pStr)) return;
+            let hnStr = h.hole_number ? h.hole_number.toString() : null;
+            if (hnStr && !actHoles.includes(hnStr)) return;
+
             if (h.putts !== null && h.putts > 0) { p += h.putts; }
-            if (h.drops) dr += h.drops; 
+            if (h.drops) { 
+                dr += h.drops; 
+                let adv = h.drops_adv ? h.drops_adv.split(',') : [];
+                if (adv.includes('WATER')) dW++;
+                if (adv.includes('OB')) dOB++;
+                if (adv.includes('LOST')) dL++;
+                if (adv.includes('UNPLAYABLE')) dU++;
+            } 
+            
             if (h.fir === 'hit' || h.fir === 'drv grn') { fT++; fH++; } else if (h.fir === 'miss') fT++; 
             if (h.gir === 'hit' || h.gir === 'under') { gT++; gH++; } else if (h.gir === 'miss') gT++; 
             
@@ -2705,9 +2807,11 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
                 if (d === -1) { brd++; tpBrd++; }
                 else if (d === 0) { pr++; tpPar++; }
                 else if (d === 1) { bog++; tpBog++; }
-                else if (d >= 2) { bog++; tpDbl++; } 
+                else if (d === 2) { bog++; tpDbl++; } 
+                else if (d === 3) { bog++; tpTpl++; } 
+                else if (d === 4) { bog++; tpQuad++; } 
+                else if (d >= 5) { bog++; tpGod++; } 
                 
-                if (d >= 1 && h.par >= 3 && h.par <= 5) { bogDblHoles[h.par]++; }
                 if (h.par === 3) { p3T += h.score; p3C++; } 
                 if (h.par === 4) { p4T += h.score; p4C++; } 
                 if (h.par === 5) { p5T += h.score; p5C++; } 
@@ -2741,40 +2845,45 @@ window.renderCharts = function(filteredRounds, actHoles, actPars) {
     if (tCtx && typeof Chart !== 'undefined') {
         trendChart = new Chart(tCtx.getContext('2d'), { 
             type: 'line', data: { labels: accLabels, datasets: trendDatasets }, 
-            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { display: activeMetrics.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { enabled: true } }, scales: { x: { display: true, grid: { display: false } }, y: { display: true, position: 'left', grid: { color: '#2a2a2a' } }, y1: { display: activeMetrics.length > 0, position: 'right', grid: { drawOnChartArea: false } } } } 
         }); 
     }
+
+    const pieLabelPlugin = {
+        color: '#fff',
+        formatter: (value, ctx) => {
+            if (value === 0) return null; 
+            let sum = 0;
+            let dataArr = ctx.chart.data.datasets[0].data;
+            dataArr.map(data => { sum += data; });
+            let percentage = (value*100 / sum).toFixed(1)+"%";
+            return value + "\n(" + percentage + ")";
+        },
+        font: { size: 10, weight: 'bold' },
+        textAlign: 'center'
+    };
 
     if (pC && typeof Chart !== 'undefined') { 
         scorePieChart = new Chart(pC.getContext('2d'), { 
-            type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double+'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, 
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } 
+            type: 'doughnut', data: { labels: ['Birdie or Better', 'Par', 'Bogey', 'Double (+2)', 'Triple (+3)', 'Quad (+4)', '+5 or Worse'], datasets: [{ data: [tpBrd, tpPar, tpBog, tpDbl, tpTpl, tpQuad, tpGod], backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#ef4444', '#b91c1c', '#7f1d1d', '#450a0a'], borderWidth: 0 }] }, 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: pieLabelPlugin, legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}, padding: 15} } } } 
         }); 
     } 
-
-    // NEW DROPPED SHOT PIE CHART
-    if (dsCtx && typeof Chart !== 'undefined') {
-        window.droppedShotsPieChartObj = new Chart(dsCtx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Par 3s', 'Par 4s', 'Par 5s'],
-                datasets: [{ data: [bogDblHoles[3], bogDblHoles[4], bogDblHoles[5]], backgroundColor: ['#f43f5e', '#14b8a6', '#eab308'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } }
-        });
-    }
     
     if (pCtx && typeof Chart !== 'undefined') { 
+        let penaltyData = [dW, dOB, dL, dU];
+        let hasPenalties = penaltyData.some(v => v > 0);
+        
         penaltyPieChartObj = new Chart(pCtx.getContext('2d'), { 
-            type: 'doughnut', data: { labels: ['Water', 'OB', 'Lost', 'Unplayable'], datasets: [{ data: [dW, dOB, dL, dU], backgroundColor: ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] }, 
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}} } } } 
+            type: 'doughnut', data: { labels: hasPenalties ? ['Water', 'OB', 'Lost', 'Unplayable'] : ['No Penalties'], datasets: [{ data: hasPenalties ? penaltyData : [1], backgroundColor: hasPenalties ? ['#38bdf8', '#ef4444', '#f59e0b', '#8b5cf6'] : ['#2a2a2a'], borderWidth: 0 }] }, 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: hasPenalties ? pieLabelPlugin : { formatter: () => null }, legend: { position: 'right', labels: {color: '#9ca3af', font: {size: 10}, padding: 15} } } } 
         }); 
     } 
     
     if (aCtx && typeof Chart !== 'undefined') { 
         accuracyChart = new Chart(aCtx.getContext('2d'), { 
             type: 'line', data: { labels: accLabels, datasets: [ { label: 'FIR %', data: firData, borderColor: '#8b5cf6', tension: 0.3 }, { label: 'GIR %', data: girData, borderColor: '#d946ef', tension: 0.3 } ] }, 
-            options: { responsive: true, maintainAspectRatio: false } 
+            options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { enabled: true } }, scales: { x: { display: true, grid: { display: false } } } } 
         }); 
     } 
     
@@ -2839,13 +2948,21 @@ window.refreshModalGraph = function() {
             targetHoles.forEach(h => { if (h.gir === 'hit' || h.gir === 'miss' || h.gir === 'under'){ tg++; if (h.gir === 'hit' || h.gir === 'under') th++; } }); 
             if (tg > 0) { val = (th/tg)*100; valid = true; } 
         }
+        if (currentStatKey === 'scram') { 
+            let th = 0, ts = 0; 
+            targetHoles.forEach(h => { if (h.gir === 'miss') { ts++; if (h.score <= h.par) th++; } }); 
+            if (ts > 0) { val = (th/ts)*100; valid = true; } 
+        }
+        if (currentStatKey === 'sand') { 
+            let th = 0, ts = 0; 
+            targetHoles.forEach(h => { if (h.sand_save === 'yes' || h.sand_save === '1') { ts++; th++; } else if (h.sand_save === 'no' || h.sand_save === '2' || h.sand_save === '3+') ts++; }); 
+            if (ts > 0) { val = (th/ts)*100; valid = true; } 
+        }
         if (currentStatKey === 'drops') { 
             let dSum = 0; 
             targetHoles.forEach(h => { dSum += (h.drops||0); }); 
             val = dSum; valid = true; 
         }
-        
-        // BUG FIX: Synced up the graph click listener arrays (brd vs birdies, etc)
         if (['hio','egl','birdies','pars','bogeys','dbl','tpl','qd'].includes(currentStatKey)) {
             let cnt = 0; 
             targetHoles.forEach(h => { 
@@ -2856,9 +2973,7 @@ window.refreshModalGraph = function() {
                     else if (currentStatKey === 'birdies' && d === -1) cnt++; 
                     else if (currentStatKey === 'pars' && d === 0) cnt++; 
                     else if (currentStatKey === 'bogeys' && d === 1) cnt++; 
-                    else if (currentStatKey === 'dbl' && d === 2) cnt++; 
-                    else if (currentStatKey === 'tpl' && d === 3) cnt++; 
-                    else if (currentStatKey === 'qd' && d >= 4) cnt++; 
+                    else if (currentStatKey === 'dbl' && d >= 2) cnt++; 
                 } 
             }); 
             val = cnt; valid = true;
@@ -2886,7 +3001,7 @@ window.refreshModalGraph = function() {
                 borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderWidth: 2, fill: true, pointBackgroundColor: '#121212', tension: 0.3 
             }] 
         }, 
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: false } } } 
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: true } }, scales: { y: { grid: { color: '#2a2a2a' } }, x: { display: true, grid: { display: false } } } } 
     });
 };
 
