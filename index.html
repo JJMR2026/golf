@@ -419,11 +419,15 @@
                             <option value="last20">Last 20 Rounds</option>
                             <option value="full">All Time</option>
                         </select>
+                        
                         <select class="filter-select settings-select" id="filter-hole-count" onchange="updateAnalytics()">
                             <option value="18" selected>18-Holes Only</option>
                             <option value="9">9-Holes Only</option>
+                            <option value="complete">Complete Rounds (9 or 18)</option>
+                            <option value="incomplete">Incomplete / Partial Only</option>
                             <option value="all">All Rounds</option>
                         </select>
+                        
                         <select class="filter-select settings-select" id="filter-round-type" onchange="updateAnalytics()">
                             <option value="real" selected>Real Golf</option>
                             <option value="sim">Simulator Only</option>
