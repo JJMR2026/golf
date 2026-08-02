@@ -2053,43 +2053,51 @@ window.calculateHandicap = function(allRounds) {
     if (n < 3) return "--.-";
     
     let diffs = validRounds.map(r => {
-        let holesLoggedArr = r.hole_scores ? r.hole_scores.filter(h => h.score > 0) : [];
+        let holesLoggedArr = r.hole_scores ? r.hole_scores.filter(h => h.score && h.score > 0) : [];
         let holesLogged = holesLoggedArr.length;
-        if (holesLogged === 0) return null;
         
-        let pacedScore = Math.round((r.total_score / holesLogged) * 18);
-        let scoreToUse = pacedScore;
+        // BUG FIX: Protect against divide-by-zero on legacy imported rounds
+        if (holesLogged === 0) {
+            if (r.total_score > 0) holesLogged = 18; 
+            else return null;
+        }
+        
         let crToUse = r.course_rating;
         let srToUse = r.slope_rating;
+        let pacedScore = Math.round((r.total_score / holesLogged) * 18);
 
         if (crToUse && srToUse) {
-            if (crToUse < 50) {
-                crToUse = crToUse * 2;
-            }
-            return ((scoreToUse - crToUse) * 113 / srToUse);
+            // If it's a 9-hole rating, normalize it to 18
+            if (crToUse < 50) crToUse = crToUse * 2;
+            return ((pacedScore - crToUse) * 113 / srToUse);
         } else {
-            return (scoreToUse - 72) * 0.96;
+            // Fallback if CR/Slope is missing
+            let parSum = holesLoggedArr.reduce((sum, h) => sum + (h.par || 4), 0);
+            if (parSum === 0) parSum = 72;
+            let pacedPar = Math.round((parSum / holesLogged) * 18);
+            return (pacedScore - pacedPar) * 0.96;
         }
     }).filter(d => d !== null).sort((a,b) => a-b);
     
+    let validCount = diffs.length;
+    if (validCount < 3) return "--.-";
+
     let countToUse = 1, adj = 0;
-    
-    if (n === 3) { countToUse = 1; adj = -2.0; } 
-    else if (n === 4) { countToUse = 1; adj = -1.0; } 
-    else if (n === 5) { countToUse = 1; adj = 0; } 
-    else if (n === 6) { countToUse = 2; adj = -1.0; } 
-    else if (n >= 7 && n <= 8) { countToUse = 2; adj = 0; } 
-    else if (n >= 9 && n <= 11) { countToUse = 3; adj = 0; } 
-    else if (n >= 12 && n <= 14) { countToUse = 4; adj = 0; } 
-    else if (n >= 15 && n <= 16) { countToUse = 5; adj = 0; } 
-    else if (n >= 17 && n <= 18) { countToUse = 6; adj = 0; } 
-    else if (n === 19) { countToUse = 7; adj = 0; } 
-    else if (n === 20) { countToUse = 8; adj = 0; }
+    if (validCount === 3) { countToUse = 1; adj = -2.0; } 
+    else if (validCount === 4) { countToUse = 1; adj = -1.0; } 
+    else if (validCount === 5) { countToUse = 1; adj = 0; } 
+    else if (validCount === 6) { countToUse = 2; adj = -1.0; } 
+    else if (validCount >= 7 && validCount <= 8) { countToUse = 2; adj = 0; } 
+    else if (validCount >= 9 && validCount <= 11) { countToUse = 3; adj = 0; } 
+    else if (validCount >= 12 && validCount <= 14) { countToUse = 4; adj = 0; } 
+    else if (validCount >= 15 && validCount <= 16) { countToUse = 5; adj = 0; } 
+    else if (validCount >= 17 && validCount <= 18) { countToUse = 6; adj = 0; } 
+    else if (validCount === 19) { countToUse = 7; adj = 0; } 
+    else if (validCount >= 20) { countToUse = 8; adj = 0; }
     
     const avg = (diffs.slice(0, countToUse).reduce((a,b) => a+b, 0) / countToUse) + adj; 
     let finalHcp = Math.max(0, (Math.round(avg * 10) / 10)).toFixed(1);
     
-    console.log("🏆 WHS Math - Lowest", countToUse, "Diffs:", diffs.slice(0, countToUse), " | Calculated HCP:", finalHcp);
     return finalHcp;
 };
 
