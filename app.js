@@ -139,6 +139,10 @@ window.initializeApp = async function() {
         console.warn("Auth check bypassed/offline:", error.message);
     }
 
+    if (currentUser && currentUser.user_metadata && currentUser.user_metadata.club_distances) {
+        localStorage.setItem('golf_club_distances', JSON.stringify(currentUser.user_metadata.club_distances));
+    }
+
     if (currentUser) {
         localStorage.removeItem('golf_guest_mode'); 
         document.getElementById('auth-overlay').style.display = 'none'; 
@@ -152,6 +156,9 @@ window.initializeApp = async function() {
                 document.getElementById('settings-msg').innerText = "Security token authenticated."; 
             } else if (event === 'SIGNED_IN' && session) { 
                 currentUser = session.user; 
+                if (currentUser.user_metadata && currentUser.user_metadata.club_distances) {
+                    localStorage.setItem('golf_club_distances', JSON.stringify(currentUser.user_metadata.club_distances));
+                }
                 localStorage.removeItem('golf_guest_mode'); 
                 document.getElementById('auth-overlay').style.display = 'none'; 
                 window.loadLocalState(); 
@@ -372,7 +379,7 @@ window.renderClubDistancesUI = function() {
             <div style="display: flex; justify-content: space-between; align-items: center; background: var(--cell-bg); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
                 <span style="font-weight: bold; font-size: 14px;">${club}</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="number" class="club-dist-input" data-club="${club}" value="${val}" placeholder="Yds" onchange="window.saveClubDistances()" style="width: 70px; text-align: right; background: rgba(0,0,0,0.3); border: 1px solid var(--cell-border); padding: 8px; border-radius: 6px; color: var(--text-main); font-weight: bold;">
+                    <input type="number" class="club-dist-input" data-club="${club}" value="${val}" placeholder="Yds" style="width: 70px; text-align: right; background: rgba(0,0,0,0.3); border: 1px solid var(--cell-border); padding: 8px; border-radius: 6px; color: var(--text-main); font-weight: bold;">
                     <span style="font-size: 11px; color: var(--text-muted);">YDS</span>
                 </div>
             </div>
@@ -382,21 +389,35 @@ window.renderClubDistancesUI = function() {
     listContainer.innerHTML = html;
 };
 
-window.saveClubDistances = function() {
-    let savedDistancesStr = localStorage.getItem('golf_club_distances');
-    let savedDistances = savedDistancesStr ? JSON.parse(savedDistancesStr) : {};
+window.saveClubDistances = async function() {
+    let savedDistances = {};
     
     document.querySelectorAll('.club-dist-input').forEach(input => {
         let club = input.getAttribute('data-club');
         let dist = parseInt(input.value);
         if (!isNaN(dist) && dist > 0) {
             savedDistances[club] = dist;
-        } else {
-            delete savedDistances[club];
         }
     });
     
     localStorage.setItem('golf_club_distances', JSON.stringify(savedDistances));
+
+    if (supabaseClient && currentUser) {
+        try {
+            await supabaseClient.auth.updateUser({
+                data: { club_distances: savedDistances }
+            });
+        } catch(e) {
+            console.error("Cloud distance sync failed:", e);
+        }
+    }
+
+    let btn = document.querySelector('#view-range button.primary');
+    if (btn) {
+        let origText = btn.innerText;
+        btn.innerText = "✅ DISTANCES SAVED";
+        setTimeout(() => { btn.innerText = origText; }, 2000);
+    }
 };
 
 window.getSmartClubRecommendation = function(targetDistance) {
@@ -1226,7 +1247,7 @@ window.fetchCourseDetails = async function() {
         if (error) throw error;
 
         if (teeData && teeData.length > 0) {
-            let cleanQuery = query.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            const cleanQuery = query.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
             
             let matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() === cleanQuery);
             
@@ -2056,7 +2077,6 @@ window.calculateHandicap = function(allRounds) {
         let holesLoggedArr = r.hole_scores ? r.hole_scores.filter(h => h.score && h.score > 0) : [];
         let holesLogged = holesLoggedArr.length;
         
-        // BUG FIX: Protect against divide-by-zero on legacy imported rounds
         if (holesLogged === 0) {
             if (r.total_score > 0) holesLogged = 18; 
             else return null;
@@ -2067,11 +2087,9 @@ window.calculateHandicap = function(allRounds) {
         let pacedScore = Math.round((r.total_score / holesLogged) * 18);
 
         if (crToUse && srToUse) {
-            // If it's a 9-hole rating, normalize it to 18
             if (crToUse < 50) crToUse = crToUse * 2;
             return ((pacedScore - crToUse) * 113 / srToUse);
         } else {
-            // Fallback if CR/Slope is missing
             let parSum = holesLoggedArr.reduce((sum, h) => sum + (h.par || 4), 0);
             if (parSum === 0) parSum = 72;
             let pacedPar = Math.round((parSum / holesLogged) * 18);
@@ -2406,8 +2424,10 @@ window.updateAnalytics = function() {
 
             if (r.hole_scores && r.hole_scores.length > 0) {
                 const playedHoles = r.hole_scores.filter(h => h.score && h.score > 0).length; 
-                if (holeFilter === '18' && playedHoles < 18) return false;
-                if (holeFilter === '9' && (playedHoles < 9 || playedHoles >= 18)) return false; 
+                if (holeFilter === '18' && playedHoles !== 18) return false;
+                if (holeFilter === '9' && playedHoles !== 9) return false;
+                if (holeFilter === 'complete' && (playedHoles !== 9 && playedHoles !== 18)) return false;
+                if (holeFilter === 'incomplete' && (playedHoles === 9 || playedHoles === 18)) return false;
             }
 
             let tName = r.tee_name || "";
