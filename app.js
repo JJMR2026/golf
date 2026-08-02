@@ -100,7 +100,35 @@ window.applyTheme = function(themeName) {
 let savedTheme = localStorage.getItem('golf_theme') || 'dark'; 
 window.applyTheme(savedTheme);
 
+window.saveBag = function() {
+    let bag = [];
+    document.querySelectorAll('.bag-club:checked').forEach(cb => bag.push(cb.value));
+    localStorage.setItem('golf_my_bag', JSON.stringify(bag));
+};
+
 window.initializeApp = async function() {
+    let savedBagStr = localStorage.getItem('golf_my_bag');
+    if (savedBagStr) {
+        let savedBag = JSON.parse(savedBagStr);
+        document.querySelectorAll('.bag-club').forEach(cb => {
+            cb.checked = savedBag.includes(cb.value);
+        });
+    }
+
+    document.querySelectorAll('.bag-club').forEach(cb => {
+        cb.addEventListener('change', window.saveBag);
+    });
+
+    ['play-score', 'play-putts', 'play-drive'].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function() {
+                let field = id.replace('play-', '');
+                window.syncPlayToState(field, this.value);
+            });
+        }
+    });
+
     try {
         if (supabaseClient) {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
@@ -344,7 +372,7 @@ window.renderClubDistancesUI = function() {
             <div style="display: flex; justify-content: space-between; align-items: center; background: var(--cell-bg); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
                 <span style="font-weight: bold; font-size: 14px;">${club}</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="number" class="club-dist-input" data-club="${club}" value="${val}" placeholder="Yds" style="width: 70px; text-align: right; background: rgba(0,0,0,0.3); border: 1px solid var(--cell-border); padding: 8px; border-radius: 6px; color: var(--text-main); font-weight: bold;">
+                    <input type="number" class="club-dist-input" data-club="${club}" value="${val}" placeholder="Yds" onchange="window.saveClubDistances()" style="width: 70px; text-align: right; background: rgba(0,0,0,0.3); border: 1px solid var(--cell-border); padding: 8px; border-radius: 6px; color: var(--text-main); font-weight: bold;">
                     <span style="font-size: 11px; color: var(--text-muted);">YDS</span>
                 </div>
             </div>
@@ -369,7 +397,6 @@ window.saveClubDistances = function() {
     });
     
     localStorage.setItem('golf_club_distances', JSON.stringify(savedDistances));
-    alert("✅ Distances saved. The app will now auto-suggest clubs based on these yardages.");
 };
 
 window.getSmartClubRecommendation = function(targetDistance) {
@@ -571,11 +598,11 @@ if (searchInputEl) {
                 const { data, error } = await supabaseClient.from('course_tees').select('course_name').ilike('course_name', `%${broadSearch}%`).limit(1000); 
                 if(error) throw error;
                 
-                const cleanQuery = query.replace(/\s+/g, '');
+                const cleanQuery = query.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                 const uniqueCourses = [];
                 data.forEach(item => {
                     let c = item.course_name.trim();
-                    if (c.replace(/\s+/g, '').toLowerCase().includes(cleanQuery)) {
+                    if (c.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().includes(cleanQuery)) {
                         if (!uniqueCourses.includes(c)) uniqueCourses.push(c);
                     }
                 });
@@ -792,25 +819,8 @@ window.syncGridToState = function(idx, field, val) {
         if(pInput) pInput.value = val; 
     }
     
-    let strokes = 0; 
-    let parSum = 0; 
-    let endIndex = currentHoleOffset + currentHoleCount;
-    
-    for(let i=currentHoleOffset; i<endIndex; i++) { 
-        let s = parseInt(roundData[i].score); 
-        let p = parseInt(currentCoursePars[i]) || 4; 
-        if(s > 0) { 
-            strokes += s; 
-            parSum += p; 
-        } 
-    }
-    
-    let relToPar = strokes - parSum; 
-    let relStr = relToPar > 0 ? `+${relToPar}` : (relToPar === 0 ? 'E' : relToPar);
-    let paceScoreEl = document.getElementById('pace-score-display');
-    if(paceScoreEl) paceScoreEl.innerText = `Strokes: ${strokes} (${window.getRelativeParString(strokes, parSum)})`; 
-    
     window.saveLocalState();
+    window.updatePlayModeUI();
 };
 
 window.togglePlayMode = function(isPlayMode) { 
@@ -921,6 +931,7 @@ window.updatePlayModeUI = function() {
     let totScore = 0;
     let currPar = 0;
     let endIndex = currentHoleOffset + currentHoleCount;
+    let holesPlayedForPace = 0;
     
     for (let i = currentHoleOffset; i < endIndex; i++) { 
         let s = parseInt(roundData[i].score); 
@@ -933,6 +944,7 @@ window.updatePlayModeUI = function() {
         if (s > 0) { 
             totScore += s; 
             currPar += (!isNaN(p) ? p : 4); 
+            holesPlayedForPace++;
         } 
     }
     
@@ -942,6 +954,17 @@ window.updatePlayModeUI = function() {
     let paceScoreEl = document.getElementById('pace-score-display');
     if (paceScoreEl) {
         paceScoreEl.innerText = `Strokes: ${totScore} (${relStr})`; 
+    }
+
+    let paceProjEl = document.getElementById('pace-projected-display');
+    if (paceProjEl) {
+        if (holesPlayedForPace > 0) {
+            let pacedRelToPar = Math.round((relToPar / holesPlayedForPace) * 18);
+            let paceStr = pacedRelToPar > 0 ? `+${pacedRelToPar}` : (pacedRelToPar === 0 ? 'E' : pacedRelToPar);
+            paceProjEl.innerText = `Pace: ${paceStr} / 18`;
+        } else {
+            paceProjEl.innerText = `Pace: E / 18`;
+        }
     }
 
     if (state.score === "") {
@@ -1203,12 +1226,12 @@ window.fetchCourseDetails = async function() {
         if (error) throw error;
 
         if (teeData && teeData.length > 0) {
-            let cleanQuery = query.replace(/\s+/g, '').toUpperCase();
+            let cleanQuery = query.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
             
-            let matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/\s+/g, '').toUpperCase() === cleanQuery);
+            let matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() === cleanQuery);
             
             if (!matchedCourse) {
-                matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/\s+/g, '').toUpperCase().includes(cleanQuery));
+                matchedCourse = teeData.find(t => (t.course_name || "").trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase().includes(cleanQuery));
             }
             
             if (matchedCourse) {
@@ -1752,9 +1775,19 @@ window.renderHistoryList = function(allData, type) {
             let wTemp = (r.weather_temp || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
             let wWind = (r.weather_wind || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
+            let scoreHtml = `<strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong>`;
+
+            if (holesPlayed > 0 && holesPlayed < 18) {
+                let coursePar = r.hole_scores.filter(h => h.score > 0).reduce((sum, h) => sum + (h.par || 4), 0);
+                let relToPar = r.total_score - coursePar;
+                let paceRel = Math.round((relToPar / holesPlayed) * 18);
+                let paceStr = paceRel > 0 ? `+${paceRel}` : (paceRel === 0 ? 'E' : paceRel);
+                scoreHtml = `<div style="color:var(--accent-green);font-weight:bold;font-size:16px;">${r.total_score} <span style="font-size:12px;color:var(--text-muted);">thru ${holesPlayed}</span></div><div style="font-size:11px;color:var(--text-muted);">Pace: ${paceStr}</div>`;
+            }
+
             html += `<div class="history-item" onclick="window.openHistoryModal('${r.id}', '${cName}', '${r.date_played}', ${r.total_score}, ${holesPlayed}, '${wTemp}', '${wWind}')">
                 <div><strong>${(r.course_name || "Unknown").toUpperCase()}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.date_played}</span></div>
-                <div style="text-align:right;"><strong style="color:var(--accent-green);font-size:18px;">${r.total_score}</strong></div>
+                <div style="text-align:right;">${scoreHtml}</div>
             </div>`;
         });
         
@@ -1798,19 +1831,8 @@ window.openHistoryModal = async function(id, name, date, score, holesPlayed, tem
     
     const { data } = await supabaseClient.from('hole_scores').select('*').eq('round_id', id).order('hole_number', { ascending: true });
     
-    let startHole = 0, endHole = 18;
-    if (data && data.length > 0 && data.length < 18) { 
-        let firstHole = data[0].hole_number; 
-        if (firstHole > 9) { 
-            startHole = 9; 
-            endHole = 18; 
-        } else { 
-            startHole = 0; 
-            endHole = 9; 
-        } 
-    }
-    
-    let viewHoles = endHole - startHole;
+    let startHole = 0;
+    let viewHoles = 18;
     
     modalCoursePars = Array(viewHoles).fill(""); 
     modalRoundData = Array.from({length: viewHoles}, () => ({ 
@@ -2028,29 +2050,27 @@ window.calculateHandicap = function(allRounds) {
     ).slice(0, 20);
 
     const n = validRounds.length; 
-    
     if (n < 3) return "--.-";
     
     let diffs = validRounds.map(r => {
-        let holesLogged = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 18;
-        let is9HoleRound = holesLogged <= 9;
+        let holesLoggedArr = r.hole_scores ? r.hole_scores.filter(h => h.score > 0) : [];
+        let holesLogged = holesLoggedArr.length;
+        if (holesLogged === 0) return null;
         
-        let scoreToUse = r.total_score;
+        let pacedScore = Math.round((r.total_score / holesLogged) * 18);
+        let scoreToUse = pacedScore;
         let crToUse = r.course_rating;
         let srToUse = r.slope_rating;
 
         if (crToUse && srToUse) {
-            if (is9HoleRound && crToUse > 50) {
-                scoreToUse = r.total_score * 2;
-            } else if (!is9HoleRound && crToUse < 50) {
+            if (crToUse < 50) {
                 crToUse = crToUse * 2;
             }
             return ((scoreToUse - crToUse) * 113 / srToUse);
         } else {
-            let parSum = r.hole_scores ? r.hole_scores.reduce((sum, h) => sum + (h.par || 0), 0) : (is9HoleRound ? 36 : 72);
-            return (scoreToUse - parSum) * 0.96;
+            return (scoreToUse - 72) * 0.96;
         }
-    }).sort((a,b) => a-b);
+    }).filter(d => d !== null).sort((a,b) => a-b);
     
     let countToUse = 1, adj = 0;
     
@@ -2120,7 +2140,6 @@ window.updateTrophyRoom = function(fRounds) {
         let dStr = r.date_played ? new Date(r.date_played).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : "Unknown";
         let holesPlayed = r.hole_scores ? r.hole_scores.filter(h => h.score > 0).length : 0;
         
-        // BUG FIX 15: Grab formatting vars to pass to the modal
         let cName = (r.course_name || "Unknown").replace(/'/g, "\\'").replace(/"/g, '&quot;');
         let wTemp = r.weather_temp || "";
         let wWind = r.weather_wind || "";
@@ -2412,7 +2431,6 @@ window.updateAnalytics = function() {
             fRounds = fRounds.slice(0, parseInt(timeframe.replace('last', ''))); 
         }
         
-        // BUG FIX 3: HCP is now completely beholden to fRounds (the filtered array)
         let hcDisplay = document.getElementById('hcp-display');
         if (hcDisplay && typeof window.calculateHandicap === 'function') { 
             hcDisplay.innerText = window.calculateHandicap(fRounds); 
